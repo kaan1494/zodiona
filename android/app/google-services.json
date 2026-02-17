@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "525715666823",
+    "project_id": "zodiona-93e39",
+    "storage_bucket": "zodiona-93e39.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:525715666823:android:7d160f9a5e9c4e33b50522",
+        "android_client_info": {
+          "package_name": "com.zodiona.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "525715666823-chrv2jgcf3kscjnfnf9r5euifk7r1bmc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zodiona.app",
+            "certificate_hash": "8cf16a06cdd66acf0c9b63c63d4bd19403c1fba9"
+          }
+        },
+        {
+          "client_id": "525715666823-6l3pck049aj7g60pn1obm652d090afi4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB99kZTlsXFGgkWznaTHnzaQoEYlSXezlY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "525715666823-4jj0luhvv0fpf2f73v06vj7cvvkftut7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "525715666823-8l1441k4ehn7nhfvq7606iki7399kp0e.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.zodiona"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter: Run",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=GOOGLE_ANDROID_SERVER_CLIENT_ID=525715666823-6l3pck049aj7g60pn1obm652d090afi4.apps.googleusercontent.com",
+        "--dart-define=GOOGLE_IOS_CLIENT_ID=525715666823-8l1441k4ehn7nhfvq7606iki7399kp0e.apps.googleusercontent.com"
+      ]
+    }
+  ]
+}
