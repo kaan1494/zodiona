@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../profile/presentation/profile_screen.dart';
+import 'widgets/astro_story_strip.dart';
 import '../../../services/astro_api_service.dart';
 import '../../../utils/zodiac.dart';
 
@@ -14,6 +16,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 2;
+
+  void _openProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
 
   void _onTabSelected(int index) {
     if (_currentIndex == index) {
@@ -38,6 +46,15 @@ class _HomeScreenState extends State<HomeScreen> {
           const Positioned.fill(child: _CosmicBackground()),
           Positioned.fill(
             child: IndexedStack(index: _currentIndex, children: pages),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12, right: 16),
+                child: _TopRightProfileButton(onTap: _openProfile),
+              ),
+            ),
           ),
           SafeArea(
             bottom: false,
@@ -412,7 +429,14 @@ class _MainHomePage extends StatelessWidget {
     return const SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: _HomeUserHeader(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _HomeUserHeader(),
+            SizedBox(height: 14),
+            AstroStoryStrip(),
+          ],
+        ),
       ),
     );
   }
@@ -427,8 +451,18 @@ class _HomeUserHeader extends StatefulWidget {
 
 class _HomeUserHeaderState extends State<_HomeUserHeader> {
   final _astroApiService = const AstroApiService();
+  static const _astroRetryInterval = Duration(seconds: 12);
   bool _isRefreshingAstro = false;
   String? _lastAstroRequestKey;
+  DateTime? _lastAstroAttemptAt;
+
+  bool _isKnownAstroValue(String? value) {
+    final normalized = value?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return false;
+    }
+    return normalized != 'Bilinmiyor' && normalized != 'Yukleniyor...';
+  }
 
   DateTime? _buildLocalBirthDateTime({
     required DateTime? birthDate,
@@ -488,6 +522,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
     setState(() {
       _isRefreshingAstro = true;
       _lastAstroRequestKey = requestKey;
+      _lastAstroAttemptAt = DateTime.now();
     });
 
     try {
@@ -542,11 +577,11 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
             : (birthDate != null ? calculateZodiac(birthDate) : 'Bilinmiyor');
 
         final moonSignRaw = (data['moonSign'] as String?)?.trim();
-        final hasMoonSign = moonSignRaw?.isNotEmpty ?? false;
+        final hasMoonSign = _isKnownAstroValue(moonSignRaw);
         final moonSign = hasMoonSign ? moonSignRaw! : 'Bilinmiyor';
 
         final risingSignRaw = (data['risingSign'] as String?)?.trim();
-        final hasRisingSign = risingSignRaw?.isNotEmpty ?? false;
+        final hasRisingSign = _isKnownAstroValue(risingSignRaw);
         final risingSign = hasRisingSign ? risingSignRaw! : 'Bilinmiyor';
 
         final birthTime = (data['birthTime'] as String?)?.trim();
@@ -562,15 +597,20 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
             localBirthDateTime != null &&
             lat != null &&
             lon != null;
-        final needsAstroRefresh = canRefreshAstro && (!hasMoonSign || !hasRisingSign);
+        final needsAstroRefresh =
+          canRefreshAstro && (!hasMoonSign || !hasRisingSign);
         final requestKey = canRefreshAstro
             ? '${localBirthDateTime!.toIso8601String()}|$lat|$lon'
             : null;
+        final canRetryNow =
+          _lastAstroAttemptAt == null ||
+          DateTime.now().difference(_lastAstroAttemptAt!) >=
+            _astroRetryInterval;
 
         if (needsAstroRefresh &&
             !_isRefreshingAstro &&
             requestKey != null &&
-            requestKey != _lastAstroRequestKey) {
+          (requestKey != _lastAstroRequestKey || canRetryNow)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _refreshAstro(
               uid: uid!,
@@ -583,7 +623,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
         }
 
         return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
@@ -641,19 +681,33 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            Container(
-              height: 36,
-              width: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white70),
-              ),
-              child: const Icon(Icons.person_outline, color: Colors.white70),
-            ),
           ],
         );
       },
+    );
+  }
+}
+
+class _TopRightProfileButton extends StatelessWidget {
+  const _TopRightProfileButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 36,
+        width: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white70),
+          color: Colors.black.withValues(alpha: 0.12),
+        ),
+        child: const Icon(Icons.person_outline, color: Colors.white70),
+      ),
     );
   }
 }

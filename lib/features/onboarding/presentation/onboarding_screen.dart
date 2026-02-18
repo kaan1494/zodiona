@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/location_model.dart';
-import '../../../services/astro_api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/location_service.dart';
 import '../../../utils/zodiac.dart';
@@ -59,7 +58,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _placeController = TextEditingController();
   final _authService = AuthService();
   final _locationService = LocationService();
-  final _astroApiService = const AstroApiService();
 
   int _stepIndex = 0;
   DateTime? _birthDate;
@@ -745,7 +743,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     String sunSign = _birthDate != null ? calculateZodiac(_birthDate!) : '';
     String moonSign = 'Bilinmiyor';
     String risingSign = 'Bilinmiyor';
-    String? timezone;
+    String? timezone = 'pending';
 
     final canCalculateFromApi =
         _birthDate != null &&
@@ -753,35 +751,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         !_birthTimeUnknown &&
         _selectedBirthLocation != null;
 
-    if (canCalculateFromApi) {
-      try {
-        final localBirthDateTime = DateTime(
-          _birthDate!.year,
-          _birthDate!.month,
-          _birthDate!.day,
-          _birthTime!.hour,
-          _birthTime!.minute,
-        );
-
-        final astro = await _astroApiService.calculate(
-          localBirthDateTime: localBirthDateTime,
-          latitude: _selectedBirthLocation!.lat,
-          longitude: _selectedBirthLocation!.lon,
-        );
-
-        sunSign = astro.sunSign;
-        moonSign = astro.moonSign;
-        risingSign = astro.ascendant;
-        timezone = astro.timezone;
-      } catch (_) {
-        if (mounted) {
-          _showSnack(
-            'Astroloji servisine baglanilamadi. Lutfen internetini veya backend baglantisini kontrol et.',
-          );
-          setState(() => _isSaving = false);
-        }
-        return;
-      }
+    if (!canCalculateFromApi) {
+      timezone = null;
     }
 
     final data = <String, dynamic>{

@@ -37,6 +37,24 @@ migrate_working_dir/
 .venv/
 de440s.bsp
 
+# Secrets / local environment
+.env
+.env.*
+backend/.env
+backend/.env.*
+*.pem
+*.p12
+*.key
+*.crt
+*.cer
+*service-account*.json
+*service_account*.json
+firebase-adminsdk*.json
+
+# Firebase local config (do not commit in public repos)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
 # Symbolication related
 app.*.symbols
 

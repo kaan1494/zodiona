@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flutter Run (Render API)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "run",
+        "--dart-define=ASTRO_API_BASE_URL=https://zodiona-astro-api.onrender.com"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter Build Android AAB (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "appbundle",
+        "--release",
+        "--dart-define=ASTRO_API_BASE_URL=https://zodiona-astro-api.onrender.com"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter Build iOS IPA (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "ipa",
+        "--release",
+        "--dart-define=ASTRO_API_BASE_URL=https://zodiona-astro-api.onrender.com"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
