@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../models/astro_story.dart';
 import '../../../services/astro_story_service.dart';
@@ -17,27 +18,73 @@ class AdminStoryAdminScreen extends StatefulWidget {
 }
 
 class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
-  static const List<_PresetStoryImage> _presetImages = [
-    _PresetStoryImage('Aurora', 'https://picsum.photos/seed/zodiona-1/720/1280'),
-    _PresetStoryImage('Galaxy', 'https://picsum.photos/seed/zodiona-2/720/1280'),
-    _PresetStoryImage('Nebula', 'https://picsum.photos/seed/zodiona-3/720/1280'),
-    _PresetStoryImage('Moonlight', 'https://picsum.photos/seed/zodiona-4/720/1280'),
-    _PresetStoryImage('Cosmos', 'https://picsum.photos/seed/zodiona-5/720/1280'),
-    _PresetStoryImage('Saturn', 'https://picsum.photos/seed/zodiona-6/720/1280'),
-    _PresetStoryImage('Stardust', 'https://picsum.photos/seed/zodiona-7/720/1280'),
-    _PresetStoryImage('Night Sky', 'https://picsum.photos/seed/zodiona-8/720/1280'),
-    _PresetStoryImage('Deep Space', 'https://picsum.photos/seed/zodiona-9/720/1280'),
-    _PresetStoryImage('Blue Planet', 'https://picsum.photos/seed/zodiona-10/720/1280'),
-  ];
+  static const _presetAssetFolder = 'assets/admin_story_presets/';
 
   final _service = const AstroStoryService();
   final _titleController = TextEditingController();
   bool _isActive = true;
   bool _isSaving = false;
+  bool _isLoadingPresetImages = true;
+  List<_PresetStoryImage> _presetImages = const [];
 
   final List<_SegmentDraft> _segments = [
     _SegmentDraft(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPresetImages();
+  }
+
+  Future<void> _loadPresetImages() async {
+    try {
+      final manifestRaw = await rootBundle.loadString('AssetManifest.json');
+      final manifest = jsonDecode(manifestRaw) as Map<String, dynamic>;
+      final imagePaths = manifest.keys
+          .where((path) => path.startsWith(_presetAssetFolder))
+          .where(
+            (path) => RegExp(r'\.(png|jpe?g|webp)$', caseSensitive: false)
+                .hasMatch(path),
+          )
+          .toList()
+        ..sort();
+
+      final images = imagePaths
+          .map(
+            (path) => _PresetStoryImage(
+              _prettyName(path.split('/').last),
+              path,
+            ),
+          )
+          .toList();
+
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _presetImages = images;
+        _isLoadingPresetImages = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _presetImages = const [];
+        _isLoadingPresetImages = false;
+      });
+    }
+  }
+
+  String _prettyName(String fileName) {
+    final withoutExt = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
+    final normalized = withoutExt.replaceAll(RegExp(r'[_-]+'), ' ').trim();
+    if (normalized.isEmpty) {
+      return fileName;
+    }
+    return normalized[0].toUpperCase() + normalized.substring(1);
+  }
 
   @override
   void dispose() {
@@ -275,7 +322,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                     const SizedBox(height: 8),
                     _presetSelector(
                       selectedValue: segment.imageController.text.trim(),
-                      title: 'Sayfa icin hazir 10 gorsel',
+                      title: 'Sayfa icin sabit gorseller',
                       onSelected: (value) =>
                           setState(() => segment.imageController.text = value),
                     ),
@@ -465,6 +512,19 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       children: [
         Text(title, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 6),
+        if (_isLoadingPresetImages)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 10),
+            child: LinearProgressIndicator(minHeight: 2),
+          )
+        else if (_presetImages.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Text(
+              'Preset gorsel bulunamadi. assets/admin_story_presets klasorune 20 gorsel ekleyin.',
+            ),
+          )
+        else
         SizedBox(
           height: 96,
           child: ListView.separated(
@@ -491,7 +551,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
+                          child: Image.asset(
                             item.url,
                             width: double.infinity,
                             fit: BoxFit.cover,

@@ -71,6 +71,7 @@ flutter:
   assets:
     - assets/images/zodiona_logo.png
     - assets/onboarding/
+    - assets/admin_story_presets/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
