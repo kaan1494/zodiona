@@ -36,12 +36,12 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
       return;
     }
 
-    final admin = findAdminById(id);
+    final admin = findAdminByIdOrEmail(id);
     if (admin == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Tanimli admin ID bulunamadi. Render/Web icin ADMIN_ID_1 ve ADMIN_EMAIL_1 tanimlayin.',
+            'Tanimli admin bulunamadi. Render/Web icin ADMIN_ID_1 ve ADMIN_EMAIL_1 tanimlayin.',
           ),
         ),
       );
@@ -128,8 +128,8 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
                 controller: _idController,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
-                  labelText: 'Admin ID',
-                  hintText: 'admin',
+                  labelText: 'Admin ID veya Email',
+                  hintText: 'admin1 veya admin1@zodiona.com',
                 ),
               ),
               const SizedBox(height: 12),

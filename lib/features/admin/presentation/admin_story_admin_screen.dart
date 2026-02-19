@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../models/astro_story.dart';
 import '../../../services/astro_story_service.dart';
@@ -18,73 +17,37 @@ class AdminStoryAdminScreen extends StatefulWidget {
 }
 
 class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
-  static const _presetAssetFolder = 'assets/admin_story_presets/';
+  static const List<_PresetStoryImage> _presetImages = [
+    _PresetStoryImage('Story 01', 'assets/admin_story_presets/story_01.png'),
+    _PresetStoryImage('Story 02', 'assets/admin_story_presets/story_02.png'),
+    _PresetStoryImage('Story 03', 'assets/admin_story_presets/story_03.png'),
+    _PresetStoryImage('Story 04', 'assets/admin_story_presets/story_04.png'),
+    _PresetStoryImage('Story 05', 'assets/admin_story_presets/story_05.png'),
+    _PresetStoryImage('Story 06', 'assets/admin_story_presets/story_06.png'),
+    _PresetStoryImage('Story 07', 'assets/admin_story_presets/story_07.png'),
+    _PresetStoryImage('Story 08', 'assets/admin_story_presets/story_08.png'),
+    _PresetStoryImage('Story 09', 'assets/admin_story_presets/story_09.png'),
+    _PresetStoryImage('Story 10', 'assets/admin_story_presets/story_10.png'),
+    _PresetStoryImage('Story 11', 'assets/admin_story_presets/story_11.png'),
+    _PresetStoryImage('Story 12', 'assets/admin_story_presets/story_12.png'),
+    _PresetStoryImage('Story 13', 'assets/admin_story_presets/story_13.png'),
+    _PresetStoryImage('Story 14', 'assets/admin_story_presets/story_14.png'),
+    _PresetStoryImage('Story 15', 'assets/admin_story_presets/story_15.png'),
+    _PresetStoryImage('Story 16', 'assets/admin_story_presets/story_16.png'),
+    _PresetStoryImage('Story 17', 'assets/admin_story_presets/story_17.png'),
+    _PresetStoryImage('Story 18', 'assets/admin_story_presets/story_18.png'),
+    _PresetStoryImage('Story 19', 'assets/admin_story_presets/story_19.png'),
+    _PresetStoryImage('Story 20', 'assets/admin_story_presets/story_20.png'),
+  ];
 
   final _service = const AstroStoryService();
   final _titleController = TextEditingController();
   bool _isActive = true;
   bool _isSaving = false;
-  bool _isLoadingPresetImages = true;
-  List<_PresetStoryImage> _presetImages = const [];
 
   final List<_SegmentDraft> _segments = [
     _SegmentDraft(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPresetImages();
-  }
-
-  Future<void> _loadPresetImages() async {
-    try {
-      final manifestRaw = await rootBundle.loadString('AssetManifest.json');
-      final manifest = jsonDecode(manifestRaw) as Map<String, dynamic>;
-      final imagePaths = manifest.keys
-          .where((path) => path.startsWith(_presetAssetFolder))
-          .where(
-            (path) => RegExp(r'\.(png|jpe?g|webp)$', caseSensitive: false)
-                .hasMatch(path),
-          )
-          .toList()
-        ..sort();
-
-      final images = imagePaths
-          .map(
-            (path) => _PresetStoryImage(
-              _prettyName(path.split('/').last),
-              path,
-            ),
-          )
-          .toList();
-
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _presetImages = images;
-        _isLoadingPresetImages = false;
-      });
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _presetImages = const [];
-        _isLoadingPresetImages = false;
-      });
-    }
-  }
-
-  String _prettyName(String fileName) {
-    final withoutExt = fileName.replaceAll(RegExp(r'\.[^.]+$'), '');
-    final normalized = withoutExt.replaceAll(RegExp(r'[_-]+'), ' ').trim();
-    if (normalized.isEmpty) {
-      return fileName;
-    }
-    return normalized[0].toUpperCase() + normalized.substring(1);
-  }
 
   @override
   void dispose() {
@@ -512,19 +475,6 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       children: [
         Text(title, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 6),
-        if (_isLoadingPresetImages)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: LinearProgressIndicator(minHeight: 2),
-          )
-        else if (_presetImages.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 6),
-            child: Text(
-              'Preset gorsel bulunamadi. assets/admin_story_presets klasorune 20 gorsel ekleyin.',
-            ),
-          )
-        else
         SizedBox(
           height: 96,
           child: ListView.separated(
