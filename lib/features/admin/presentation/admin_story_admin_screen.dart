@@ -317,6 +317,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                           segment.imageController.text.trim(),
                           height: 120,
                           errorText: 'Sayfa resmi onizlenemedi',
+                          storyFrame: true,
                         ),
                       ),
                     const SizedBox(height: 8),
@@ -410,6 +411,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     String source, {
     required double height,
     required String errorText,
+    bool storyFrame = false,
   }) {
     Widget errorBox() => Container(
       height: height,
@@ -418,6 +420,31 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       child: Text(errorText),
     );
 
+    Widget inStoryFrame(Widget child) {
+      if (!storyFrame) {
+        return child;
+      }
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 250),
+          child: AspectRatio(
+            aspectRatio: 9 / 16,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     if (source.startsWith('data:image')) {
       try {
         final commaIndex = source.indexOf(',');
@@ -425,13 +452,12 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
           return errorBox();
         }
         final bytes = base64Decode(source.substring(commaIndex + 1));
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Image.memory(
+        return inStoryFrame(
+          Image.memory(
             bytes,
             height: height,
             width: double.infinity,
-            fit: BoxFit.cover,
+            fit: storyFrame ? BoxFit.contain : BoxFit.cover,
             errorBuilder: (_, _, _) => errorBox(),
           ),
         );
@@ -441,25 +467,23 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     }
 
     if (source.startsWith('assets/')) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: Image.asset(
+      return inStoryFrame(
+        Image.asset(
           source,
           height: height,
           width: double.infinity,
-          fit: BoxFit.cover,
+          fit: storyFrame ? BoxFit.contain : BoxFit.cover,
           errorBuilder: (_, _, _) => errorBox(),
         ),
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
+    return inStoryFrame(
+      Image.network(
         source,
         height: height,
         width: double.infinity,
-        fit: BoxFit.cover,
+        fit: storyFrame ? BoxFit.contain : BoxFit.cover,
         errorBuilder: (_, _, _) => errorBox(),
       ),
     );
@@ -470,59 +494,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     required String selectedValue,
     required ValueChanged<String> onSelected,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(title, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: 96,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _presetImages.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, index) {
-              final item = _presetImages[index];
-              final selected = selectedValue == item.url;
-              return GestureDetector(
-                onTap: () => onSelected(item.url),
-                child: Container(
-                  width: 86,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: selected ? const Color(0xFFF2D28E) : Colors.white24,
-                      width: selected ? 2 : 1,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            item.url,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+    return _PresetSelectorWidget(
+      title: title,
+      selectedValue: selectedValue,
+      images: _presetImages,
+      onSelected: onSelected,
     );
   }
 }
@@ -532,6 +508,125 @@ class _PresetStoryImage {
 
   final String name;
   final String url;
+}
+
+class _PresetSelectorWidget extends StatefulWidget {
+  const _PresetSelectorWidget({
+    required this.title,
+    required this.selectedValue,
+    required this.images,
+    required this.onSelected,
+  });
+
+  final String title;
+  final String selectedValue;
+  final List<_PresetStoryImage> images;
+  final ValueChanged<String> onSelected;
+
+  @override
+  State<_PresetSelectorWidget> createState() => _PresetSelectorWidgetState();
+}
+
+class _PresetSelectorWidgetState extends State<_PresetSelectorWidget> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _scrollBy(double delta) async {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final target = (_scrollController.offset + delta).clamp(
+      0.0,
+      _scrollController.position.maxScrollExtent,
+    );
+    await _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(widget.title, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => _scrollBy(-280),
+              icon: const Icon(Icons.chevron_left),
+              tooltip: 'Sola kaydir',
+            ),
+            Expanded(
+              child: SizedBox(
+                height: 96,
+                child: ListView.separated(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.images.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final item = widget.images[index];
+                    final selected = widget.selectedValue == item.url;
+                    return GestureDetector(
+                      onTap: () => widget.onSelected(item.url),
+                      child: Container(
+                        width: 86,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: selected
+                                ? const Color(0xFFF2D28E)
+                                : Colors.white24,
+                            width: selected ? 2 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.asset(
+                                  item.url,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              item.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: () => _scrollBy(280),
+              icon: const Icon(Icons.chevron_right),
+              tooltip: 'Saga kaydir',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _SegmentDraft {
