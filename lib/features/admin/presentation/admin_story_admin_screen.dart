@@ -411,13 +411,17 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance
           .collection('supportMessages')
-          .orderBy('createdAt', descending: true)
           .limit(200)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Text(
-            'Mesajlar yüklenemedi. Firestore erişimini kontrol edin.',
+          final err = snapshot.error;
+          final message = err is FirebaseException
+              ? 'Mesajlar yüklenemedi (${err.code}). Firestore yetkilerini kontrol edin.'
+              : 'Mesajlar yüklenemedi. Firestore erişimini kontrol edin.';
+          return Text(
+            message,
+            style: const TextStyle(color: Colors.orangeAccent),
           );
         }
 
@@ -428,7 +432,14 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
           );
         }
 
-        final docs = snapshot.data?.docs ?? const [];
+        final docs =
+            List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+              snapshot.data?.docs ?? const [],
+            )..sort((a, b) {
+              final aTs = _resolveSupportTimestamp(a.data());
+              final bTs = _resolveSupportTimestamp(b.data());
+              return bTs.compareTo(aTs);
+            });
         if (docs.isEmpty) {
           return const Text('Henüz kullanıcı mesajı yok.');
         }
@@ -490,6 +501,20 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         );
       },
     );
+  }
+
+  DateTime _resolveSupportTimestamp(Map<String, dynamic> data) {
+    final createdAt = data['createdAt'];
+    if (createdAt is Timestamp) {
+      return createdAt.toDate();
+    }
+
+    final createdAtClient = data['createdAtClient'];
+    if (createdAtClient is Timestamp) {
+      return createdAtClient.toDate();
+    }
+
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   Future<void> _markSupportMessageAsRead(String docId) async {
