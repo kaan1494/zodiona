@@ -91,7 +91,8 @@ double _julianDay(DateTime utcDateTime) {
   final dt = utcDateTime.toUtc();
   var year = dt.year;
   var month = dt.month;
-  final day = dt.day +
+  final day =
+      dt.day +
       (dt.hour + (dt.minute + (dt.second + dt.millisecond / 1000) / 60) / 60) /
           24;
 
@@ -114,8 +115,7 @@ double _sunEclipticLongitude(double julianDay) {
   final n = julianDay - 2451545.0;
   final l = _normalizeDegrees(280.460 + 0.9856474 * n);
   final g = _normalizeDegrees(357.528 + 0.9856003 * n);
-  final lambda =
-      l + 1.915 * _sinDeg(g) + 0.020 * _sinDeg(2 * g);
+  final lambda = l + 1.915 * _sinDeg(g) + 0.020 * _sinDeg(2 * g);
   return _normalizeDegrees(lambda);
 }
 
@@ -138,9 +138,11 @@ double _moonEclipticLongitude(double julianDay) {
   final r = math.sqrt(xv * xv + yv * yv);
 
   final xh =
-      r * (_cosDeg(n) * _cosDeg(v + w) - _sinDeg(n) * _sinDeg(v + w) * _cosDeg(i));
+      r *
+      (_cosDeg(n) * _cosDeg(v + w) - _sinDeg(n) * _sinDeg(v + w) * _cosDeg(i));
   final yh =
-      r * (_sinDeg(n) * _cosDeg(v + w) + _cosDeg(n) * _sinDeg(v + w) * _cosDeg(i));
+      r *
+      (_sinDeg(n) * _cosDeg(v + w) + _cosDeg(n) * _sinDeg(v + w) * _cosDeg(i));
 
   return _normalizeDegrees(_radToDeg(math.atan2(yh, xh)));
 }
@@ -189,8 +191,8 @@ double _ascendantLongitude({
     if (prevAltitude != null &&
         prevIsRising == true &&
         state.isRising &&
-        ((prevAltitude! <= 0 && state.altitudeRad >= 0) ||
-            (prevAltitude! >= 0 && state.altitudeRad <= 0))) {
+        ((prevAltitude <= 0 && state.altitudeRad >= 0) ||
+            (prevAltitude >= 0 && state.altitudeRad <= 0))) {
       crossingStart = lambdaDeg - 0.5;
       crossingEnd = lambdaDeg;
       break;
@@ -219,7 +221,8 @@ double _ascendantLongitude({
         epsilon: epsilon,
       );
 
-      final sameSign = (aState.altitudeRad >= 0 && midState.altitudeRad >= 0) ||
+      final sameSign =
+          (aState.altitudeRad >= 0 && midState.altitudeRad >= 0) ||
           (aState.altitudeRad <= 0 && midState.altitudeRad <= 0);
 
       if (sameSign) {
@@ -258,10 +261,7 @@ _EclipticState _eclipticState({
       math.cos(phi) * math.cos(delta) * math.cos(hourAngle);
   final altitude = math.asin(sinAltitude.clamp(-1.0, 1.0));
 
-  return _EclipticState(
-    altitudeRad: altitude,
-    isRising: hourAngleDeg < 0,
-  );
+  return _EclipticState(altitudeRad: altitude, isRising: hourAngleDeg < 0);
 }
 
 class _EclipticState {

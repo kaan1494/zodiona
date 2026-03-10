@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -45,9 +44,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   bool _isActive = true;
   bool _isSaving = false;
 
-  final List<_SegmentDraft> _segments = [
-    _SegmentDraft(),
-  ];
+  final List<_SegmentDraft> _segments = [_SegmentDraft()];
 
   @override
   void dispose() {
@@ -73,8 +70,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         .toList();
 
     final coverImage = segments
-      .map((s) => s.imageUrl.trim())
-      .firstWhere((url) => url.isNotEmpty, orElse: () => '');
+        .map((s) => s.imageUrl.trim())
+        .firstWhere((url) => url.isNotEmpty, orElse: () => '');
 
     if (segments.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,21 +100,21 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
       if (mounted) {
         setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hikaye kaydedildi.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Hikaye kaydedildi.')));
       }
     } on FirebaseException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kaydetme hatasi: ${e.code}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kaydetme hatasi: ${e.code}')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kaydetme hatasi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kaydetme hatasi: $e')));
       }
     } finally {
       if (mounted) {
@@ -126,23 +123,26 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     }
   }
 
-  Future<void> _setStoryActive({required String id, required bool isActive}) async {
+  Future<void> _setStoryActive({
+    required String id,
+    required bool isActive,
+  }) async {
     try {
       await _service.setStoryActive(id: id, isActive: isActive);
     } on FirebaseException catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Guncelleme hatasi: ${e.code}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Guncelleme hatasi: ${e.code}')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Guncelleme hatasi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Guncelleme hatasi: $e')));
     }
   }
 
@@ -153,16 +153,16 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silme hatasi: ${e.code}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Silme hatasi: ${e.code}')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silme hatasi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Silme hatasi: $e')));
     }
   }
 
@@ -201,16 +201,16 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return;
       }
       setState(() => segment.imageController.text = url);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sayfa resmi eklendi.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Sayfa resmi eklendi.')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Sayfa resmi yuklenemedi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Sayfa resmi yuklenemedi: $e')));
     } finally {
       if (mounted) {
         setState(() => segment.isUploading = false);
@@ -300,7 +300,9 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                             ? const SizedBox(
                                 height: 14,
                                 width: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.upload_file),
                         label: Text(
@@ -381,10 +383,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                         children: [
                           Switch(
                             value: isActive,
-                            onChanged: (v) => _setStoryActive(
-                              id: story.id,
-                              isActive: v,
-                            ),
+                            onChanged: (v) =>
+                                _setStoryActive(id: story.id, isActive: v),
                           ),
                           IconButton(
                             onPressed: () => _deleteStory(story.id),
@@ -398,9 +398,185 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
               );
             },
           ),
+          const SizedBox(height: 24),
+          _sectionTitle('Kullanıcılardan Gelen Mesajlar'),
+          const SizedBox(height: 8),
+          _supportMessagesSection(),
         ],
       ),
     );
+  }
+
+  Widget _supportMessagesSection() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('supportMessages')
+          .orderBy('createdAt', descending: true)
+          .limit(200)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Text(
+            'Mesajlar yüklenemedi. Firestore erişimini kontrol edin.',
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? const [];
+        if (docs.isEmpty) {
+          return const Text('Henüz kullanıcı mesajı yok.');
+        }
+
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data();
+            final userName = (data['userName'] as String?)?.trim();
+            final userEmail = (data['userEmail'] as String?)?.trim();
+            final subject = (data['subject'] as String?)?.trim();
+            final message = (data['message'] as String?)?.trim();
+            final isRead = (data['isRead'] as bool?) ?? false;
+            final createdAt =
+                (data['createdAt'] as Timestamp?) ??
+                (data['createdAtClient'] as Timestamp?);
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: isRead
+                      ? Colors.grey.shade600
+                      : const Color(0xFF5C3EFF),
+                  child: Icon(
+                    isRead ? Icons.drafts : Icons.mark_email_unread,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                title: Text(
+                  (userName?.isNotEmpty ?? false)
+                      ? userName!
+                      : 'Bilinmeyen kullanıcı',
+                ),
+                subtitle: Text(
+                  '${(subject?.isNotEmpty ?? false) ? subject : 'Konu yok'}\n${_formatSupportTime(createdAt)}',
+                ),
+                isThreeLine: true,
+                trailing: IconButton(
+                  onPressed: isRead
+                      ? null
+                      : () => _markSupportMessageAsRead(doc.id),
+                  icon: const Icon(Icons.done_all),
+                  tooltip: 'Okundu olarak işaretle',
+                ),
+                onTap: () => _openSupportMessageDetail(
+                  userName: userName,
+                  userEmail: userEmail,
+                  subject: subject,
+                  message: message,
+                  question: (data['question'] as String?)?.trim(),
+                  contactEmail: (data['contactEmail'] as String?)?.trim(),
+                  createdAt: createdAt,
+                  entryPoint: (data['entryPoint'] as String?)?.trim(),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Future<void> _markSupportMessageAsRead(String docId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('supportMessages')
+          .doc(docId)
+          .set({
+            'isRead': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Mesaj güncellenemedi.')));
+    }
+  }
+
+  void _openSupportMessageDetail({
+    required String? userName,
+    required String? userEmail,
+    required String? contactEmail,
+    required String? subject,
+    required String? question,
+    required String? message,
+    required Timestamp? createdAt,
+    required String? entryPoint,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            (userName?.isNotEmpty ?? false) ? userName! : 'Kullanıcı Mesajı',
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _detailLine('Kullanıcı Email', userEmail),
+                _detailLine('İletişim Email', contactEmail),
+                _detailLine('Konu', subject),
+                _detailLine('Soru', question),
+                _detailLine('Tarih', _formatSupportTime(createdAt)),
+                _detailLine('Kaynak', entryPoint),
+                const SizedBox(height: 8),
+                const Text(
+                  'Mesaj',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text((message?.isNotEmpty ?? false) ? message! : '-'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Kapat'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _detailLine(String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text('$label: ${(value?.isNotEmpty ?? false) ? value : '-'}'),
+    );
+  }
+
+  String _formatSupportTime(Timestamp? timestamp) {
+    if (timestamp == null) {
+      return 'Tarih yok';
+    }
+    final dt = timestamp.toDate().toLocal();
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year.toString();
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day.$month.$year $hour:$minute';
   }
 
   Widget _sectionTitle(String text) {

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/admin_access.dart';
@@ -26,12 +27,23 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
   }
 
   Future<void> _login() async {
+    if (!kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Uygulama içi admin girişi kapalıdır. Lütfen Render/Web panelinden giriş yapın.',
+          ),
+        ),
+      );
+      return;
+    }
+
     final id = _idController.text.trim();
     final password = _passwordController.text.trim();
 
     if (id.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Admin ID ve sifre gerekli.')),
+        const SnackBar(content: Text('Admin ID ve şifre gerekli.')),
       );
       return;
     }
@@ -41,7 +53,7 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Tanimli admin bulunamadi. Render/Web icin ADMIN_ID_1 ve ADMIN_EMAIL_1 tanimlayin.',
+            'Tanımlı admin bulunamadı. Web panel için ADMIN_ID_1 ve ADMIN_EMAIL_1 tanımlayın.',
           ),
         ),
       );
@@ -65,7 +77,7 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
       if (uid == null) {
         throw FirebaseAuthException(
           code: 'no-current-user',
-          message: 'Admin kullanici oturumu acilamadi.',
+          message: 'Admin kullanıcı oturumu açılamadı.',
         );
       }
 
@@ -81,7 +93,9 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
           return;
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Bu hesap admin yetkisine sahip degil.')),
+          const SnackBar(
+            content: Text('Bu hesap admin yetkisine sahip değil.'),
+          ),
         );
         return;
       }
@@ -96,16 +110,16 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Giris hatasi: ${e.code}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Giriş hatası: ${e.code}')));
     } catch (e) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Giris hatasi: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Giriş hatası: $e')));
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -115,8 +129,23 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Admin Girişi')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'Admin paneli mobil uygulamada kullanılmıyor. Lütfen Render/Web panelinden giriş yapın.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Girisi')),
+      appBar: AppBar(title: const Text('Admin Girişi')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -138,7 +167,7 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
                 obscureText: _obscure,
                 onSubmitted: (_) => _login(),
                 decoration: InputDecoration(
-                  labelText: 'Sifre',
+                  labelText: 'Şifre',
                   suffixIcon: IconButton(
                     onPressed: () => setState(() => _obscure = !_obscure),
                     icon: Icon(
@@ -156,7 +185,7 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Panele Giris Yap'),
+                    : const Text('Panele Giriş Yap'),
               ),
             ],
           ),

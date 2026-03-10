@@ -1,9 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../profile/presentation/profile_screen.dart';
+import 'pages/advisor_page.dart';
+import 'pages/calendar_page.dart';
+import 'pages/compatibility_page.dart';
+import 'pages/explore_page.dart';
 import 'widgets/astro_story_strip.dart';
+import 'widgets/biorhythm_preview_card.dart';
+import 'widgets/birth_chart_preview_card.dart';
+import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
 import '../../../utils/zodiac.dart';
 
@@ -16,11 +25,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 2;
+  int _advisorInitialTabIndex = 0;
+  int _advisorPageSeed = 0;
 
-  void _openProfile() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-    );
+  Future<void> _openProfile() async {
+    final result = await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result == ProfileScreen.advisorCommentsRouteResult) {
+      setState(() {
+        _advisorInitialTabIndex = 2;
+        _advisorPageSeed++;
+        _currentIndex = 4;
+      });
+    }
   }
 
   void _onTabSelected(int index) {
@@ -33,11 +56,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const _SectionPage(title: 'Takvim', icon: Icons.calendar_today_outlined),
-      const _SectionPage(title: 'Kesfet', icon: Icons.explore_outlined),
+      const CalendarPage(header: _HomeUserHeader()),
+      const ExplorePage(header: _HomeUserHeader()),
       const _MainHomePage(),
-      const _SectionPage(title: 'Uyum', icon: Icons.auto_awesome_outlined),
-      const _SectionPage(title: 'Danisman', icon: Icons.support_agent_outlined),
+      const CompatibilityPage(),
+      AdvisorPage(
+        key: ValueKey('advisor-$_advisorPageSeed'),
+        header: const _HomeUserHeader(),
+        initialTabIndex: _advisorInitialTabIndex,
+      ),
     ];
 
     return Scaffold(
@@ -426,16 +453,25 @@ class _MainHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SafeArea(
+    return SafeArea(
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _HomeUserHeader(),
-            SizedBox(height: 14),
-            AstroStoryStrip(),
-          ],
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 132),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _HomeUserHeader(),
+              SizedBox(height: 14),
+              AstroStoryStrip(),
+              SizedBox(height: 24),
+              ZodionaDailyCommentCard(),
+              SizedBox(height: 18),
+              BirthChartPreviewCard(),
+              SizedBox(height: 18),
+              BiorhythmPreviewCard(),
+            ],
+          ),
         ),
       ),
     );
@@ -451,10 +487,28 @@ class _HomeUserHeader extends StatefulWidget {
 
 class _HomeUserHeaderState extends State<_HomeUserHeader> {
   final _astroApiService = const AstroApiService();
-  static const _astroRetryInterval = Duration(seconds: 12);
+  static const _astroRetryInterval = Duration(seconds: 20);
   bool _isRefreshingAstro = false;
   String? _lastAstroRequestKey;
   DateTime? _lastAstroAttemptAt;
+  Timer? _astroRetryTicker;
+
+  @override
+  void initState() {
+    super.initState();
+    _astroRetryTicker = Timer.periodic(_astroRetryInterval, (_) {
+      if (!mounted || _isRefreshingAstro) {
+        return;
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _astroRetryTicker?.cancel();
+    super.dispose();
+  }
 
   bool _isKnownAstroValue(String? value) {
     final normalized = value?.trim();
@@ -506,6 +560,25 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
       return double.tryParse(value);
     }
     return null;
+  }
+
+  String _capitalizeNameInitial(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return trimmed;
+    }
+    const trUpperMap = {
+      'i': 'İ',
+      'ı': 'I',
+      'ş': 'Ş',
+      'ğ': 'Ğ',
+      'ü': 'Ü',
+      'ö': 'Ö',
+      'ç': 'Ç',
+    };
+    final first = trimmed[0];
+    final upperFirst = trUpperMap[first] ?? first.toUpperCase();
+    return '$upperFirst${trimmed.substring(1)}';
   }
 
   Future<void> _refreshAstro({
@@ -563,11 +636,13 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
         final name = (data['name'] as String?)?.trim();
         final fallbackName = FirebaseAuth.instance.currentUser?.displayName
             ?.trim();
-        final resolvedName = (name?.isNotEmpty ?? false)
-            ? name!
-            : ((fallbackName?.isNotEmpty ?? false)
-                  ? fallbackName!
-                  : 'Kullanici');
+        final resolvedName = _capitalizeNameInitial(
+          (name?.isNotEmpty ?? false)
+              ? name!
+              : ((fallbackName?.isNotEmpty ?? false)
+                    ? fallbackName!
+                    : 'Kullanici'),
+        );
 
         final timestamp = data['birthDate'];
         final birthDate = timestamp is Timestamp ? timestamp.toDate() : null;
@@ -598,26 +673,26 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
             lat != null &&
             lon != null;
         final needsAstroRefresh =
-          canRefreshAstro && (!hasMoonSign || !hasRisingSign);
+            canRefreshAstro && (!hasMoonSign || !hasRisingSign);
         final requestKey = canRefreshAstro
-            ? '${localBirthDateTime!.toIso8601String()}|$lat|$lon'
+            ? '${localBirthDateTime.toIso8601String()}|$lat|$lon'
             : null;
         final canRetryNow =
-          _lastAstroAttemptAt == null ||
-          DateTime.now().difference(_lastAstroAttemptAt!) >=
-            _astroRetryInterval;
+            _lastAstroAttemptAt == null ||
+            DateTime.now().difference(_lastAstroAttemptAt!) >=
+                _astroRetryInterval;
 
         if (needsAstroRefresh &&
             !_isRefreshingAstro &&
             requestKey != null &&
-          (requestKey != _lastAstroRequestKey || canRetryNow)) {
+            (requestKey != _lastAstroRequestKey || canRetryNow)) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _refreshAstro(
-              uid: uid!,
+              uid: uid,
               requestKey: requestKey,
-              localBirthDateTime: localBirthDateTime!,
-              latitude: lat!,
-              longitude: lon!,
+              localBirthDateTime: localBirthDateTime,
+              latitude: lat,
+              longitude: lon,
             );
           });
         }
@@ -751,48 +826,6 @@ String _displaySign(String value) {
   }
 }
 
-class _SectionPage extends StatelessWidget {
-  const _SectionPage({required this.title, required this.icon});
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _HomeUserHeader(),
-            const SizedBox(height: 24),
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icon, size: 48, color: Colors.white70),
-                    const SizedBox(height: 12),
-                    Text(
-                      '$title Sayfasi',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 120),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _CosmicBackground extends StatelessWidget {
   const _CosmicBackground();
 
@@ -812,7 +845,11 @@ class _CosmicBackground extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0x020B1026), Color(0x080B1026), Color(0x101B1F3B)],
+                colors: [
+                  Color(0x020B1026),
+                  Color(0x080B1026),
+                  Color(0x101B1F3B),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 stops: [0.0, 0.6, 1.0],
