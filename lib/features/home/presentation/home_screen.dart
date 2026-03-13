@@ -500,10 +500,11 @@ class _HomeUserHeader extends StatefulWidget {
 
 class _HomeUserHeaderState extends State<_HomeUserHeader> {
   final _astroApiService = const AstroApiService();
-  static const _astroRetryInterval = Duration(seconds: 20);
+  static const _astroRetryInterval = Duration(seconds: 15);
   bool _isRefreshingAstro = false;
   String? _lastAstroRequestKey;
   DateTime? _lastAstroAttemptAt;
+  String? _lastAstroError;
   Timer? _astroRetryTicker;
 
   @override
@@ -594,6 +595,17 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
     return '$upperFirst${trimmed.substring(1)}';
   }
 
+  String _astroRetryStatusMessage() {
+    final error = (_lastAstroError ?? '').toLowerCase();
+    if (error.contains('xmlhttprequest') ||
+        error.contains('cors') ||
+        error.contains('failed host lookup') ||
+        error.contains('clientexception')) {
+      return 'Astro servisine ulasilamadi. Baglanti/izin kontrol edilerek tekrar deneniyor...';
+    }
+    return 'Astro bilgileri alinamadi. 15 sn sonra tekrar denenecek...';
+  }
+
   Future<void> _refreshAstro({
     required String uid,
     required String requestKey,
@@ -609,7 +621,10 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
       _isRefreshingAstro = true;
       _lastAstroRequestKey = requestKey;
       _lastAstroAttemptAt = DateTime.now();
+      _lastAstroError = null;
     });
+
+    String? refreshError;
 
     try {
       final astro = await _astroApiService.calculate(
@@ -625,11 +640,14 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
         'birthTimezone': astro.timezone,
         'updatedAt': FieldValue.serverTimestamp(),
       });
-    } catch (_) {
-      // Sessiz gec: ekranda yukleniyor bilgisi kalir, sonraki acilista tekrar dener.
+    } catch (e) {
+      refreshError = e.toString();
     } finally {
       if (mounted) {
-        setState(() => _isRefreshingAstro = false);
+        setState(() {
+          _isRefreshingAstro = false;
+          _lastAstroError = refreshError;
+        });
       }
     }
   }
@@ -759,7 +777,9 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
                   if (needsAstroRefresh || _isRefreshingAstro) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Astro bilgileri yukleniyor...',
+                      _isRefreshingAstro
+                          ? 'Astro bilgileri yukleniyor...'
+                          : _astroRetryStatusMessage(),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.white60,
                         fontWeight: FontWeight.w500,
