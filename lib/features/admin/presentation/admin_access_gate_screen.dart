@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/admin_access.dart';
+import '../../home/presentation/home_screen.dart';
 import 'admin_story_admin_screen.dart';
 
 class AdminAccessGateScreen extends StatefulWidget {
@@ -26,18 +26,14 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (!kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Uygulama içi admin girişi kapalıdır. Lütfen Render/Web panelinden giriş yapın.',
-          ),
-        ),
-      );
-      return;
-    }
+  void _openMainApp() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false,
+    );
+  }
 
+  Future<void> _login() async {
     final id = _idController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -53,7 +49,7 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Tanımlı admin bulunamadı. Web panel için ADMIN_ID_1 ve ADMIN_EMAIL_1 tanımlayın.',
+            'Tanımlı admin bulunamadı. ADMIN_ID_1 ve ADMIN_EMAIL_1 tanımlayın.',
           ),
         ),
       );
@@ -129,21 +125,6 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!kIsWeb) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Admin Girişi')),
-        body: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Text(
-              'Admin paneli mobil uygulamada kullanılmıyor. Lütfen Render/Web panelinden giriş yapın.',
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Girişi')),
       body: Center(
@@ -186,6 +167,12 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('Panele Giriş Yap'),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: _openMainApp,
+                icon: const Icon(Icons.phone_android),
+                label: const Text('Uygulamaya Git'),
               ),
             ],
           ),

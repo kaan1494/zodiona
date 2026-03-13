@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../models/astro_story.dart';
 import '../../../services/astro_story_service.dart';
 import '../../../utils/web_image_picker.dart';
+import '../../home/presentation/home_screen.dart';
 
 enum _AdminPanelTab { dashboard, users, stories, support, premium }
 
@@ -245,6 +246,13 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       case _AdminPanelTab.premium:
         return 'Admin - Premium Kullanıcılar';
     }
+  }
+
+  void _openMainApp() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      (route) => false,
+    );
   }
 
   DateTime? _resolveUserCreatedAt(Map<String, dynamic> data) {
@@ -571,6 +579,10 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').snapshots(),
       builder: (context, userSnapshot) {
+        final hasUsersPermissionDenied = _isPermissionDeniedError(
+          userSnapshot.error,
+        );
+
         if (userSnapshot.hasData) {
           _cachedUserDocs =
               List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
@@ -578,21 +590,28 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
               );
         }
 
+        final docsSource = userSnapshot.data?.docs ?? _cachedUserDocs;
         final userDocs =
-            List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-              userSnapshot.data?.docs ?? _cachedUserDocs,
-            )..sort((a, b) {
-              final aTs = _sortDateOrEpoch(a.data());
-              final bTs = _sortDateOrEpoch(b.data());
-              return bTs.compareTo(aTs);
-            });
+            hasUsersPermissionDenied
+                  ? <QueryDocumentSnapshot<Map<String, dynamic>>>[]
+                  : List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                      docsSource,
+                    )
+              ..sort((a, b) {
+                final aTs = _sortDateOrEpoch(a.data());
+                final bTs = _sortDateOrEpoch(b.data());
+                return bTs.compareTo(aTs);
+              });
 
-        if (userDocs.isEmpty &&
+        if (!hasUsersPermissionDenied &&
+            userDocs.isEmpty &&
             userSnapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (userDocs.isEmpty && userSnapshot.hasError) {
+        if (!hasUsersPermissionDenied &&
+            userDocs.isEmpty &&
+            userSnapshot.hasError) {
           return Text(_usersErrorMessage(userSnapshot.error));
         }
 
@@ -663,12 +682,9 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                     color: Colors.orange.withValues(alpha: 0.6),
                   ),
                 ),
-                child: Text(
-                  '${_usersErrorMessage(userSnapshot.error)} Son başarılı veri gösteriliyor.',
-                ),
+                child: Text(_usersErrorMessage(userSnapshot.error)),
               ),
-            if (_isPermissionDeniedError(userSnapshot.error))
-              _firestorePermissionHintCard(),
+            if (hasUsersPermissionDenied) _firestorePermissionHintCard(),
             _sectionTitle('Dashboard'),
             const SizedBox(height: 10),
             Wrap(
@@ -741,28 +757,6 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
-            _sectionTitle('Son Kayıt Olan Kullanıcılar'),
-            const SizedBox(height: 8),
-            if (userDocs.isEmpty)
-              const Text('Henüz kullanıcı kaydı yok.')
-            else
-              ...userDocs.take(8).map((doc) {
-                final data = doc.data();
-                final name = _resolveUserName(data);
-                final email = _resolveUserEmail(data);
-                final createdAt = _resolveUserCreatedAt(data);
-
-                return Card(
-                  child: ListTile(
-                    title: Text(name),
-                    subtitle: Text(
-                      '$email\nKayıt: ${_formatDateTime(createdAt)}',
-                    ),
-                    isThreeLine: true,
-                  ),
-                );
-              }),
           ],
         );
       },
@@ -819,11 +813,37 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance.collection('users').snapshots(),
           builder: (context, snapshot) {
+            final hasUsersPermissionDenied = _isPermissionDeniedError(
+              snapshot.error,
+            );
+
             if (snapshot.hasData) {
               _cachedUserDocs =
                   List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
                     snapshot.data?.docs ?? const [],
                   );
+            }
+
+            if (hasUsersPermissionDenied) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.orange.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: Colors.orange.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Text(_usersErrorMessage(snapshot.error)),
+                  ),
+                  _firestorePermissionHintCard(),
+                ],
+              );
             }
 
             final docsSource = snapshot.data?.docs ?? _cachedUserDocs;
@@ -868,33 +888,10 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                 .toList(growable: false);
 
             if (filtered.isEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (snapshot.hasError)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.orange.withValues(alpha: 0.12),
-                        border: Border.all(
-                          color: Colors.orange.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      child: Text(
-                        '${_usersErrorMessage(snapshot.error)} Son başarılı veri gösteriliyor.',
-                      ),
-                    ),
-                  if (_isPermissionDeniedError(snapshot.error))
-                    _firestorePermissionHintCard(),
-                  Text(
-                    premiumOnly
-                        ? 'Premium kullanıcı bulunamadı.'
-                        : 'Kullanıcı bulunamadı.',
-                  ),
-                ],
+              return Text(
+                premiumOnly
+                    ? 'Premium kullanıcı bulunamadı.'
+                    : 'Kullanıcı bulunamadı.',
               );
             }
 
@@ -914,11 +911,9 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       ),
                     ),
                     child: Text(
-                      '${_usersErrorMessage(snapshot.error)} Son başarılı veri gösteriliyor.',
+                      '${_usersErrorMessage(snapshot.error)} Önbellekteki son veri gösteriliyor.',
                     ),
                   ),
-                if (_isPermissionDeniedError(snapshot.error))
-                  _firestorePermissionHintCard(),
                 ...filtered.map((doc) {
                   final data = doc.data();
                   final name = _resolveUserName(data);
@@ -1376,7 +1371,19 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_panelTitle)),
+      appBar: AppBar(
+        title: Text(_panelTitle),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              onPressed: _openMainApp,
+              icon: const Icon(Icons.phone_android),
+              label: const Text('Uygulamaya Git'),
+            ),
+          ),
+        ],
+      ),
       body: Row(
         children: [
           _buildSidebar(),

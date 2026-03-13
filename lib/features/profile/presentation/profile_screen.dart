@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -64,16 +63,6 @@ class ProfileScreen extends StatelessWidget {
     }
 
     if (title == 'Admin Paneli') {
-      if (!kIsWeb) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Admin paneli mobil uygulamada kapalıdır. Lütfen Render/Web panelinden giriş yapın.',
-            ),
-          ),
-        );
-        return;
-      }
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const AdminAccessGateScreen()));
