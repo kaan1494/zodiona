@@ -18,18 +18,24 @@ class LocationModel {
   final String? district;
 
   factory LocationModel.fromFeature(Map<String, dynamic> feature) {
-    final properties = (feature['properties'] as Map<String, dynamic>?) ??
-        <String, dynamic>{};
-    final geometry = (feature['geometry'] as Map<String, dynamic>?) ??
-        <String, dynamic>{};
+    final properties =
+        (feature['properties'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+    final geometry =
+        (feature['geometry'] as Map<String, dynamic>?) ?? <String, dynamic>{};
     final coordinates = (geometry['coordinates'] as List?) ?? const [];
 
-    final lon = coordinates.isNotEmpty
-      ? (coordinates[0] as num).toDouble()
-      : 0.0;
-    final lat = coordinates.length > 1
-      ? (coordinates[1] as num).toDouble()
-      : 0.0;
+    double parseCoordinate(dynamic value) {
+      if (value is num) {
+        return value.toDouble();
+      }
+      if (value is String) {
+        return double.tryParse(value) ?? 0.0;
+      }
+      return 0.0;
+    }
+
+    final lon = coordinates.isNotEmpty ? parseCoordinate(coordinates[0]) : 0.0;
+    final lat = coordinates.length > 1 ? parseCoordinate(coordinates[1]) : 0.0;
 
     return LocationModel(
       name: (properties['name'] as String?)?.trim() ?? '',
@@ -53,5 +59,6 @@ class LocationModel {
     return parts.join(', ');
   }
 
-  String get stableId => '${lat.toStringAsFixed(5)}|${lon.toStringAsFixed(5)}|$name';
+  String get stableId =>
+      '${lat.toStringAsFixed(5)}|${lon.toStringAsFixed(5)}|$name';
 }
