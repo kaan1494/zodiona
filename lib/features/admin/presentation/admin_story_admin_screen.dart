@@ -55,6 +55,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   bool _isSaving = false;
 
   final List<_SegmentDraft> _segments = [_SegmentDraft()];
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _cachedUserDocs = [];
 
   @override
   void dispose() {
@@ -245,23 +246,146 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     }
   }
 
-  DateTime _resolveUserCreatedAt(Map<String, dynamic> data) {
+  DateTime? _resolveUserCreatedAt(Map<String, dynamic> data) {
     final createdAt = data['createdAt'];
     if (createdAt is Timestamp) {
       return createdAt.toDate();
+    }
+    if (createdAt is DateTime) {
+      return createdAt;
+    }
+    if (createdAt is int) {
+      return DateTime.fromMillisecondsSinceEpoch(createdAt);
     }
 
     final createdAtClient = data['createdAtClient'];
     if (createdAtClient is Timestamp) {
       return createdAtClient.toDate();
     }
+    if (createdAtClient is DateTime) {
+      return createdAtClient;
+    }
+    if (createdAtClient is int) {
+      return DateTime.fromMillisecondsSinceEpoch(createdAtClient);
+    }
 
     final updatedAt = data['updatedAt'];
     if (updatedAt is Timestamp) {
       return updatedAt.toDate();
     }
+    if (updatedAt is DateTime) {
+      return updatedAt;
+    }
+    if (updatedAt is int) {
+      return DateTime.fromMillisecondsSinceEpoch(updatedAt);
+    }
 
-    return DateTime.fromMillisecondsSinceEpoch(0);
+    return null;
+  }
+
+  DateTime _sortDateOrEpoch(Map<String, dynamic> data) {
+    return _resolveUserCreatedAt(data) ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  bool _asBool(dynamic value) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'true' || normalized == '1' || normalized == 'evet';
+    }
+    return false;
+  }
+
+  DateTime? _resolveBirthDate(Map<String, dynamic> data) {
+    final birthDate = data['birthDate'];
+    if (birthDate is Timestamp) {
+      return birthDate.toDate();
+    }
+    if (birthDate is DateTime) {
+      return birthDate;
+    }
+    if (birthDate is int) {
+      return DateTime.fromMillisecondsSinceEpoch(birthDate);
+    }
+    return null;
+  }
+
+  int? _resolveAge(Map<String, dynamic> data) {
+    final birthDate = _resolveBirthDate(data);
+    if (birthDate == null) {
+      return null;
+    }
+
+    final now = DateTime.now();
+    var age = now.year - birthDate.year;
+    final hadBirthday =
+        now.month > birthDate.month ||
+        (now.month == birthDate.month && now.day >= birthDate.day);
+    if (!hadBirthday) {
+      age -= 1;
+    }
+    if (age < 0 || age > 120) {
+      return null;
+    }
+    return age;
+  }
+
+  String _resolveUserCity(Map<String, dynamic> data) {
+    final candidates = <dynamic>[
+      data['birthPlaceName'],
+      data['birthPlace'],
+      data['birthPlaceCity'],
+      data['city'],
+      data['locationCity'],
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is! String) {
+        continue;
+      }
+      final cleaned = candidate.trim();
+      if (cleaned.isEmpty) {
+        continue;
+      }
+      final normalized = cleaned.split(',').first.split('/').first.trim();
+      if (normalized.isNotEmpty) {
+        return normalized;
+      }
+    }
+
+    return 'Belirtilmemiş';
+  }
+
+  String _resolveUserGender(Map<String, dynamic> data) {
+    final raw = (data['gender'] as String?)?.trim().toLowerCase();
+    if (raw == null || raw.isEmpty) {
+      return 'Belirtilmemiş';
+    }
+
+    if (raw.contains('erkek') || raw == 'male') {
+      return 'Erkek';
+    }
+    if (raw.contains('kadin') || raw.contains('kadın') || raw == 'female') {
+      return 'Kadın';
+    }
+    if (raw.contains('non')) {
+      return 'Non Binary';
+    }
+
+    return 'Belirtilmemiş';
+  }
+
+  String _usersErrorMessage(Object? error) {
+    if (error is FirebaseException) {
+      return 'Kullanıcı verileri yüklenemedi (${error.code}).';
+    }
+    return 'Kullanıcı verileri yüklenemedi.';
   }
 
   String _resolveUserName(Map<String, dynamic> data) {
@@ -423,27 +547,102 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: FirebaseFirestore.instance.collection('users').snapshots(),
       builder: (context, userSnapshot) {
-        if (userSnapshot.hasError) {
-          return const Text('Kullanıcı verileri yüklenemedi.');
+        if (userSnapshot.hasData) {
+          _cachedUserDocs =
+              List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                userSnapshot.data?.docs ?? const [],
+              );
         }
 
         final userDocs =
             List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-              userSnapshot.data?.docs ?? const [],
+              userSnapshot.data?.docs ?? _cachedUserDocs,
             )..sort((a, b) {
-              final aTs = _resolveUserCreatedAt(a.data());
-              final bTs = _resolveUserCreatedAt(b.data());
+              final aTs = _sortDateOrEpoch(a.data());
+              final bTs = _sortDateOrEpoch(b.data());
               return bTs.compareTo(aTs);
             });
 
+        if (userDocs.isEmpty &&
+            userSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (userDocs.isEmpty && userSnapshot.hasError) {
+          return Text(_usersErrorMessage(userSnapshot.error));
+        }
+
         final totalUsers = userDocs.length;
         final premiumCount = userDocs
-            .where((doc) => (doc.data()['isPremium'] as bool?) ?? false)
+            .where((doc) => _asBool(doc.data()['isPremium']))
             .length;
+        final adminCount = userDocs.where((doc) {
+          final data = doc.data();
+          final role = (data['role'] as String?)?.trim().toLowerCase();
+          return _asBool(data['isAdmin']) || role == 'admin';
+        }).length;
+
+        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+        final newLast7Days = userDocs.where((doc) {
+          final createdAt = _resolveUserCreatedAt(doc.data());
+          return createdAt != null && createdAt.isAfter(sevenDaysAgo);
+        }).length;
+
+        final cityCounts = <String, int>{};
+        final genderCounts = <String, int>{};
+        final ageBuckets = <String, int>{
+          '18 altı': 0,
+          '18-24': 0,
+          '25-34': 0,
+          '35-44': 0,
+          '45+': 0,
+          'Bilinmiyor': 0,
+        };
+
+        for (final doc in userDocs) {
+          final data = doc.data();
+
+          final city = _resolveUserCity(data);
+          cityCounts[city] = (cityCounts[city] ?? 0) + 1;
+
+          final gender = _resolveUserGender(data);
+          genderCounts[gender] = (genderCounts[gender] ?? 0) + 1;
+
+          final age = _resolveAge(data);
+          if (age == null) {
+            ageBuckets['Bilinmiyor'] = (ageBuckets['Bilinmiyor'] ?? 0) + 1;
+          } else if (age < 18) {
+            ageBuckets['18 altı'] = (ageBuckets['18 altı'] ?? 0) + 1;
+          } else if (age <= 24) {
+            ageBuckets['18-24'] = (ageBuckets['18-24'] ?? 0) + 1;
+          } else if (age <= 34) {
+            ageBuckets['25-34'] = (ageBuckets['25-34'] ?? 0) + 1;
+          } else if (age <= 44) {
+            ageBuckets['35-44'] = (ageBuckets['35-44'] ?? 0) + 1;
+          } else {
+            ageBuckets['45+'] = (ageBuckets['45+'] ?? 0) + 1;
+          }
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (userSnapshot.hasError)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: Colors.orange.withValues(alpha: 0.6),
+                  ),
+                ),
+                child: Text(
+                  '${_usersErrorMessage(userSnapshot.error)} Son başarılı veri gösteriliyor.',
+                ),
+              ),
             _sectionTitle('Dashboard'),
             const SizedBox(height: 10),
             Wrap(
@@ -452,9 +651,15 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
               children: [
                 _statCard(label: 'Toplam Kullanıcı', value: '$totalUsers'),
                 _statCard(label: 'Premium Kullanıcı', value: '$premiumCount'),
+                _statCard(label: 'Admin Kullanıcı', value: '$adminCount'),
+                _statCard(label: 'Son 7 Gün Kayıt', value: '$newLast7Days'),
                 StreamBuilder<List<AstroStory>>(
                   stream: _service.watchAllStories(),
                   builder: (context, storySnapshot) {
+                    if (storySnapshot.hasError) {
+                      return _statCard(label: 'Aktif Hikâye', value: '-');
+                    }
+
                     final stories = storySnapshot.data ?? const <AstroStory>[];
                     final activeStories = stories
                         .where((s) => s.isActive)
@@ -471,6 +676,10 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       .limit(300)
                       .snapshots(),
                   builder: (context, supportSnapshot) {
+                    if (supportSnapshot.hasError) {
+                      return _statCard(label: 'Okunmamış Mesaj', value: '-');
+                    }
+
                     final docs = supportSnapshot.data?.docs ?? const [];
                     final unread = docs
                         .where((doc) => (doc.data()['isRead'] as bool?) != true)
@@ -480,6 +689,29 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       value: '$unread',
                     );
                   },
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _distributionCard(
+                  title: 'Şehir Dağılımı (Top 5)',
+                  distribution: cityCounts,
+                  accent: const Color(0xFF7AA8FF),
+                  maxItems: 5,
+                ),
+                _distributionCard(
+                  title: 'Cinsiyet Dağılımı',
+                  distribution: genderCounts,
+                  accent: const Color(0xFFE7A4C8),
+                ),
+                _distributionCard(
+                  title: 'Yaş Dağılımı',
+                  distribution: ageBuckets,
+                  accent: const Color(0xFF9CE1AE),
                 ),
               ],
             ),
@@ -561,27 +793,37 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance.collection('users').snapshots(),
           builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return const Text('Kullanıcı listesi yüklenemedi.');
+            if (snapshot.hasData) {
+              _cachedUserDocs =
+                  List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                    snapshot.data?.docs ?? const [],
+                  );
             }
 
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            final docsSource = snapshot.data?.docs ?? _cachedUserDocs;
+
+            if (docsSource.isEmpty &&
+                snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
+            }
+
+            if (docsSource.isEmpty && snapshot.hasError) {
+              return Text(_usersErrorMessage(snapshot.error));
             }
 
             final docs =
                 List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-                  snapshot.data?.docs ?? const [],
+                  docsSource,
                 )..sort((a, b) {
-                  final aTs = _resolveUserCreatedAt(a.data());
-                  final bTs = _resolveUserCreatedAt(b.data());
+                  final aTs = _sortDateOrEpoch(a.data());
+                  final bTs = _sortDateOrEpoch(b.data());
                   return bTs.compareTo(aTs);
                 });
 
             final filtered = docs
                 .where((doc) {
                   final data = doc.data();
-                  final isPremium = (data['isPremium'] as bool?) ?? false;
+                  final isPremium = _asBool(data['isPremium']);
                   if (premiumOnly && !isPremium) {
                     return false;
                   }
@@ -613,9 +855,9 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                     final data = doc.data();
                     final name = _resolveUserName(data);
                     final email = _resolveUserEmail(data);
-                    final isPremium = (data['isPremium'] as bool?) ?? false;
+                    final isPremium = _asBool(data['isPremium']);
                     final isAdmin =
-                        (data['isAdmin'] as bool?) == true ||
+                        _asBool(data['isAdmin']) ||
                         ((data['role'] as String?)?.toLowerCase() == 'admin');
                     final createdAt = _resolveUserCreatedAt(data);
                     final premiumExpire = data['premiumExpireDate'];
@@ -902,6 +1144,85 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
           ),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(color: Colors.white70)),
+        ],
+      ),
+    );
+  }
+
+  Widget _distributionCard({
+    required String title,
+    required Map<String, int> distribution,
+    required Color accent,
+    int maxItems = 6,
+  }) {
+    final entries =
+        distribution.entries
+            .where((entry) => entry.value > 0)
+            .toList(growable: false)
+          ..sort((a, b) => b.value.compareTo(a.value));
+    final visible = entries.take(maxItems).toList(growable: false);
+    final total = visible.fold<int>(
+      0,
+      (accumulator, item) => accumulator + item.value,
+    );
+
+    return Container(
+      width: 380,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+        color: Colors.white.withValues(alpha: 0.02),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
+          const SizedBox(height: 10),
+          if (visible.isEmpty)
+            const Text(
+              'Yeterli veri yok.',
+              style: TextStyle(color: Colors.white70),
+            )
+          else
+            ...visible.map((entry) {
+              final ratio = total == 0 ? 0.0 : entry.value / total;
+              final percent = (ratio * 100).round();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text('${entry.value} (%$percent)'),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: ratio,
+                        minHeight: 8,
+                        backgroundColor: Colors.white12,
+                        valueColor: AlwaysStoppedAnimation<Color>(accent),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
