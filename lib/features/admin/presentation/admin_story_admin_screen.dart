@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -383,9 +384,32 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
   String _usersErrorMessage(Object? error) {
     if (error is FirebaseException) {
+      if (error.code == 'permission-denied') {
+        return 'Kullanıcı verileri yüklenemedi (permission-denied). Firestore kuralları admin listeleme izni vermiyor.';
+      }
       return 'Kullanıcı verileri yüklenemedi (${error.code}).';
     }
     return 'Kullanıcı verileri yüklenemedi.';
+  }
+
+  bool _isPermissionDeniedError(Object? error) {
+    return error is FirebaseException && error.code == 'permission-denied';
+  }
+
+  Widget _firestorePermissionHintCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0x1AFF6A6A),
+        border: Border.all(color: const Color(0x66FF6A6A)),
+      ),
+      child: const Text(
+        'Not: Bu ekran tüm kullanıcıları users koleksiyonundan okur. permission-denied alındığında çözüm uygulama kodu değil Firestore Rules tarafındadır. Admin kullanıcıya users list/read izni tanımlanmalıdır.',
+      ),
+    );
   }
 
   String _resolveUserName(Map<String, dynamic> data) {
@@ -643,6 +667,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                   '${_usersErrorMessage(userSnapshot.error)} Son başarılı veri gösteriliyor.',
                 ),
               ),
+            if (_isPermissionDeniedError(userSnapshot.error))
+              _firestorePermissionHintCard(),
             _sectionTitle('Dashboard'),
             const SizedBox(height: 10),
             Wrap(
@@ -842,73 +868,115 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                 .toList(growable: false);
 
             if (filtered.isEmpty) {
-              return Text(
-                premiumOnly
-                    ? 'Premium kullanıcı bulunamadı.'
-                    : 'Kullanıcı bulunamadı.',
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (snapshot.hasError)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.orange.withValues(alpha: 0.12),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: Text(
+                        '${_usersErrorMessage(snapshot.error)} Son başarılı veri gösteriliyor.',
+                      ),
+                    ),
+                  if (_isPermissionDeniedError(snapshot.error))
+                    _firestorePermissionHintCard(),
+                  Text(
+                    premiumOnly
+                        ? 'Premium kullanıcı bulunamadı.'
+                        : 'Kullanıcı bulunamadı.',
+                  ),
+                ],
               );
             }
 
             return Column(
-              children: filtered
-                  .map((doc) {
-                    final data = doc.data();
-                    final name = _resolveUserName(data);
-                    final email = _resolveUserEmail(data);
-                    final isPremium = _asBool(data['isPremium']);
-                    final isAdmin =
-                        _asBool(data['isAdmin']) ||
-                        ((data['role'] as String?)?.toLowerCase() == 'admin');
-                    final createdAt = _resolveUserCreatedAt(data);
-                    final premiumExpire = data['premiumExpireDate'];
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (snapshot.hasError)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.orange.withValues(alpha: 0.12),
+                      border: Border.all(
+                        color: Colors.orange.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Text(
+                      '${_usersErrorMessage(snapshot.error)} Son başarılı veri gösteriliyor.',
+                    ),
+                  ),
+                if (_isPermissionDeniedError(snapshot.error))
+                  _firestorePermissionHintCard(),
+                ...filtered.map((doc) {
+                  final data = doc.data();
+                  final name = _resolveUserName(data);
+                  final email = _resolveUserEmail(data);
+                  final isPremium = _asBool(data['isPremium']);
+                  final isAdmin =
+                      _asBool(data['isAdmin']) ||
+                      ((data['role'] as String?)?.toLowerCase() == 'admin');
+                  final createdAt = _resolveUserCreatedAt(data);
+                  final premiumExpire = data['premiumExpireDate'];
 
-                    final premiumExpireText = premiumExpire is Timestamp
-                        ? _formatDateTime(premiumExpire.toDate())
-                        : '-';
+                  final premiumExpireText = premiumExpire is Timestamp
+                      ? _formatDateTime(premiumExpire.toDate())
+                      : '-';
 
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        title: Text(name),
-                        subtitle: Text(
-                          'Email: $email\nUID: ${doc.id}\nKayıt: ${_formatDateTime(createdAt)}\nPremium Bitiş: $premiumExpireText',
-                        ),
-                        isThreeLine: true,
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isPremium
-                                    ? const Color(0x3344C767)
-                                    : const Color(0x33FFFFFF),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                isPremium ? 'Premium' : 'Standart',
-                                style: const TextStyle(fontSize: 12),
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(name),
+                      subtitle: Text(
+                        'Email: $email\nUID: ${doc.id}\nKayıt: ${_formatDateTime(createdAt)}\nPremium Bitiş: $premiumExpireText',
+                      ),
+                      isThreeLine: true,
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isPremium
+                                  ? const Color(0x3344C767)
+                                  : const Color(0x33FFFFFF),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              isPremium ? 'Premium' : 'Standart',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          if (isAdmin)
+                            const Text(
+                              'Admin',
+                              style: TextStyle(
+                                color: Color(0xFFF2D28E),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            if (isAdmin)
-                              const Text(
-                                'Admin',
-                                style: TextStyle(
-                                  color: Color(0xFFF2D28E),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                          ],
-                        ),
+                        ],
                       ),
-                    );
-                  })
-                  .toList(growable: false),
+                    ),
+                  );
+                }),
+              ],
             );
           },
         ),
@@ -1155,15 +1223,27 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     required Color accent,
     int maxItems = 6,
   }) {
-    final entries =
-        distribution.entries
-            .where((entry) => entry.value > 0)
-            .toList(growable: false)
-          ..sort((a, b) => b.value.compareTo(a.value));
+    final entries = distribution.entries.where((e) => e.value > 0).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
     final visible = entries.take(maxItems).toList(growable: false);
-    final total = visible.fold<int>(
-      0,
-      (accumulator, item) => accumulator + item.value,
+    final remaining = entries
+        .skip(maxItems)
+        .fold<int>(0, (acc, e) => acc + e.value);
+    final normalized = <MapEntry<String, int>>[
+      ...visible,
+      if (remaining > 0) MapEntry<String, int>('Diğer', remaining),
+    ];
+    final total = normalized.fold<int>(0, (acc, e) => acc + e.value);
+    final palette = _buildPiePalette(accent, normalized.length);
+    final slices = List<_PieSlice>.generate(
+      normalized.length,
+      (i) => _PieSlice(
+        label: normalized[i].key,
+        value: normalized[i].value,
+        color: palette[i],
+      ),
+      growable: false,
     );
 
     return Container(
@@ -1182,50 +1262,102 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
           ),
           const SizedBox(height: 10),
-          if (visible.isEmpty)
+          if (slices.isEmpty)
             const Text(
               'Yeterli veri yok.',
               style: TextStyle(color: Colors.white70),
             )
           else
-            ...visible.map((entry) {
-              final ratio = total == 0 ? 0.0 : entry.value / total;
-              final percent = (ratio * 100).round();
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.key,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 340;
+                final pie = SizedBox(
+                  width: 132,
+                  height: 132,
+                  child: CustomPaint(
+                    painter: _PieChartPainter(slices: slices),
+                    child: Center(
+                      child: Text(
+                        '$total',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 20,
                         ),
-                        const SizedBox(width: 10),
-                        Text('${entry.value} (%$percent)'),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: ratio,
-                        minHeight: 8,
-                        backgroundColor: Colors.white12,
-                        valueColor: AlwaysStoppedAnimation<Color>(accent),
                       ),
                     ),
+                  ),
+                );
+
+                final legend = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: slices
+                      .map((slice) {
+                        final percent = total == 0
+                            ? 0
+                            : ((slice.value / total) * 100).round();
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: slice.color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${slice.label} (${slice.value} / %$percent)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      })
+                      .toList(growable: false),
+                );
+
+                if (compact) {
+                  return Column(
+                    children: [pie, const SizedBox(height: 12), legend],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    pie,
+                    const SizedBox(width: 12),
+                    Expanded(child: legend),
                   ],
-                ),
-              );
-            }),
+                );
+              },
+            ),
         ],
       ),
     );
+  }
+
+  List<Color> _buildPiePalette(Color accent, int count) {
+    if (count <= 0) {
+      return const <Color>[];
+    }
+    final base = HSLColor.fromColor(accent);
+    return List<Color>.generate(count, (index) {
+      final hue = (base.hue + (index * 31)) % 360;
+      final saturation = (base.saturation + 0.12 - ((index % 3) * 0.05))
+          .clamp(0.45, 0.9)
+          .toDouble();
+      final lightness = (0.42 + ((index % 4) * 0.1))
+          .clamp(0.38, 0.76)
+          .toDouble();
+      return HSLColor.fromAHSL(1, hue, saturation, lightness).toColor();
+    }, growable: false);
   }
 
   String _formatDateTime(DateTime? dt) {
@@ -1556,6 +1688,74 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       images: _presetImages,
       onSelected: onSelected,
     );
+  }
+}
+
+class _PieSlice {
+  const _PieSlice({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final int value;
+  final Color color;
+}
+
+class _PieChartPainter extends CustomPainter {
+  const _PieChartPainter({required this.slices});
+
+  final List<_PieSlice> slices;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final total = slices.fold<int>(
+      0,
+      (accumulator, item) => accumulator + item.value,
+    );
+    if (total <= 0) {
+      return;
+    }
+
+    final rect = Offset.zero & size;
+    var start = -math.pi / 2;
+
+    for (final slice in slices) {
+      final sweep = (slice.value / total) * 2 * math.pi;
+      final paint = Paint()
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true
+        ..color = slice.color;
+      canvas.drawArc(rect, start, sweep, true, paint);
+      start += sweep;
+    }
+
+    final border = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..color = Colors.white24;
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.shortestSide / 2,
+      border,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _PieChartPainter oldDelegate) {
+    if (oldDelegate.slices.length != slices.length) {
+      return true;
+    }
+    for (var i = 0; i < slices.length; i++) {
+      if (oldDelegate.slices[i].label != slices[i].label ||
+          oldDelegate.slices[i].value != slices[i].value ||
+          oldDelegate.slices[i].color != slices[i].color) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
