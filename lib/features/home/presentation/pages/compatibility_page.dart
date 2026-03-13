@@ -659,6 +659,90 @@ class _CompatibilityLinkPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+class _CompatibilityBondPainter extends CustomPainter {
+  const _CompatibilityBondPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final area = Offset.zero & size;
+    final bondPath = Path()
+      ..moveTo(1, size.height * 0.5)
+      ..quadraticBezierTo(
+        size.width * 0.20,
+        size.height * 0.26,
+        size.width * 0.38,
+        size.height * 0.50,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.56,
+        size.height * 0.74,
+        size.width * 0.74,
+        size.height * 0.50,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.88,
+        size.height * 0.32,
+        size.width - 1,
+        size.height * 0.50,
+      );
+    final echoPath = Path()
+      ..moveTo(4, size.height * 0.58)
+      ..quadraticBezierTo(
+        size.width * 0.24,
+        size.height * 0.42,
+        size.width * 0.46,
+        size.height * 0.58,
+      )
+      ..quadraticBezierTo(
+        size.width * 0.70,
+        size.height * 0.74,
+        size.width - 4,
+        size.height * 0.58,
+      );
+
+    final glowPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0x45F5DEB6), Color(0xD9FFE6B6), Color(0x45F5DEB6)],
+      ).createShader(area)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 9
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+
+    final linePaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xB2F6D9A1), Color(0xFFFFF1D2), Color(0xB2F6D9A1)],
+      ).createShader(area)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.8;
+
+    final echoPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0x00F8E7C0), Color(0x99F8E7C0), Color(0x00F8E7C0)],
+      ).createShader(area)
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 1.6;
+
+    final pulseCorePaint = Paint()..color = const Color(0xFFFFF3D8);
+    final pulseHaloPaint = Paint()
+      ..color = const Color(0x90FFE7BE)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    canvas.drawPath(bondPath, glowPaint);
+    canvas.drawPath(bondPath, linePaint);
+    canvas.drawPath(echoPath, echoPaint);
+
+    final center = Offset(size.width * 0.5, size.height * 0.5);
+    canvas.drawCircle(center, 8, pulseHaloPaint);
+    canvas.drawCircle(center, 3.2, pulseCorePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class _CompatibilityFriendList extends StatelessWidget {
   const _CompatibilityFriendList({
     required this.uid,
@@ -724,6 +808,10 @@ class _CompatibilityFriendList extends StatelessWidget {
     final currentRising = _displaySign(
       (currentUserData['risingSign'] as String?) ?? 'Bilinmiyor',
     );
+    final rawCurrentAvatarId = (currentUserData['avatarId'] as String?)?.trim();
+    final currentAvatarId = _isValidAvatarId(rawCurrentAvatarId)
+        ? rawCurrentAvatarId!
+        : _defaultAvatarIdForSign(currentSun);
 
     return ListView.separated(
       itemCount: friendEntries.length,
@@ -760,6 +848,8 @@ class _CompatibilityFriendList extends StatelessWidget {
               MaterialPageRoute(
                 builder: (_) => CompatibilityFriendDetailPage(
                   currentUserName: currentUserName,
+                  currentUserAvatarId: currentAvatarId,
+                  friendAvatarId: friendAvatarId,
                   currentUserSigns: {
                     'sun': currentSun,
                     'moon': currentMoon,
@@ -782,13 +872,6 @@ class _CompatibilityFriendList extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      '$currentUserName & $name',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                     const Spacer(),
                     IconButton(
                       onPressed: (uid == null || friendId == null)
@@ -806,27 +889,128 @@ class _CompatibilityFriendList extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _ProfileAvatarBadge(
-                      avatarId: _defaultAvatarIdForSign(currentSun),
-                      size: 56,
-                      borderColor: const Color(0xD2F2D9A3),
-                    ),
-                    const SizedBox(width: 10),
-                    _ProfileAvatarBadge(
-                      avatarId: friendAvatarId,
-                      size: 56,
-                      borderColor: const Color(0xD2F2D9A3),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '☉ $friendSun   ☾ $friendMoon   ↑ $friendRising',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w600,
+                Align(
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 104,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 64,
+                                  child: Text(
+                                    currentUserName,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                _ProfileAvatarBadge(
+                                  avatarId: _defaultAvatarIdForSign(currentSun),
+                                  size: 64,
+                                  borderColor: const Color(0xD2F2D9A3),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Column(
+                            children: [
+                              SizedBox(height: 27),
+                              SizedBox(
+                                width: 38,
+                                height: 68,
+                                child: CustomPaint(
+                                  painter: _CompatibilityBondPainter(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 4),
+                          SizedBox(
+                            width: 104,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 72,
+                                  child: Text(
+                                    name,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                _ProfileAvatarBadge(
+                                  avatarId: friendAvatarId,
+                                  size: 64,
+                                  borderColor: const Color(0xD2F2D9A3),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 128,
+                            child: Text(
+                              '☉$currentSun☾$currentMoon↑$currentRising',
+                              maxLines: 1,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 18),
+                          SizedBox(
+                            width: 128,
+                            child: Text(
+                              '☉$friendSun☾$friendMoon↑$friendRising',
+                              maxLines: 1,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ],

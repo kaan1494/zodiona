@@ -16,10 +16,12 @@ class AddCompatibilityFriendPage extends StatefulWidget {
   final String uid;
 
   @override
-  State<AddCompatibilityFriendPage> createState() => _AddCompatibilityFriendPageState();
+  State<AddCompatibilityFriendPage> createState() =>
+      _AddCompatibilityFriendPageState();
 }
 
-class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage> {
+class _AddCompatibilityFriendPageState
+    extends State<AddCompatibilityFriendPage> {
   static const _savingMinDuration = Duration(seconds: 3);
 
   static const _jobOptions = <String>[
@@ -145,7 +147,9 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
                         ),
                       ),
                       IconButton(
-                        onPressed: _isSaving ? null : () => Navigator.of(context).pop(false),
+                        onPressed: _isSaving
+                            ? null
+                            : () => Navigator.of(context).pop(false),
                         icon: const Icon(Icons.close, color: Colors.white70),
                       ),
                     ],
@@ -162,7 +166,10 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
                 const SizedBox(height: 8),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
                       child: _buildStep(theme),
@@ -282,7 +289,8 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
         _buildPickerContainer(
           child: CupertinoDatePicker(
             mode: CupertinoDatePickerMode.date,
-            initialDateTime: _birthDate ?? DateTime(DateTime.now().year - 25, 1, 1),
+            initialDateTime:
+                _birthDate ?? DateTime(DateTime.now().year - 25, 1, 1),
             minimumDate: DateTime(1900),
             maximumDate: DateTime.now(),
             onDateTimeChanged: (value) => setState(() => _birthDate = value),
@@ -419,7 +427,9 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
                 return ListTile(
                   title: Text(
                     item.displayLabel,
-                    style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                   onTap: () {
                     setState(() {
@@ -524,7 +534,10 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
               .map(
                 (item) => DropdownMenuItem<String>(
                   value: item,
-                  child: Text(item, style: const TextStyle(color: Colors.white)),
+                  child: Text(
+                    item,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               )
               .toList(),
@@ -629,7 +642,9 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
         ? _formatTime(_birthTime!)
         : null;
 
-    String sunSign = _birthDate != null ? calculateZodiac(_birthDate!) : 'Bilinmiyor';
+    String sunSign = _birthDate != null
+        ? calculateZodiac(_birthDate!)
+        : 'Bilinmiyor';
     String moonSign = 'Bilinmiyor';
     String risingSign = 'Bilinmiyor';
     String? timezone;
@@ -696,13 +711,10 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
 
       payload['id'] = friendId;
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.uid)
-          .set({
-            'compatibilityFriends': {friendId: payload},
-            'updatedAt': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(widget.uid).set({
+        'compatibilityFriends': {friendId: payload},
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
       await minLoadingFuture;
 
@@ -761,10 +773,7 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
             height: 290,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF6B6792),
-                  Color(0xFF5D5A86),
-                ],
+                colors: [Color(0xFF6B6792), Color(0xFF5D5A86)],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -803,7 +812,10 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
                       CupertinoButton(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         onPressed: () {
-                          setState(() => _relationship = _relationshipOptions[selectedIndex]);
+                          setState(
+                            () => _relationship =
+                                _relationshipOptions[selectedIndex],
+                          );
                           Navigator.of(context).pop();
                         },
                         child: const Text(
@@ -821,7 +833,9 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
                 Expanded(
                   child: CupertinoPicker(
                     backgroundColor: Colors.transparent,
-                    scrollController: FixedExtentScrollController(initialItem: selectedIndex),
+                    scrollController: FixedExtentScrollController(
+                      initialItem: selectedIndex,
+                    ),
                     itemExtent: 34,
                     selectionOverlay: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -887,7 +901,11 @@ class _AddCompatibilityFriendPageState extends State<AddCompatibilityFriendPage>
     }
 
     try {
-      final results = await _locationService.searchLocations(normalized, limit: 10, language: 'tr');
+      final results = await _locationService.searchLocations(
+        normalized,
+        limit: 10,
+        language: 'tr',
+      );
       if (!mounted || requestId != _placeSearchRequestId) {
         return;
       }
@@ -977,21 +995,24 @@ class _GenderCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected ? const Color(0xFFF2C98A) : const Color(0xB47858D4),
+                color: isSelected
+                    ? const Color(0xFFF2C98A)
+                    : const Color(0xB47858D4),
                 width: 1.6,
               ),
-              color: isSelected ? const Color(0x335A4F9C) : Colors.white.withValues(alpha: 0.02),
+              color: isSelected
+                  ? const Color(0x335A4F9C)
+                  : Colors.white.withValues(alpha: 0.02),
             ),
-            child: Icon(
-              icon,
-              size: 42,
-              color: const Color(0xFFA475F5),
-            ),
+            child: Icon(icon, size: 42, color: const Color(0xFFA475F5)),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -1002,20 +1023,26 @@ class _GenderCard extends StatelessWidget {
 class CompatibilityFriendDetailPage extends StatefulWidget {
   const CompatibilityFriendDetailPage({
     super.key,
-    required this.currentUserName,
-    required this.currentUserSigns,
-    required this.friendData,
+    this.currentUserName = 'Kullanici',
+    this.currentUserAvatarId = 'terazi',
+    this.friendAvatarId = 'terazi',
+    this.currentUserSigns = const <String, String>{},
+    this.friendData = const <String, dynamic>{},
   });
 
   final String currentUserName;
+  final String currentUserAvatarId;
+  final String friendAvatarId;
   final Map<String, String> currentUserSigns;
   final Map<String, dynamic> friendData;
 
   @override
-  State<CompatibilityFriendDetailPage> createState() => _CompatibilityFriendDetailPageState();
+  State<CompatibilityFriendDetailPage> createState() =>
+      _CompatibilityFriendDetailPageState();
 }
 
-class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetailPage>
+class _CompatibilityFriendDetailPageState
+    extends State<CompatibilityFriendDetailPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -1034,12 +1061,28 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
   @override
   Widget build(BuildContext context) {
     final friendName = (widget.friendData['name'] as String?)?.trim();
-    final resolvedFriendName =
-        (friendName?.isNotEmpty ?? false) ? friendName! : 'Arkadas';
+    final resolvedFriendName = _capitalizeNameInitial(
+      (friendName?.isNotEmpty ?? false) ? friendName! : 'Arkadas',
+    );
+    final resolvedCurrentUserName = _capitalizeNameInitial(
+      widget.currentUserName,
+    );
 
-    final friendSun = _displaySign((widget.friendData['zodiacSign'] as String?) ?? 'Bilinmiyor');
-    final friendMoon = _displaySign((widget.friendData['moonSign'] as String?) ?? 'Bilinmiyor');
-    final friendRising = _displaySign((widget.friendData['risingSign'] as String?) ?? 'Bilinmiyor');
+    final friendSun = _displaySign(
+      (widget.friendData['zodiacSign'] as String?) ?? 'Bilinmiyor',
+    );
+    final friendMoon = _displaySign(
+      (widget.friendData['moonSign'] as String?) ?? 'Bilinmiyor',
+    );
+    final friendRising = _displaySign(
+      (widget.friendData['risingSign'] as String?) ?? 'Bilinmiyor',
+    );
+    final currentUserAvatarId = _isValidAvatarId(widget.currentUserAvatarId)
+        ? widget.currentUserAvatarId
+        : _defaultAvatarIdForSign(widget.currentUserSigns['sun'] ?? '');
+    final friendAvatarId = _isValidAvatarId(widget.friendAvatarId)
+        ? widget.friendAvatarId
+        : _defaultAvatarIdForSign(friendSun);
 
     return Scaffold(
       body: Stack(
@@ -1056,7 +1099,11 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0x330B1026), Color(0x990B1026), Color(0xE61B1F3B)],
+                  colors: [
+                    Color(0x330B1026),
+                    Color(0x990B1026),
+                    Color(0xE61B1F3B),
+                  ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -1093,8 +1140,10 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
                     children: [
                       _buildBetweenTab(
                         context,
+                        currentUserName: resolvedCurrentUserName,
                         friendName: resolvedFriendName,
-                        friendSun: friendSun,
+                        currentUserAvatarId: currentUserAvatarId,
+                        friendAvatarId: friendAvatarId,
                       ),
                       _buildFriendTab(
                         context,
@@ -1116,8 +1165,10 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
 
   Widget _buildBetweenTab(
     BuildContext context, {
+    required String currentUserName,
     required String friendName,
-    required String friendSun,
+    required String currentUserAvatarId,
+    required String friendAvatarId,
   }) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
@@ -1126,7 +1177,7 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
           child: Column(
             children: [
               Text(
-                '${widget.currentUserName} - $friendName',
+                '$currentUserName - $friendName',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -1136,8 +1187,14 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _CircleSign(label: widget.currentUserName, sign: widget.currentUserSigns['sun'] ?? ''),
-                  _CircleSign(label: friendName, sign: friendSun),
+                  _CircleAvatarSign(
+                    label: currentUserName,
+                    avatarId: currentUserAvatarId,
+                  ),
+                  _CircleAvatarSign(
+                    label: friendName,
+                    avatarId: friendAvatarId,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -1154,7 +1211,10 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
             children: [
               Text(
                 'Iliskinizi Etkileyen Transitler',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               SizedBox(height: 10),
               Text(
@@ -1188,7 +1248,10 @@ class _CompatibilityFriendDetailPageState extends State<CompatibilityFriendDetai
         const SizedBox(height: 6),
         Text(
           '☉ $friendSun   ☾ $friendMoon   ↑ $friendRising',
-          style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            color: Colors.white70,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 14),
         Wrap(
@@ -1306,7 +1369,10 @@ class _MetricRow extends StatelessWidget {
         children: [
           Text(
             '$label  %$value',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 6),
           LinearProgressIndicator(
@@ -1321,11 +1387,11 @@ class _MetricRow extends StatelessWidget {
   }
 }
 
-class _CircleSign extends StatelessWidget {
-  const _CircleSign({required this.label, required this.sign});
+class _CircleAvatarSign extends StatelessWidget {
+  const _CircleAvatarSign({required this.label, required this.avatarId});
 
   final String label;
-  final String sign;
+  final String avatarId;
 
   @override
   Widget build(BuildContext context) {
@@ -1339,10 +1405,22 @@ class _CircleSign extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.12),
             border: Border.all(color: const Color(0xFFF2C98A), width: 1.6),
           ),
-          alignment: Alignment.center,
-          child: Text(
-            sign.isEmpty ? '?' : sign.characters.first,
-            style: const TextStyle(color: Colors.white, fontSize: 26),
+          child: ClipOval(
+            child: Image.asset(
+              _avatarAssetPathForId(avatarId),
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFF0E2152),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.person,
+                    color: Colors.white70,
+                    size: 36,
+                  ),
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -1396,3 +1474,67 @@ String _displaySign(String value) {
       return value.trim().isEmpty ? 'Bilinmiyor' : value.trim();
   }
 }
+
+String _capitalizeNameInitial(String value) {
+  final trimmed = value.trim();
+  if (trimmed.isEmpty) {
+    return trimmed;
+  }
+  const trUpperMap = {
+    'i': 'İ',
+    'ı': 'I',
+    'ş': 'Ş',
+    'ğ': 'Ğ',
+    'ü': 'Ü',
+    'ö': 'Ö',
+    'ç': 'Ç',
+  };
+  final first = trimmed[0];
+  final upperFirst = trUpperMap[first] ?? first.toUpperCase();
+  return '$upperFirst${trimmed.substring(1)}';
+}
+
+bool _isValidAvatarId(String? id) {
+  if (id == null || id.trim().isEmpty) {
+    return false;
+  }
+  return _avatarAssetById.containsKey(id.trim());
+}
+
+String _defaultAvatarIdForSign(String sign) {
+  const signToAvatar = <String, String>{
+    'Koç': 'koc',
+    'Boğa': 'boga',
+    'İkizler': 'ikizler',
+    'Yengeç': 'yengec',
+    'Aslan': 'aslan',
+    'Başak': 'basak',
+    'Terazi': 'terazi',
+    'Akrep': 'akrep',
+    'Yay': 'yay',
+    'Oğlak': 'oglak',
+    'Kova': 'kova',
+    'Balık': 'balik',
+  };
+  return signToAvatar[sign] ?? 'terazi';
+}
+
+String _avatarAssetPathForId(String id) {
+  final normalized = id.trim();
+  return _avatarAssetById[normalized] ?? _avatarAssetById['terazi']!;
+}
+
+const Map<String, String> _avatarAssetById = <String, String>{
+  'kova': 'assets/burclar/kova.png',
+  'balik': 'assets/burclar/balık.png',
+  'terazi': 'assets/burclar/terazi.png',
+  'aslan': 'assets/burclar/aslan.png',
+  'ikizler': 'assets/burclar/ikizler.png',
+  'oglak': 'assets/burclar/oglak.png',
+  'yengec': 'assets/burclar/yengec.png',
+  'koc': 'assets/burclar/koc.png',
+  'yay': 'assets/burclar/yay.png',
+  'akrep': 'assets/burclar/akrep.png',
+  'boga': 'assets/burclar/boga.png',
+  'basak': 'assets/burclar/basak.png',
+};

@@ -6,12 +6,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../profile/presentation/profile_screen.dart';
 import 'pages/advisor_page.dart';
+import 'pages/birth_chart_detail_page.dart';
 import 'pages/calendar_page.dart';
 import 'pages/compatibility_page.dart';
 import 'pages/explore_page.dart';
 import 'widgets/astro_story_strip.dart';
 import 'widgets/biorhythm_preview_card.dart';
 import 'widgets/birth_chart_preview_card.dart';
+import 'widgets/daily_affirmation_card.dart';
+import 'widgets/periodic_horoscope_section.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
 import '../../../utils/zodiac.dart';
@@ -451,6 +454,12 @@ class _ActiveCenterShadow extends StatelessWidget {
 class _MainHomePage extends StatelessWidget {
   const _MainHomePage();
 
+  void _openBirthChart(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const BirthChartDetailPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -458,18 +467,22 @@ class _MainHomePage extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: SingleChildScrollView(
           padding: const EdgeInsets.only(bottom: 132),
-          child: const Column(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HomeUserHeader(),
-              SizedBox(height: 14),
-              AstroStoryStrip(),
-              SizedBox(height: 24),
-              ZodionaDailyCommentCard(),
-              SizedBox(height: 18),
-              BirthChartPreviewCard(),
-              SizedBox(height: 18),
-              BiorhythmPreviewCard(),
+              const _HomeUserHeader(),
+              const SizedBox(height: 14),
+              const AstroStoryStrip(),
+              const SizedBox(height: 24),
+              const ZodionaDailyCommentCard(),
+              const SizedBox(height: 18),
+              const DailyAffirmationCard(),
+              const SizedBox(height: 18),
+              BirthChartPreviewCard(onTap: () => _openBirthChart(context)),
+              const SizedBox(height: 18),
+              const PeriodicHoroscopeSection(),
+              const SizedBox(height: 18),
+              const BiorhythmPreviewCard(),
             ],
           ),
         ),

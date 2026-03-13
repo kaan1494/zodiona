@@ -8,6 +8,8 @@ import '../../../models/astro_story.dart';
 import '../../../services/astro_story_service.dart';
 import '../../../utils/web_image_picker.dart';
 
+enum _AdminPanelTab { dashboard, users, stories, support, premium }
+
 class AdminStoryAdminScreen extends StatefulWidget {
   const AdminStoryAdminScreen({super.key});
 
@@ -41,6 +43,14 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
   final _service = const AstroStoryService();
   final _titleController = TextEditingController();
+  final _userSearchController = TextEditingController();
+  final _premiumSearchController = TextEditingController();
+
+  _AdminPanelTab _activeTab = _AdminPanelTab.dashboard;
+  bool _isSidebarExpanded = true;
+  String _userSearchQuery = '';
+  String _premiumSearchQuery = '';
+
   bool _isActive = true;
   bool _isSaving = false;
 
@@ -49,6 +59,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   @override
   void dispose() {
     _titleController.dispose();
+    _userSearchController.dispose();
+    _premiumSearchController.dispose();
     for (final s in _segments) {
       s.dispose();
     }
@@ -60,7 +72,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     if (title.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Baslik gerekli.')));
+      ).showSnackBar(const SnackBar(content: Text('Başlık gerekli.')));
       return;
     }
 
@@ -75,7 +87,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
     if (segments.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('En az 1 hikaye sayfasi ekle.')),
+        const SnackBar(content: Text('En az 1 hikaye sayfası ekle.')),
       );
       return;
     }
@@ -102,19 +114,19 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         setState(() {});
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Hikaye kaydedildi.')));
+        ).showSnackBar(const SnackBar(content: Text('Hikâye kaydedildi.')));
       }
     } on FirebaseException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Kaydetme hatasi: ${e.code}')));
+        ).showSnackBar(SnackBar(content: Text('Kaydetme hatası: ${e.code}')));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Kaydetme hatasi: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kaydetme hatası: $e')));
       }
     } finally {
       if (mounted) {
@@ -135,14 +147,14 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Guncelleme hatasi: ${e.code}')));
+      ).showSnackBar(SnackBar(content: Text('Güncelleme hatası: ${e.code}')));
     } catch (e) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Guncelleme hatasi: $e')));
+      ).showSnackBar(SnackBar(content: Text('Güncelleme hatası: $e')));
     }
   }
 
@@ -155,20 +167,20 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Silme hatasi: ${e.code}')));
+      ).showSnackBar(SnackBar(content: Text('Silme hatası: ${e.code}')));
     } catch (e) {
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Silme hatasi: $e')));
+      ).showSnackBar(SnackBar(content: Text('Silme hatası: $e')));
     }
   }
 
   Future<String?> _pickAndUploadImage() async {
     if (!kIsWeb) {
-      throw Exception('Bu secim su an yalnizca web panelde destekleniyor.');
+      throw Exception('Bu seçim şu an yalnızca web panelde destekleniyor.');
     }
 
     final picked = await pickImageForWebSafe();
@@ -179,14 +191,14 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     final bytes = picked['bytes'] as Uint8List?;
     final name = (picked['name'] as String?) ?? 'image.jpg';
     if (bytes == null) {
-      throw Exception('Secilen dosya okunamadi.');
+      throw Exception('Seçilen dosya okunamadı.');
     }
 
     final ext = name.contains('.') ? name.split('.').last : 'jpg';
     final safeExt = ext.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
     const maxBytes = 350 * 1024;
     if (bytes.length > maxBytes) {
-      throw Exception('Gorsel boyutu cok buyuk (maks 350 KB).');
+      throw Exception('Görsel boyutu çok büyük (maks 350 KB).');
     }
 
     final base64 = base64Encode(bytes);
@@ -210,7 +222,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Sayfa resmi yuklenemedi: $e')));
+      ).showSnackBar(SnackBar(content: Text('Sayfa resmi yüklenemedi: $e')));
     } finally {
       if (mounted) {
         setState(() => segment.isUploading = false);
@@ -218,190 +230,712 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     }
   }
 
+  String get _panelTitle {
+    switch (_activeTab) {
+      case _AdminPanelTab.dashboard:
+        return 'Admin - Dashboard';
+      case _AdminPanelTab.users:
+        return 'Admin - Kullanıcılar';
+      case _AdminPanelTab.stories:
+        return 'Admin - Astro Hikâyeler';
+      case _AdminPanelTab.support:
+        return 'Admin - Bize Ulaşın Mesajları';
+      case _AdminPanelTab.premium:
+        return 'Admin - Premium Kullanıcılar';
+    }
+  }
+
+  DateTime _resolveUserCreatedAt(Map<String, dynamic> data) {
+    final createdAt = data['createdAt'];
+    if (createdAt is Timestamp) {
+      return createdAt.toDate();
+    }
+
+    final createdAtClient = data['createdAtClient'];
+    if (createdAtClient is Timestamp) {
+      return createdAtClient.toDate();
+    }
+
+    final updatedAt = data['updatedAt'];
+    if (updatedAt is Timestamp) {
+      return updatedAt.toDate();
+    }
+
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  String _resolveUserName(Map<String, dynamic> data) {
+    final name = (data['name'] as String?)?.trim();
+    final displayName = (data['displayName'] as String?)?.trim();
+    if (name != null && name.isNotEmpty) {
+      return name;
+    }
+    if (displayName != null && displayName.isNotEmpty) {
+      return displayName;
+    }
+    return 'İsimsiz Kullanıcı';
+  }
+
+  String _resolveUserEmail(Map<String, dynamic> data) {
+    final email = (data['email'] as String?)?.trim();
+    return (email?.isNotEmpty ?? false) ? email! : '-';
+  }
+
+  Widget _buildSidebar() {
+    final width = _isSidebarExpanded ? 264.0 : 76.0;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      width: width,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E1330),
+        border: Border(
+          right: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 58,
+            child: Row(
+              children: [
+                if (_isSidebarExpanded)
+                  const Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 14),
+                      child: Text(
+                        'Yönetim Paneli',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                IconButton(
+                  onPressed: () {
+                    setState(() => _isSidebarExpanded = !_isSidebarExpanded);
+                  },
+                  icon: Icon(
+                    _isSidebarExpanded ? Icons.menu_open : Icons.menu,
+                    color: const Color(0xFFF2D28E),
+                  ),
+                  tooltip: _isSidebarExpanded ? 'Menüyü daralt' : 'Menüyü aç',
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
+          _buildNavItem(
+            icon: Icons.dashboard_outlined,
+            title: 'Dashboard',
+            tab: _AdminPanelTab.dashboard,
+          ),
+          _buildNavItem(
+            icon: Icons.groups_outlined,
+            title: 'Kullanıcılar',
+            tab: _AdminPanelTab.users,
+          ),
+          _buildNavItem(
+            icon: Icons.auto_stories_outlined,
+            title: 'Story Sayfası',
+            tab: _AdminPanelTab.stories,
+          ),
+          _buildNavItem(
+            icon: Icons.contact_mail_outlined,
+            title: 'Bize Ulaşın',
+            tab: _AdminPanelTab.support,
+          ),
+          _buildNavItem(
+            icon: Icons.workspace_premium_outlined,
+            title: 'Premium Kullanıcılar',
+            tab: _AdminPanelTab.premium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String title,
+    required _AdminPanelTab tab,
+  }) {
+    final isActive = _activeTab == tab;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Material(
+        color: isActive ? const Color(0x22F2C98A) : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => setState(() => _activeTab = tab),
+          child: SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                const SizedBox(width: 10),
+                Icon(
+                  icon,
+                  color: isActive ? const Color(0xFFF2D28E) : Colors.white70,
+                ),
+                if (_isSidebarExpanded) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: isActive
+                            ? const Color(0xFFF2D28E)
+                            : Colors.white,
+                        fontWeight: isActive
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _panelContent() {
+    switch (_activeTab) {
+      case _AdminPanelTab.dashboard:
+        return _dashboardSection();
+      case _AdminPanelTab.users:
+        return _usersSection(premiumOnly: false);
+      case _AdminPanelTab.stories:
+        return _storiesSection();
+      case _AdminPanelTab.support:
+        return _supportSection();
+      case _AdminPanelTab.premium:
+        return _usersSection(premiumOnly: true);
+    }
+  }
+
+  Widget _dashboardSection() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      builder: (context, userSnapshot) {
+        if (userSnapshot.hasError) {
+          return const Text('Kullanıcı verileri yüklenemedi.');
+        }
+
+        final userDocs =
+            List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+              userSnapshot.data?.docs ?? const [],
+            )..sort((a, b) {
+              final aTs = _resolveUserCreatedAt(a.data());
+              final bTs = _resolveUserCreatedAt(b.data());
+              return bTs.compareTo(aTs);
+            });
+
+        final totalUsers = userDocs.length;
+        final premiumCount = userDocs
+            .where((doc) => (doc.data()['isPremium'] as bool?) ?? false)
+            .length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _sectionTitle('Dashboard'),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _statCard(label: 'Toplam Kullanıcı', value: '$totalUsers'),
+                _statCard(label: 'Premium Kullanıcı', value: '$premiumCount'),
+                StreamBuilder<List<AstroStory>>(
+                  stream: _service.watchAllStories(),
+                  builder: (context, storySnapshot) {
+                    final stories = storySnapshot.data ?? const <AstroStory>[];
+                    final activeStories = stories
+                        .where((s) => s.isActive)
+                        .length;
+                    return _statCard(
+                      label: 'Aktif Hikâye',
+                      value: '$activeStories',
+                    );
+                  },
+                ),
+                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('supportMessages')
+                      .limit(300)
+                      .snapshots(),
+                  builder: (context, supportSnapshot) {
+                    final docs = supportSnapshot.data?.docs ?? const [];
+                    final unread = docs
+                        .where((doc) => (doc.data()['isRead'] as bool?) != true)
+                        .length;
+                    return _statCard(
+                      label: 'Okunmamış Mesaj',
+                      value: '$unread',
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _sectionTitle('Son Kayıt Olan Kullanıcılar'),
+            const SizedBox(height: 8),
+            if (userDocs.isEmpty)
+              const Text('Henüz kullanıcı kaydı yok.')
+            else
+              ...userDocs.take(8).map((doc) {
+                final data = doc.data();
+                final name = _resolveUserName(data);
+                final email = _resolveUserEmail(data);
+                final createdAt = _resolveUserCreatedAt(data);
+
+                return Card(
+                  child: ListTile(
+                    title: Text(name),
+                    subtitle: Text(
+                      '$email\nKayıt: ${_formatDateTime(createdAt)}',
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              }),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _usersSection({required bool premiumOnly}) {
+    final searchController = premiumOnly
+        ? _premiumSearchController
+        : _userSearchController;
+    final currentQuery = premiumOnly ? _premiumSearchQuery : _userSearchQuery;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(
+          premiumOnly ? 'Premium Kullanıcılar' : 'Tüm Kullanıcılar',
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: searchController,
+          onChanged: (value) {
+            setState(() {
+              if (premiumOnly) {
+                _premiumSearchQuery = value.trim().toLowerCase();
+              } else {
+                _userSearchQuery = value.trim().toLowerCase();
+              }
+            });
+          },
+          decoration: InputDecoration(
+            labelText: premiumOnly
+                ? 'Premium kullanıcı ara (isim, email, uid)'
+                : 'Kullanıcı ara (isim, email, uid)',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: currentQuery.isEmpty
+                ? null
+                : IconButton(
+                    onPressed: () {
+                      searchController.clear();
+                      setState(() {
+                        if (premiumOnly) {
+                          _premiumSearchQuery = '';
+                        } else {
+                          _userSearchQuery = '';
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.clear),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance.collection('users').snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Text('Kullanıcı listesi yüklenemedi.');
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final docs =
+                List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                  snapshot.data?.docs ?? const [],
+                )..sort((a, b) {
+                  final aTs = _resolveUserCreatedAt(a.data());
+                  final bTs = _resolveUserCreatedAt(b.data());
+                  return bTs.compareTo(aTs);
+                });
+
+            final filtered = docs
+                .where((doc) {
+                  final data = doc.data();
+                  final isPremium = (data['isPremium'] as bool?) ?? false;
+                  if (premiumOnly && !isPremium) {
+                    return false;
+                  }
+
+                  if (currentQuery.isEmpty) {
+                    return true;
+                  }
+
+                  final name = _resolveUserName(data).toLowerCase();
+                  final email = _resolveUserEmail(data).toLowerCase();
+                  final uid = doc.id.toLowerCase();
+                  return name.contains(currentQuery) ||
+                      email.contains(currentQuery) ||
+                      uid.contains(currentQuery);
+                })
+                .toList(growable: false);
+
+            if (filtered.isEmpty) {
+              return Text(
+                premiumOnly
+                    ? 'Premium kullanıcı bulunamadı.'
+                    : 'Kullanıcı bulunamadı.',
+              );
+            }
+
+            return Column(
+              children: filtered
+                  .map((doc) {
+                    final data = doc.data();
+                    final name = _resolveUserName(data);
+                    final email = _resolveUserEmail(data);
+                    final isPremium = (data['isPremium'] as bool?) ?? false;
+                    final isAdmin =
+                        (data['isAdmin'] as bool?) == true ||
+                        ((data['role'] as String?)?.toLowerCase() == 'admin');
+                    final createdAt = _resolveUserCreatedAt(data);
+                    final premiumExpire = data['premiumExpireDate'];
+
+                    final premiumExpireText = premiumExpire is Timestamp
+                        ? _formatDateTime(premiumExpire.toDate())
+                        : '-';
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        title: Text(name),
+                        subtitle: Text(
+                          'Email: $email\nUID: ${doc.id}\nKayıt: ${_formatDateTime(createdAt)}\nPremium Bitiş: $premiumExpireText',
+                        ),
+                        isThreeLine: true,
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isPremium
+                                    ? const Color(0x3344C767)
+                                    : const Color(0x33FFFFFF),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                isPremium ? 'Premium' : 'Standart',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            if (isAdmin)
+                              const Text(
+                                'Admin',
+                                style: TextStyle(
+                                  color: Color(0xFFF2D28E),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  })
+                  .toList(growable: false),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _storiesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Story Sayfası'),
+        const SizedBox(height: 12),
+        _storyComposerSection(),
+        const SizedBox(height: 20),
+        _publishedStoriesSection(),
+      ],
+    );
+  }
+
+  Widget _storyComposerSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Yeni Hikâye Ekle'),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _titleController,
+          decoration: const InputDecoration(labelText: 'Başlık'),
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Aktif Olsun'),
+          value: _isActive,
+          onChanged: (v) => setState(() => _isActive = v),
+        ),
+        const SizedBox(height: 8),
+        _sectionTitle('Hikâye Sayfaları'),
+        const SizedBox(height: 8),
+        ..._segments.asMap().entries.map((entry) {
+          final index = entry.key;
+          final segment = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text('Sayfa ${index + 1}'),
+                      const Spacer(),
+                      if (_segments.length > 1)
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              segment.dispose();
+                              _segments.removeAt(index);
+                            });
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                        ),
+                    ],
+                  ),
+                  TextField(
+                    controller: segment.textController,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(labelText: 'Metin'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: segment.imageController,
+                    decoration: const InputDecoration(
+                      labelText: 'Resim Kaynağı (URL / Asset / Data)',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _presetSelector(
+                    selectedValue: segment.imageController.text.trim(),
+                    title: 'Sayfa için sabit görseller',
+                    onSelected: (value) =>
+                        setState(() => segment.imageController.text = value),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: segment.isUploading
+                          ? null
+                          : () => _pickAndUploadSegmentImage(segment),
+                      icon: segment.isUploading
+                          ? const SizedBox(
+                              height: 14,
+                              width: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.upload_file),
+                      label: Text(
+                        segment.isUploading
+                            ? 'Resim ekleniyor...'
+                            : 'Galeriden Sayfa Resmi Seç',
+                      ),
+                    ),
+                  ),
+                  if (segment.imageController.text.trim().isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _buildPreviewImage(
+                        segment.imageController.text.trim(),
+                        height: 120,
+                        errorText: 'Sayfa resmi önizlenemedi',
+                        storyFrame: true,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: segment.durationController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Süre (ms) - örn 5000',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => setState(() => _segments.add(_SegmentDraft())),
+            icon: const Icon(Icons.add),
+            label: const Text('Sayfa Ekle'),
+          ),
+        ),
+        const SizedBox(height: 10),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _createStory,
+          child: _isSaving
+              ? const SizedBox(
+                  height: 18,
+                  width: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Hikâyeyi Kaydet'),
+        ),
+      ],
+    );
+  }
+
+  Widget _publishedStoriesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Yayındaki Hikâyeler'),
+        const SizedBox(height: 8),
+        StreamBuilder<List<AstroStory>>(
+          stream: _service.watchAllStories(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Text(
+                'Firestore erişim hatası. Rules izinlerini kontrol edin.',
+              );
+            }
+
+            final stories = snapshot.data ?? const <AstroStory>[];
+            if (stories.isEmpty) {
+              return const Text('Henüz hikâye yok.');
+            }
+
+            return Column(
+              children: stories.map((story) {
+                final isActive = story.isActive;
+                return Card(
+                  child: ListTile(
+                    title: Text(story.title),
+                    subtitle: Text('${story.segments.length} sayfa'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Switch(
+                          value: isActive,
+                          onChanged: (v) =>
+                              _setStoryActive(id: story.id, isActive: v),
+                        ),
+                        IconButton(
+                          onPressed: () => _deleteStory(story.id),
+                          icon: const Icon(Icons.delete_outline),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _supportSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Kullanıcılardan Gelen Mesajlar'),
+        const SizedBox(height: 8),
+        _supportMessagesSection(),
+      ],
+    );
+  }
+
+  Widget _statCard({required String label, required String value}) {
+    return Container(
+      width: 190,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+        color: Colors.white.withValues(alpha: 0.03),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(color: Colors.white70)),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime? dt) {
+    if (dt == null) {
+      return '-';
+    }
+    final local = dt.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$day.$month.$year $hour:$minute';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin - Astro Hikayeler')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(title: Text(_panelTitle)),
+      body: Row(
         children: [
-          _sectionTitle('Yeni Hikaye Ekle'),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(labelText: 'Baslik'),
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Aktif Olsun'),
-            value: _isActive,
-            onChanged: (v) => setState(() => _isActive = v),
-          ),
-          const SizedBox(height: 8),
-          _sectionTitle('Hikaye Sayfalari'),
-          const SizedBox(height: 8),
-          ..._segments.asMap().entries.map((entry) {
-            final index = entry.key;
-            final segment = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Text('Sayfa ${index + 1}'),
-                        const Spacer(),
-                        if (_segments.length > 1)
-                          IconButton(
-                            onPressed: () {
-                              setState(() {
-                                segment.dispose();
-                                _segments.removeAt(index);
-                              });
-                            },
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                      ],
-                    ),
-                    TextField(
-                      controller: segment.textController,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(labelText: 'Metin'),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: segment.imageController,
-                      decoration: const InputDecoration(
-                        labelText: 'Resim Kaynagi (URL / Asset / Data)',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _presetSelector(
-                      selectedValue: segment.imageController.text.trim(),
-                      title: 'Sayfa icin sabit gorseller',
-                      onSelected: (value) =>
-                          setState(() => segment.imageController.text = value),
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: segment.isUploading
-                            ? null
-                            : () => _pickAndUploadSegmentImage(segment),
-                        icon: segment.isUploading
-                            ? const SizedBox(
-                                height: 14,
-                                width: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.upload_file),
-                        label: Text(
-                          segment.isUploading
-                              ? 'Resim ekleniyor...'
-                              : 'Galeriden Sayfa Resmi Sec',
-                        ),
-                      ),
-                    ),
-                    if (segment.imageController.text.trim().isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: _buildPreviewImage(
-                          segment.imageController.text.trim(),
-                          height: 120,
-                          errorText: 'Sayfa resmi onizlenemedi',
-                          storyFrame: true,
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: segment.durationController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Sure (ms) - orn 5000',
-                      ),
-                    ),
-                  ],
-                ),
+          _buildSidebar(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [_panelContent()],
               ),
-            );
-          }),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => setState(() => _segments.add(_SegmentDraft())),
-              icon: const Icon(Icons.add),
-              label: const Text('Sayfa Ekle'),
             ),
           ),
-          const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: _isSaving ? null : _createStory,
-            child: _isSaving
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Hikayeyi Kaydet'),
-          ),
-          const SizedBox(height: 20),
-          _sectionTitle('Yayindaki Hikayeler'),
-          const SizedBox(height: 8),
-          StreamBuilder<List<AstroStory>>(
-            stream: _service.watchAllStories(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return const Text(
-                  'Firestore erisim hatasi. Rules izinlerini kontrol edin.',
-                );
-              }
-
-              final stories = snapshot.data ?? const <AstroStory>[];
-              if (stories.isEmpty) {
-                return const Text('Henuz hikaye yok.');
-              }
-
-              return Column(
-                children: stories.map((story) {
-                  final isActive = story.isActive;
-                  return Card(
-                    child: ListTile(
-                      title: Text(story.title),
-                      subtitle: Text('${story.segments.length} sayfa'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Switch(
-                            value: isActive,
-                            onChanged: (v) =>
-                                _setStoryActive(id: story.id, isActive: v),
-                          ),
-                          IconButton(
-                            onPressed: () => _deleteStory(story.id),
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          _sectionTitle('Kullanıcılardan Gelen Mesajlar'),
-          const SizedBox(height: 8),
-          _supportMessagesSection(),
         ],
       ),
     );
@@ -764,7 +1298,7 @@ class _PresetSelectorWidgetState extends State<_PresetSelectorWidget> {
             IconButton(
               onPressed: () => _scrollBy(-280),
               icon: const Icon(Icons.chevron_left),
-              tooltip: 'Sola kaydir',
+              tooltip: 'Sola kaydır',
             ),
             Expanded(
               child: SizedBox(
@@ -821,7 +1355,7 @@ class _PresetSelectorWidgetState extends State<_PresetSelectorWidget> {
             IconButton(
               onPressed: () => _scrollBy(280),
               icon: const Icon(Icons.chevron_right),
-              tooltip: 'Saga kaydir',
+              tooltip: 'Sağa kaydır',
             ),
           ],
         ),

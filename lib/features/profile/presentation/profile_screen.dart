@@ -239,8 +239,6 @@ class ProfileScreen extends StatelessWidget {
                         icon: Icons.dashboard,
                         onTap: () => _onCreamActionTap(context, 'Widget'),
                       ),
-                      const SizedBox(height: 12),
-                      const _PremiumCard(),
                       const SizedBox(height: 14),
                       _ContactCard(onContactTap: () => _onContactTap(context)),
                     ],
@@ -905,7 +903,6 @@ class _MenuCard extends StatelessWidget {
     const items = <String>[
       'Profilim',
       'Hesap Ayarları',
-      'Admin Paneli',
       'Premium Üyelik',
       'Promosyon Kodu Kullan',
       'Zodiona Hakkında',
@@ -990,78 +987,6 @@ class _CreamActionCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: child,
-    );
-  }
-}
-
-class _PremiumCard extends StatelessWidget {
-  const _PremiumCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF3E3A62),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0DDAE),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Text(
-              'PREMIUM',
-              style: TextStyle(fontSize: 10, letterSpacing: 2),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: Text(
-              'Yeni Yıl Geliyor',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Yeni fırsatlar, yeni başlangıçlar... 2026 senin için neler getiriyor?',
-            textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: Colors.white70),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                colors: [
-                  Color(0xFF2A184A),
-                  Color(0xFF4D4369),
-                  Color(0xFF2A184A),
-                ],
-              ),
-            ),
-            child: Text(
-              'Şimdi Keşfet',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: const Color(0xFFF2D28E),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../legal/legal_texts.dart';
 import 'contact_support_screen.dart';
+import 'faq_screen.dart';
 
 class ZodionaAboutScreen extends StatelessWidget {
   const ZodionaAboutScreen({super.key});
@@ -76,16 +78,27 @@ class ZodionaAboutScreen extends StatelessWidget {
                         _showComingSoon(context, 'Uygulamayı Değerlendirin'),
                   ),
                   _AboutRow(
-                    label: 'Kullanıcı Sözleşmesi & Gizlilik Politikası',
-                    onTap: () => _showComingSoon(
+                    label: 'Kullanıcı Sözleşmesi',
+                    onTap: () => _showAgreementDialog(
                       context,
-                      'Kullanıcı Sözleşmesi & Gizlilik Politikası',
+                      title: 'Kullanıcı Sözleşmesi',
+                      content: userAgreementContent,
+                    ),
+                  ),
+                  _AboutRow(
+                    label: 'Gizlilik Politikası',
+                    onTap: () => _showAgreementDialog(
+                      context,
+                      title: 'Gizlilik Politikası',
+                      content: privacyPolicyContent,
                     ),
                   ),
                   _AboutRow(
                     label: 'S.S.S',
                     isLast: true,
-                    onTap: () => _showComingSoon(context, 'S.S.S'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FaqScreen()),
+                    ),
                   ),
                 ],
               ),
@@ -100,6 +113,44 @@ class ZodionaAboutScreen extends StatelessWidget {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('$title yakında eklenecek.')));
+  }
+
+  void _showAgreementDialog(
+    BuildContext context, {
+    required String title,
+    required String content,
+  }) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1B1F3B),
+          surfaceTintColor: Colors.transparent,
+          titleTextStyle: theme.textTheme.titleMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+          contentTextStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: Colors.white70,
+          ),
+          title: Text(title),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(child: Text(content)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFF2C98A),
+              ),
+              child: const Text('Kapat'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
