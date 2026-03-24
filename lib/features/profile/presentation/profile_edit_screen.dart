@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/location_model.dart';
 import '../../../services/location_service.dart';
+import '../../../utils/city_normalizer.dart';
 import '../../../utils/zodiac.dart';
 
 class ProfileEditScreen extends StatefulWidget {
@@ -682,6 +683,8 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
         ? (canCalculateFromApi ? 'pending' : null)
         : _existingBirthTimezone;
 
+    final normalizedCity = normalizeCityName(birthPlaceName ?? placeText);
+
     final data = <String, dynamic>{
       'name': _nameController.text.trim(),
       'birthDate': Timestamp.fromDate(_birthDate!),
@@ -690,10 +693,13 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       'job': _job,
       'relationshipStatus': _relationshipStatus,
       'birthPlace': placeText.isEmpty ? null : placeText,
-      'birthPlaceName': birthPlaceName,
+      'birthPlaceName': normalizedCity.isEmpty
+          ? birthPlaceName
+          : normalizedCity,
       'birthPlaceCountry': birthPlaceCountry,
       'birthPlaceLat': birthPlaceLat,
       'birthPlaceLon': birthPlaceLon,
+      'cityNormalized': normalizedCity.isEmpty ? null : normalizedCity,
       'birthTimezone': timezone,
       'gender': _gender,
       'zodiacSign': calculateZodiac(_birthDate!),

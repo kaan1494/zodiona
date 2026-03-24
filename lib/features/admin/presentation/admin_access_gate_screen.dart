@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/admin_access.dart';
-import '../../home/presentation/home_screen.dart';
+import '../../auth/presentation/auth_screen.dart';
 import 'admin_story_admin_screen.dart';
 
 class AdminAccessGateScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
 
   void _openMainApp() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
       (route) => false,
     );
   }

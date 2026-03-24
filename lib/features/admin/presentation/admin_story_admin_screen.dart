@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 
 import '../../../models/astro_story.dart';
 import '../../../services/astro_story_service.dart';
+import '../../../utils/city_normalizer.dart';
 import '../../../utils/web_image_picker.dart';
-import '../../home/presentation/home_screen.dart';
+import '../../auth/presentation/auth_screen.dart';
 
 enum _AdminPanelTab { dashboard, users, stories, support, premium }
 
@@ -250,7 +251,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
   void _openMainApp() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
       (route) => false,
     );
   }
@@ -347,6 +348,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
   String _resolveUserCity(Map<String, dynamic> data) {
     final candidates = <dynamic>[
+      data['cityNormalized'],
       data['birthPlaceName'],
       data['birthPlace'],
       data['birthPlaceCity'],
@@ -362,9 +364,9 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       if (cleaned.isEmpty) {
         continue;
       }
-      final normalized = cleaned.split(',').first.split('/').first.trim();
-      if (normalized.isNotEmpty) {
-        return normalized;
+      final normalizedCity = normalizeCityName(cleaned);
+      if (normalizedCity.isNotEmpty) {
+        return normalizedCity;
       }
     }
 
@@ -435,6 +437,76 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   String _resolveUserEmail(Map<String, dynamic> data) {
     final email = (data['email'] as String?)?.trim();
     return (email?.isNotEmpty ?? false) ? email! : '-';
+  }
+
+  DateTime? _resolveDateTimeValue(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    return null;
+  }
+
+  String _stringOrDash(dynamic value) {
+    if (value == null) {
+      return '-';
+    }
+    final text = value.toString().trim();
+    return text.isEmpty ? '-' : text;
+  }
+
+  String _userBirthPlaceText(Map<String, dynamic> data) {
+    final normalized = _stringOrDash(data['cityNormalized']);
+    if (normalized != '-') {
+      return normalized;
+    }
+
+    final placeName = _stringOrDash(data['birthPlaceName']);
+    if (placeName != '-') {
+      return placeName;
+    }
+
+    final place = _stringOrDash(data['birthPlace']);
+    if (place != '-') {
+      return place;
+    }
+
+    return 'Belirtilmemiş';
+  }
+
+  String _userBirthTimeText(Map<String, dynamic> data) {
+    if (_asBool(data['birthTimeUnknown'])) {
+      return 'Bilmiyorum (12:00 varsayılan)';
+    }
+
+    return _stringOrDash(data['birthTime']);
+  }
+
+  Widget _detailInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 150,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
   }
 
   Widget _buildSidebar() {
@@ -923,49 +995,133 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       _asBool(data['isAdmin']) ||
                       ((data['role'] as String?)?.toLowerCase() == 'admin');
                   final createdAt = _resolveUserCreatedAt(data);
-                  final premiumExpire = data['premiumExpireDate'];
+                  final premiumExpire = _resolveDateTimeValue(
+                    data['premiumExpireDate'],
+                  );
+                  final premiumExpireText = _formatDateTime(premiumExpire);
 
-                  final premiumExpireText = premiumExpire is Timestamp
-                      ? _formatDateTime(premiumExpire.toDate())
-                      : '-';
+                  final detailRows = <MapEntry<String, String>>[
+                    MapEntry<String, String>('Email', email),
+                    MapEntry<String, String>('UID', doc.id),
+                    MapEntry<String, String>(
+                      'Kayıt Tarihi',
+                      _formatDateTime(createdAt),
+                    ),
+                    MapEntry<String, String>(
+                      'Premium Bitiş',
+                      premiumExpireText,
+                    ),
+                    MapEntry<String, String>(
+                      'Doğum Tarihi',
+                      _formatDateTime(_resolveBirthDate(data)),
+                    ),
+                    MapEntry<String, String>(
+                      'Doğum Saati',
+                      _userBirthTimeText(data),
+                    ),
+                    MapEntry<String, String>(
+                      'Meslek',
+                      _stringOrDash(data['job']),
+                    ),
+                    MapEntry<String, String>(
+                      'İlişki Durumu',
+                      _stringOrDash(
+                        data['relationshipStatus'] ?? data['relationshipType'],
+                      ),
+                    ),
+                    MapEntry<String, String>(
+                      'Doğum Yeri',
+                      _userBirthPlaceText(data),
+                    ),
+                    MapEntry<String, String>(
+                      'Doğum Ülkesi',
+                      _stringOrDash(data['birthPlaceCountry']),
+                    ),
+                    MapEntry<String, String>(
+                      'Doğum Koordinatları',
+                      '${_stringOrDash(data['birthPlaceLat'])}, ${_stringOrDash(data['birthPlaceLon'])}',
+                    ),
+                    MapEntry<String, String>(
+                      'Cinsiyet',
+                      _resolveUserGender(data),
+                    ),
+                    MapEntry<String, String>(
+                      'Burç (Güneş)',
+                      _stringOrDash(data['zodiacSign']),
+                    ),
+                    MapEntry<String, String>(
+                      'Ay Burcu',
+                      _stringOrDash(data['moonSign']),
+                    ),
+                    MapEntry<String, String>(
+                      'Yükselen',
+                      _stringOrDash(data['risingSign']),
+                    ),
+                    MapEntry<String, String>(
+                      'Saat Dilimi',
+                      _stringOrDash(data['birthTimezone']),
+                    ),
+                  ];
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(name),
-                      subtitle: Text(
-                        'Email: $email\nUID: ${doc.id}\nKayıt: ${_formatDateTime(createdAt)}\nPremium Bitiş: $premiumExpireText',
-                      ),
-                      isThreeLine: true,
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isPremium
-                                  ? const Color(0x3344C767)
-                                  : const Color(0x33FFFFFF),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              isPremium ? 'Premium' : 'Standart',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          if (isAdmin)
-                            const Text(
-                              'Admin',
-                              style: TextStyle(
-                                color: Color(0xFFF2D28E),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          16,
+                          0,
+                          16,
+                          12,
+                        ),
+                        title: Text(name),
+                        subtitle: Text(
+                          'UID: ${doc.id}\nKayıt: ${_formatDateTime(createdAt)}',
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isPremium
+                                    ? const Color(0x3344C767)
+                                    : const Color(0x33FFFFFF),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                isPremium ? 'Premium' : 'Standart',
+                                style: const TextStyle(fontSize: 12),
                               ),
                             ),
+                            if (isAdmin)
+                              const Text(
+                                'Admin',
+                                style: TextStyle(
+                                  color: Color(0xFFF2D28E),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            const Icon(Icons.expand_more),
+                          ],
+                        ),
+                        children: [
+                          const Divider(height: 1, color: Colors.white24),
+                          const SizedBox(height: 12),
+                          ...detailRows.map(
+                            (entry) => _detailInfoRow(entry.key, entry.value),
+                          ),
                         ],
                       ),
                     ),

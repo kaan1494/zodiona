@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../models/location_model.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/location_service.dart';
+import '../../../utils/city_normalizer.dart';
 import '../../../utils/zodiac.dart';
 import '../../home/presentation/home_screen.dart';
 
@@ -755,6 +756,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       timezone = null;
     }
 
+    final normalizedCity = normalizeCityName(
+      _selectedBirthLocation?.name ?? _birthPlace,
+    );
+
     final data = <String, dynamic>{
       'name': _nameController.text.trim(),
       'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
@@ -763,10 +768,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'job': _job,
       'relationshipStatus': _relationshipStatus,
       'birthPlace': _birthPlace,
-      'birthPlaceName': _selectedBirthLocation?.name,
+      'birthPlaceName': normalizedCity.isEmpty
+          ? _selectedBirthLocation?.name
+          : normalizedCity,
       'birthPlaceCountry': _selectedBirthLocation?.country,
       'birthPlaceLat': _selectedBirthLocation?.lat,
       'birthPlaceLon': _selectedBirthLocation?.lon,
+      'cityNormalized': normalizedCity.isEmpty ? null : normalizedCity,
       'birthTimezone': timezone,
       'gender': _gender,
       'zodiacSign': sunSign,
