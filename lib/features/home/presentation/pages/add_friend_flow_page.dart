@@ -9,6 +9,9 @@ import '../../../../models/location_model.dart';
 import '../../../../services/astro_api_service.dart';
 import '../../../../services/location_service.dart';
 import '../../../../utils/zodiac.dart';
+import '../../domain/periodic_horoscope_generator.dart';
+import '../../domain/relationship_weekly_comment_generator.dart';
+import '../../domain/zodiona_daily_comment_generator.dart';
 
 class AddCompatibilityFriendPage extends StatefulWidget {
   const AddCompatibilityFriendPage({super.key, required this.uid});
@@ -1045,6 +1048,7 @@ class _CompatibilityFriendDetailPageState
     extends State<CompatibilityFriendDetailPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  String _selectedFriendFilter = 'Bugün';
 
   @override
   void initState() {
@@ -1144,6 +1148,8 @@ class _CompatibilityFriendDetailPageState
                         friendName: resolvedFriendName,
                         currentUserAvatarId: currentUserAvatarId,
                         friendAvatarId: friendAvatarId,
+                        currentUserSun: widget.currentUserSigns['sun'] ?? '',
+                        friendSun: friendSun,
                       ),
                       _buildFriendTab(
                         context,
@@ -1169,7 +1175,14 @@ class _CompatibilityFriendDetailPageState
     required String friendName,
     required String currentUserAvatarId,
     required String friendAvatarId,
+    required String currentUserSun,
+    required String friendSun,
   }) {
+    final weeklyComment = RelationshipWeeklyCommentGenerator.generate(
+      signA: currentUserSun,
+      signB: friendSun,
+    );
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
       children: [
@@ -1198,28 +1211,64 @@ class _CompatibilityFriendDetailPageState
                 ],
               ),
               const SizedBox(height: 16),
-              const _MetricRow(label: 'Duygusal Bag', value: 88),
-              const _MetricRow(label: 'Fiziksel Cekim', value: 100),
-              const _MetricRow(label: 'Iletisim', value: 84),
+              const _MetricRow(label: 'Duygusal Bağ', value: 88),
+              const _MetricRow(label: 'Fiziksel Çekim', value: 100),
+              const _MetricRow(label: 'İletişim', value: 84),
             ],
           ),
         ),
         const SizedBox(height: 14),
-        const _CardSurface(
+        _CardSurface(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Iliskinizi Etkileyen Transitler',
-                style: TextStyle(
-                  color: Colors.white,
+                'İlişkinizi Etkileyen Transitler',
+                style: const TextStyle(
+                  color: Color(0xFFF2C98A),
                   fontWeight: FontWeight.w700,
+                  fontSize: 14,
                 ),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 4),
               Text(
-                'Bu kisim, secili kisi icin ortak gezegen etkilerini ve donemsel iliski yorumlarini gosterir.',
-                style: TextStyle(color: Colors.white70, height: 1.4),
+                weeklyComment.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                weeklyComment.body,
+                style: const TextStyle(
+                  color: Colors.white,
+                  height: 1.55,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0x22F2C98A),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0x55F2C98A)),
+                ),
+                child: Text(
+                  weeklyComment.tip,
+                  style: const TextStyle(
+                    color: Color(0xFFF7D57A),
+                    height: 1.45,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1235,6 +1284,70 @@ class _CompatibilityFriendDetailPageState
     required String friendMoon,
     required String friendRising,
   }) {
+    final filters = ['Bugün', 'Bu Hafta', 'Transitler', 'Doğum Haritası'];
+
+    Widget contentCard;
+    if (_selectedFriendFilter == 'Bugün') {
+      final comment = ZodionaDailyCommentGenerator.generate(
+        userName: friendName,
+        sunSign: friendSun,
+        moonSign: friendMoon,
+        risingSign: friendRising,
+      );
+      contentCard = _CardSurface(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${comment.focusTypeLabel} odağı: ${comment.focusSign}',
+              style: const TextStyle(
+                color: Color(0xFFF7D57A),
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              comment.body,
+              style: const TextStyle(color: Colors.white, height: 1.5),
+            ),
+          ],
+        ),
+      );
+    } else if (_selectedFriendFilter == 'Bu Hafta') {
+      final weekly = PeriodicHoroscopeGenerator.general(
+        sunSign: friendSun,
+        period: HoroscopePeriod.weekly,
+      );
+      contentCard = _CardSurface(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              weekly.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              weekly.body,
+              style: const TextStyle(color: Colors.white, height: 1.5),
+            ),
+          ],
+        ),
+      );
+    } else {
+      contentCard = const _CardSurface(
+        child: Text(
+          'Bu bölüm yakında eklenecek.',
+          style: TextStyle(color: Colors.white70, height: 1.5),
+        ),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       children: [
@@ -1257,20 +1370,18 @@ class _CompatibilityFriendDetailPageState
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: const [
-            _FilterChip(label: 'Bugun', selected: true),
-            _FilterChip(label: 'Bu Hafta'),
-            _FilterChip(label: 'Transitler'),
-            _FilterChip(label: 'Dogum Haritasi'),
-          ],
+          children: filters
+              .map(
+                (f) => _FilterChip(
+                  label: f,
+                  selected: _selectedFriendFilter == f,
+                  onTap: () => setState(() => _selectedFriendFilter = f),
+                ),
+              )
+              .toList(),
         ),
         const SizedBox(height: 14),
-        const _CardSurface(
-          child: Text(
-            'Bugun, yakin iliskilerde daha dengeli bir enerji var. Kucuk ama anlamli adimlarla baginizi guclendirebilirsiniz.',
-            style: TextStyle(color: Colors.white, height: 1.5),
-          ),
-        ),
+        contentCard,
       ],
     );
   }
@@ -1431,25 +1542,29 @@ class _CircleAvatarSign extends StatelessWidget {
 }
 
 class _FilterChip extends StatelessWidget {
-  const _FilterChip({required this.label, this.selected = false});
+  const _FilterChip({required this.label, this.selected = false, this.onTap});
 
   final String label;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected ? const Color(0xFFF2C98A) : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF2C98A)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? const Color(0xFF1B1F3B) : Colors.white,
-          fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF2C98A) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF2C98A)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? const Color(0xFF1B1F3B) : Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

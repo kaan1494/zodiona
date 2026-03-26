@@ -547,7 +547,7 @@ class _DailyMoonDetailPageState extends State<_DailyMoonDetailPage> {
                         const SizedBox(height: 8),
                         Text(
                           'Doğum Haritana Özel Etkiler',
-                          style: Theme.of(context).textTheme.headlineSmall
+                          style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -949,11 +949,10 @@ class _InsightExpandableCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              color: const Color(0xFFECCB8E),
-                              fontWeight: FontWeight.w700,
-                            ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFFECCB8E),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     Icon(
