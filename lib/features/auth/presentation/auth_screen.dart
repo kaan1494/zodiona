@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../models/app_user.dart';
 import '../../../services/auth_service.dart';
@@ -305,6 +306,8 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isSubmitting = false;
   bool _isGoogleLoading = false;
 
+  static const _storage = FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
@@ -313,6 +316,20 @@ class _AuthScreenState extends State<AuthScreen> {
       ..onTap = _showUserAgreementDialog;
     _privacyAgreementRecognizer = TapGestureRecognizer()
       ..onTap = _showPrivacyAgreementDialog;
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final rememberMe = await _storage.read(key: 'remember_me');
+    if (rememberMe != 'true') return;
+    final email = await _storage.read(key: 'saved_email') ?? '';
+    final password = await _storage.read(key: 'saved_password') ?? '';
+    if (!mounted) return;
+    setState(() {
+      _rememberMe = true;
+      _emailController.text = email;
+      _passwordController.text = password;
+    });
   }
 
   @override
@@ -749,6 +766,13 @@ class _AuthScreenState extends State<AuthScreen> {
           email: email,
           password: password,
         );
+        if (_rememberMe) {
+          await _storage.write(key: 'remember_me', value: 'true');
+          await _storage.write(key: 'saved_email', value: email);
+          await _storage.write(key: 'saved_password', value: password);
+        } else {
+          await _storage.deleteAll();
+        }
         await _handlePostAuth(appUser);
       } else {
         final name = _nameController.text.trim();

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../admin/presentation/admin_access_gate_screen.dart';
 import '../../auth/presentation/auth_screen.dart';
+import '../../home/presentation/pages/birth_chart_detail_page.dart';
 import 'account_settings_screen.dart';
 import 'contact_support_screen.dart';
 import 'friend_invite_screen.dart';
@@ -115,6 +116,13 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _onShortcutTap(BuildContext context, String title) {
+    if (title == 'Doğum Haritası') {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const BirthChartDetailPage()));
+      return;
+    }
+
     if (title == 'Danışmanlıklar') {
       Navigator.of(context).pop(advisorCommentsRouteResult);
       return;

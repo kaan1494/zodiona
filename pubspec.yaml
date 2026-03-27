@@ -45,6 +45,7 @@ dependencies:
   cloud_functions: ^6.0.6
   google_sign_in: ^7.2.0
   http: ^1.2.2
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +91,7 @@ flutter:
     - assets/homepage/
     - assets/admin_story_presets/
     - assets/burclar/
+    - assets/tarot/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

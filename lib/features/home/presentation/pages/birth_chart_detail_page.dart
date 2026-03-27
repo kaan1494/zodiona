@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../utils/zodiac.dart';
+import '../../../home/domain/birth_chart_content.dart';
 
 class BirthChartDetailPage extends StatefulWidget {
   const BirthChartDetailPage({super.key});
@@ -172,8 +173,13 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) =>
-                        _BirthChartPlaceholderDetailPage(title: item.title),
+                    builder: (_) => _BirthChartContentPage(
+                      title: item.title,
+                      subtitle: item.subtitle,
+                      glyph: item.glyph,
+                      color: item.color,
+                      content: item.content,
+                    ),
                   ),
                 );
               },
@@ -372,33 +378,163 @@ class _GlyphAvatar extends StatelessWidget {
   }
 }
 
-class _BirthChartPlaceholderDetailPage extends StatelessWidget {
-  const _BirthChartPlaceholderDetailPage({required this.title});
+class _BirthChartContentPage extends StatelessWidget {
+  const _BirthChartContentPage({
+    required this.title,
+    required this.subtitle,
+    required this.glyph,
+    required this.color,
+    required this.content,
+  });
 
   final String title;
+  final String subtitle;
+  final String glyph;
+  final Color color;
+  final String content;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF06133E),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Text(title),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'Bu alanın detay içeriğini bir sonraki adımda ekleyeceğiz.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.white70,
-              height: 1.4,
+      backgroundColor: const Color(0xFF030B2A),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/onboarding/home_page.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
+              repeat: ImageRepeat.repeatY,
             ),
           ),
-        ),
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xAA04184A), Color(0xCC04133C)],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 14, 4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white70,
+                        ),
+                        splashRadius: 20,
+                      ),
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: const Color(0xFFF8E5BE),
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  color.withValues(alpha: 0.95),
+                                  color.withValues(alpha: 0.2),
+                                  const Color(0xFF060E3A),
+                                ],
+                                stops: const [0.0, 0.55, 1.0],
+                              ),
+                              border: Border.all(color: Colors.white12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.4),
+                                  blurRadius: 28,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                glyph,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(
+                                      color: const Color(0xFFFFF2D2),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          subtitle,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: const Color(0xFFECD6A8),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                const Color(0xFF131B5A).withValues(alpha: 0.88),
+                                const Color(0xFF07133F).withValues(alpha: 0.88),
+                              ],
+                            ),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: Text(
+                            content,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.92),
+                                  height: 1.7,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -858,6 +994,7 @@ class _NatalChartBuilder {
         detail: 'Yönetici tema: ${_houseDetail(houseNumber)}',
         glyph: '$houseNumber',
         color: const Color(0xFFA2C1FF),
+        content: houseContentMap[houseNumber] ?? '',
       );
     });
 
@@ -881,6 +1018,7 @@ class _NatalChartBuilder {
                       '${aspect.from.label} ${aspect.from.house}. ev • ${aspect.to.label} ${aspect.to.house}. ev',
                   glyph: _aspectGlyph(aspect.type),
                   color: _aspectColor(aspect.type),
+                  content: aspectContentMap[aspect.type.name] ?? '',
                 ),
               )
               .toList(growable: false);
@@ -894,6 +1032,11 @@ class _NatalChartBuilder {
             'Dışarıya verdiğin izlenim ile iç motivasyonun bu eksende şekillenir',
         glyph: '✦',
         color: const Color(0xFFEFC56E),
+        content: getIdentityContent(
+          userData.sunSign,
+          userData.moonSign,
+          userData.risingSign,
+        ),
       ),
       _InfoCardData(
         title: 'Element Dengesi',
@@ -901,6 +1044,12 @@ class _NatalChartBuilder {
         detail: 'Element dağılımı günlük karar ritmini etkiler',
         glyph: '◌',
         color: const Color(0xFF86D7F4),
+        content:
+            'Haritandaki gezegenler ateş, toprak, hava ve su elementleri arasında dağılır. '
+            'Bu dağılım günlük enerji ritmini, karar verme biçimini ve stres altındaki tepkilerini etkiler.\n\n'
+            'Ağırlıklı element, baskın motivasyon kaynağını gösterir: Ateş = eylem ve tutku, '
+            'Toprak = pratiklik ve güvenlik, Hava = fikir ve iletişim, Su = his ve sezgi.\n\n'
+            'Dengeli bir harita çok yönlülük sunar; baskın bir element güçlü odak ama potansiyel kör nokta yaratır.',
       ),
       _InfoCardData(
         title: 'Öne Çıkan Evler',
@@ -908,6 +1057,11 @@ class _NatalChartBuilder {
         detail: 'Bu evler hayat akışında daha görünür çalışır',
         glyph: '⌂',
         color: const Color(0xFFBDA9FF),
+        content:
+            'Bazı evler haritanda birden fazla gezegen barındırır ve hayatın o alanında daha yoğun bir enerji alanı oluşturur.\n\n'
+            'Öne çıkan evler, tekrar eden temaların ve en büyük büyüme fırsatlarının olduğu alanlardır. '
+            'Bu evlere yönelik bilinçli çalışmak haritanın potansiyelini açar.\n\n'
+            'Her ev kendi doğal ritmiyle çalışır — zorlu da olsa bu odalara kapı aralamak hayatı zenginleştirir.',
       ),
     ];
 
@@ -919,6 +1073,7 @@ class _NatalChartBuilder {
             detail: '${item.house}. Ev',
             glyph: item.glyph,
             color: item.color,
+            content: getPlanetContent(item.key, item.sign),
           ),
         )
         .toList(growable: false);
@@ -1009,6 +1164,7 @@ class _InfoCardData {
     required this.detail,
     required this.glyph,
     required this.color,
+    this.content = '',
   });
 
   final String title;
@@ -1016,6 +1172,7 @@ class _InfoCardData {
   final String detail;
   final String glyph;
   final Color color;
+  final String content;
 }
 
 enum _AspectType { conjunction, sextile, square, trine, opposition }

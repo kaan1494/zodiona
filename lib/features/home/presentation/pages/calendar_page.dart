@@ -952,6 +952,7 @@ class _InsightExpandableCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: const Color(0xFFECCB8E),
                           fontWeight: FontWeight.w700,
+                          fontSize: 18,
                         ),
                       ),
                     ),

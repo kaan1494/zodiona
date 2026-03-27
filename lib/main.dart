@@ -1,11 +1,16 @@
 import 'dart:math' as math;
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'features/admin/presentation/admin_access_gate_screen.dart';
 import 'features/auth/presentation/auth_screen.dart';
+import 'features/home/presentation/home_screen.dart';
+import 'features/onboarding/presentation/onboarding_screen.dart';
+import 'models/app_user.dart';
+import 'services/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,12 +70,18 @@ class _AppBootstrap extends StatefulWidget {
   State<_AppBootstrap> createState() => _AppBootstrapState();
 }
 
+class _BootstrapResult {
+  const _BootstrapResult({this.error, this.autoLoginUser});
+  final String? error;
+  final AppUser? autoLoginUser;
+}
+
 class _AppBootstrapState extends State<_AppBootstrap> {
   static const _minSplashDuration = Duration(seconds: 5);
 
-  late final Future<String?> _bootstrapFuture = _initialize();
+  late final Future<_BootstrapResult> _bootstrapFuture = _initialize();
 
-  Future<String?> _initialize() async {
+  Future<_BootstrapResult> _initialize() async {
     final startedAt = DateTime.now();
 
     String? error;
@@ -99,21 +110,44 @@ class _AppBootstrapState extends State<_AppBootstrap> {
       await Future<void>.delayed(remaining);
     }
 
-    return error;
+    if (error != null) {
+      return _BootstrapResult(error: error);
+    }
+
+    // Mevcut Firebase oturumunu kontrol et (uygulama yeniden açılışı)
+    try {
+      if (FirebaseAuth.instance.currentUser != null) {
+        final appUser = await AuthService().currentUser;
+        if (appUser != null) {
+          return _BootstrapResult(autoLoginUser: appUser);
+        }
+      }
+    } catch (_) {
+      // Oturum kontrolü başarısız olursa normal giriş ekranı gösterilsin
+    }
+
+    return const _BootstrapResult();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
+    return FutureBuilder<_BootstrapResult>(
       future: _bootstrapFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const _StartupSplashScreen();
         }
 
-        final error = snapshot.data;
-        if (error != null) {
-          return _BootstrapErrorScreen(error: error);
+        final result = snapshot.data;
+        if (result?.error != null) {
+          return _BootstrapErrorScreen(error: result!.error!);
+        }
+
+        if (result?.autoLoginUser != null) {
+          final user = result!.autoLoginUser!;
+          return user.onboardingCompleted
+              ? const HomeScreen()
+              : OnboardingScreen(userId: user.uid);
         }
 
         return widget.entry == 'admin'

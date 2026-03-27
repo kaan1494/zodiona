@@ -15,6 +15,7 @@ import 'widgets/biorhythm_preview_card.dart';
 import 'widgets/birth_chart_preview_card.dart';
 import 'widgets/daily_affirmation_card.dart';
 import 'widgets/periodic_horoscope_section.dart';
+import 'widgets/celestia_card_preview.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
 import '../../../utils/zodiac.dart';
@@ -483,6 +484,8 @@ class _MainHomePage extends StatelessWidget {
               const PeriodicHoroscopeSection(),
               const SizedBox(height: 18),
               const BiorhythmPreviewCard(),
+              const SizedBox(height: 18),
+              const CelestiaCardPreview(),
             ],
           ),
         ),
