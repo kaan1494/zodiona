@@ -1352,14 +1352,18 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     );
   }
 
-  Widget _advisorChatsSection() {
-    final service = AdvisorChatService();
+  // Danışman sohbetleri için tam ekran iki-pane layout.
+  // Scaffold body'sindeki Expanded içine doğrudan yerleştirilir —
+  // SingleChildScrollView içine girmez, constraints bounded kalır.
+  Widget _advisorChatsTwoPane() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Sol: sohbet listesi ──────────────────────────────────
-        SizedBox(
+        // ── Sol: sohbet listesi (340 px) ─────────────────────────
+        Container(
           width: 340,
+          padding: const EdgeInsets.all(16),
+          color: const Color(0xFF0D1B2A),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1367,103 +1371,115 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: StreamBuilder<List<AdvisorChatSummary>>(
-                stream: service.allChatsStream(),
-                builder: (context, snap) {
-                  if (snap.hasError) {
-                    return Text(
-                      'Yüklenemedi: ${snap.error}',
-                      style: const TextStyle(color: Colors.orangeAccent),
-                    );
-                  }
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final chats = snap.data ?? [];
-                  if (chats.isEmpty) {
-                    return const Text(
-                      'Henüz kullanıcıdan gelen mesaj yok.',
-                      style: TextStyle(color: Colors.white70),
-                    );
-                  }
-                  return ListView(
-                    shrinkWrap: true,
-                    children: chats.map((chat) {
-                      final isSelected = _selectedAdvisorChat?.id == chat.id;
-                      final timeStr = chat.updatedAt != null
-                          ? _formatDateTime(chat.updatedAt)
-                          : '-';
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        color: isSelected ? const Color(0xFF0F3460) : null,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: isSelected
-                              ? const BorderSide(
-                                  color: Color(0xFFFFD700),
-                                  width: 1.5,
-                                )
-                              : BorderSide.none,
-                        ),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: chat.unreadByAdmin
-                                ? const Color(0xFF5C3EFF)
-                                : Colors.grey.shade700,
-                            child: Icon(
-                              chat.unreadByAdmin
-                                  ? Icons.mark_email_unread
-                                  : Icons.chat_bubble_outline,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                          title: Text(
-                            '${chat.userName.isNotEmpty ? chat.userName : 'Bilinmiyor'} → ${chat.advisorName}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Text(
-                            '${chat.consultationType}\n'
-                            '${chat.lastMessage.isNotEmpty ? chat.lastMessage : '(henüz mesaj yok)'}\n'
-                            '$timeStr',
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          isThreeLine: true,
-                          trailing: chat.unreadByAdmin
-                              ? Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF5C3EFF),
-                                    shape: BoxShape.circle,
-                                  ),
-                                )
-                              : null,
-                          onTap: () => _openAdvisorChatDetail(chat),
-                        ),
+                  stream: AdvisorChatService().allChatsStream(),
+                  builder: (context, snap) {
+                    if (snap.hasError) {
+                      return Text(
+                        'Yüklenemedi: ${snap.error}',
+                        style: const TextStyle(color: Colors.orangeAccent),
                       );
-                    }).toList(),
-                  );
-                },
+                    }
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final chats = snap.data ?? [];
+                    if (chats.isEmpty) {
+                      return const Text(
+                        'Henüz gelen mesaj yok.',
+                        style: TextStyle(color: Colors.white70),
+                      );
+                    }
+                    return ListView.builder(
+                      itemCount: chats.length,
+                      itemBuilder: (_, i) {
+                        final chat = chats[i];
+                        final isSelected = _selectedAdvisorChat?.id == chat.id;
+                        final timeStr = chat.updatedAt != null
+                            ? _formatDateTime(chat.updatedAt)
+                            : '-';
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          color: isSelected ? const Color(0xFF0F3460) : null,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: isSelected
+                                ? const BorderSide(
+                                    color: Color(0xFFFFD700),
+                                    width: 1.5,
+                                  )
+                                : BorderSide.none,
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: chat.unreadByAdmin
+                                  ? const Color(0xFF5C3EFF)
+                                  : Colors.grey.shade700,
+                              child: Icon(
+                                chat.unreadByAdmin
+                                    ? Icons.mark_email_unread
+                                    : Icons.chat_bubble_outline,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                            title: Text(
+                              '${chat.userName.isNotEmpty ? chat.userName : 'Bilinmiyor'} → ${chat.advisorName}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${chat.consultationType}\n'
+                              '${chat.lastMessage.isNotEmpty ? chat.lastMessage : '(henüz mesaj yok)'}\n'
+                              '$timeStr',
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            isThreeLine: true,
+                            trailing: chat.unreadByAdmin
+                                ? Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF5C3EFF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                : null,
+                            onTap: () => _openAdvisorChatDetail(chat),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),   // Expanded kapanışı
             ],
           ),
         ),
-        // ── Sağ: seçili sohbet detayı ────────────────────────────
-        if (_selectedAdvisorChat != null) ...[
-          const SizedBox(width: 16),
-          Expanded(
-            child: _AdvisorChatDetailPanel(
-              key: ValueKey(_selectedAdvisorChat!.id),
-              chat: _selectedAdvisorChat!,
-              onClose: () => setState(() => _selectedAdvisorChat = null),
-            ),
-          ),
-        ],
+        const VerticalDivider(width: 1, color: Colors.white12),
+        // ── Sağ: detay paneli ────────────────────────────────────
+        Expanded(
+          child: _selectedAdvisorChat == null
+              ? const Center(
+                  child: Text(
+                    'Bir konuşma seçin',
+                    style: TextStyle(color: Colors.white38, fontSize: 16),
+                  ),
+                )
+              : _AdvisorChatDetailPanel(
+                  key: ValueKey(_selectedAdvisorChat!.id),
+                  chat: _selectedAdvisorChat!,
+                  onClose: () => setState(() => _selectedAdvisorChat = null),
+                ),
+        ),
       ],
     );
   }
+
+  // _panelContent içinden çağrıldığı için stub olarak bırakılır;
+  // advisorChats sekmesi artık _advisorChatsTwoPane() üzerinden render edilir.
+  Widget _advisorChatsSection() => const SizedBox.shrink();
 
   void _openAdvisorChatDetail(AdvisorChatSummary chat) {
     AdvisorChatService().markReadByAdmin(chat.id);
@@ -1679,23 +1695,18 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       body: Row(
         children: [
           _buildSidebar(),
-          Expanded(
-            child: _activeTab == _AdminPanelTab.advisorChats
-                ? Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [Expanded(child: _panelContent())],
-                    ),
-                  )
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [_panelContent()],
-                    ),
-                  ),
-          ),
+          if (_activeTab == _AdminPanelTab.advisorChats)
+            Expanded(child: _advisorChatsTwoPane())
+          else
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [_panelContent()],
+                ),
+              ),
+            ),
         ],
       ),
     );
