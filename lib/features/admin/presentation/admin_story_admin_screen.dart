@@ -1355,7 +1355,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   Widget _advisorChatsSection() {
     final service = AdvisorChatService();
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Sol: sohbet listesi ──────────────────────────────────
         SizedBox(
@@ -1365,7 +1365,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             children: [
               _sectionTitle('Danışman Mesajları'),
               const SizedBox(height: 8),
-              StreamBuilder<List<AdvisorChatSummary>>(
+              Expanded(
+                child: StreamBuilder<List<AdvisorChatSummary>>(
                 stream: service.allChatsStream(),
                 builder: (context, snap) {
                   if (snap.hasError) {
@@ -1384,7 +1385,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       style: TextStyle(color: Colors.white70),
                     );
                   }
-                  return Column(
+                  return ListView(
+                    shrinkWrap: true,
                     children: chats.map((chat) {
                       final isSelected = _selectedAdvisorChat?.id == chat.id;
                       final timeStr = chat.updatedAt != null
@@ -1392,14 +1394,14 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                           : '-';
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
-                        color: isSelected
-                            ? const Color(0xFF0F3460)
-                            : null,
+                        color: isSelected ? const Color(0xFF0F3460) : null,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: isSelected
                               ? const BorderSide(
-                                  color: Color(0xFFFFD700), width: 1.5)
+                                  color: Color(0xFFFFD700),
+                                  width: 1.5,
+                                )
                               : BorderSide.none,
                         ),
                         child: ListTile(
@@ -1417,8 +1419,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                           ),
                           title: Text(
                             '${chat.userName.isNotEmpty ? chat.userName : 'Bilinmiyor'} → ${chat.advisorName}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: Text(
                             '${chat.consultationType}\n'
@@ -1445,22 +1446,21 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                   );
                 },
               ),
+            ),   // Expanded kapanışı
             ],
           ),
         ),
         // ── Sağ: seçili sohbet detayı ────────────────────────────
-        if (_selectedAdvisorChat != null) ...
-          [
-            const SizedBox(width: 16),
-            Expanded(
-              child: _AdvisorChatDetailPanel(
-                key: ValueKey(_selectedAdvisorChat!.id),
-                chat: _selectedAdvisorChat!,
-                onClose: () =>
-                    setState(() => _selectedAdvisorChat = null),
-              ),
+        if (_selectedAdvisorChat != null) ...[
+          const SizedBox(width: 16),
+          Expanded(
+            child: _AdvisorChatDetailPanel(
+              key: ValueKey(_selectedAdvisorChat!.id),
+              chat: _selectedAdvisorChat!,
+              onClose: () => setState(() => _selectedAdvisorChat = null),
             ),
-          ],
+          ),
+        ],
       ],
     );
   }
@@ -1680,13 +1680,21 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         children: [
           _buildSidebar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [_panelContent()],
-              ),
-            ),
+            child: _activeTab == _AdminPanelTab.advisorChats
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [Expanded(child: _panelContent())],
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [_panelContent()],
+                    ),
+                  ),
           ),
         ],
       ),
@@ -2059,7 +2067,6 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
   Widget build(BuildContext context) {
     final profile = widget.chat.userProfile;
     return Container(
-      height: 620,
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A2E),
         borderRadius: BorderRadius.circular(12),
@@ -2095,8 +2102,7 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                   _profileRow('Ad Soyad', widget.chat.userName),
                   _profileRow('E-posta', widget.chat.userEmail),
                   if (profile['birthDate'] != null)
-                    _profileRow(
-                        'Doğum Tarihi', profile['birthDate'] as String),
+                    _profileRow('Doğum Tarihi', profile['birthDate'] as String),
                   if (profile['zodiacSign'] != null)
                     _profileRow('Burç', profile['zodiacSign'] as String),
                   if (profile['moonSign'] != null)
@@ -2109,11 +2115,11 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                     _profileRow('Meslek', profile['job'] as String),
                   if (profile['relationshipStatus'] != null)
                     _profileRow(
-                        'İlişki Durumu',
-                        profile['relationshipStatus'] as String),
+                      'İlişki Durumu',
+                      profile['relationshipStatus'] as String,
+                    ),
                   if (profile['birthPlace'] != null)
-                    _profileRow(
-                        'Doğum Yeri', profile['birthPlace'] as String),
+                    _profileRow('Doğum Yeri', profile['birthPlace'] as String),
                   const Divider(color: Colors.white24, height: 20),
                   _profileRow('Danışman', widget.chat.advisorName),
                   _profileRow('Konu', widget.chat.consultationType),
@@ -2128,7 +2134,9 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                 // Başlık
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: const BoxDecoration(
                     color: Color(0xFF0F3460),
                     borderRadius: BorderRadius.only(
@@ -2148,8 +2156,11 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                         ),
                       ),
                       IconButton(
-                        icon:
-                            const Icon(Icons.close, color: Colors.white70, size: 20),
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.white70,
+                          size: 20,
+                        ),
                         onPressed: widget.onClose,
                       ),
                     ],
@@ -2158,22 +2169,20 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                 // Mesajlar
                 Expanded(
                   child: StreamBuilder<List<AdvisorChatMessage>>(
-                    stream: AdvisorChatService()
-                        .messagesStream(widget.chat.id),
+                    stream: AdvisorChatService().messagesStream(widget.chat.id),
                     builder: (ctx, snap) {
-                      if (snap.connectionState ==
-                          ConnectionState.waiting) {
+                      if (snap.connectionState == ConnectionState.waiting) {
                         return const Center(
                           child: CircularProgressIndicator(
-                              color: Color(0xFFFFD700)),
+                            color: Color(0xFFFFD700),
+                          ),
                         );
                       }
                       if (snap.hasError) {
                         return Center(
                           child: Text(
                             'Hata: ${snap.error}',
-                            style: const TextStyle(
-                                color: Colors.orangeAccent),
+                            style: const TextStyle(color: Colors.orangeAccent),
                           ),
                         );
                       }
@@ -2207,9 +2216,10 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                             child: Container(
                               margin: const EdgeInsets.only(bottom: 8),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              constraints:
-                                  const BoxConstraints(maxWidth: 360),
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              constraints: const BoxConstraints(maxWidth: 360),
                               decoration: BoxDecoration(
                                 color: isAdmin
                                     ? const Color(0xFF0F3460)
@@ -2217,13 +2227,10 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    isAdmin
-                                        ? 'Admin'
-                                        : widget.chat.userName,
+                                    isAdmin ? 'Admin' : widget.chat.userName,
                                     style: TextStyle(
                                       color: isAdmin
                                           ? const Color(0xFFFFD700)
@@ -2236,8 +2243,9 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                                   Text(
                                     msg.text,
                                     style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13),
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -2266,17 +2274,17 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                           maxLines: null,
                           decoration: InputDecoration(
                             hintText: 'Cevabınızı yazın...',
-                            hintStyle:
-                                const TextStyle(color: Colors.white38),
+                            hintStyle: const TextStyle(color: Colors.white38),
                             filled: true,
                             fillColor: const Color(0xFF1A1A2E),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide.none,
                             ),
-                            contentPadding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                           ),
                           onSubmitted: (_) => _sendReply(),
                         ),
@@ -2287,12 +2295,15 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                               width: 32,
                               height: 32,
                               child: CircularProgressIndicator(
-                                  color: Color(0xFFFFD700),
-                                  strokeWidth: 2),
+                                color: Color(0xFFFFD700),
+                                strokeWidth: 2,
+                              ),
                             )
                           : IconButton(
-                              icon: const Icon(Icons.send,
-                                  color: Color(0xFFFFD700)),
+                              icon: const Icon(
+                                Icons.send,
+                                color: Color(0xFFFFD700),
+                              ),
                               onPressed: _sendReply,
                             ),
                     ],
@@ -2322,8 +2333,7 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
           ),
           Text(
             value.isEmpty ? '—' : value,
-            style:
-                const TextStyle(color: Colors.white, fontSize: 12),
+            style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ],
       ),
