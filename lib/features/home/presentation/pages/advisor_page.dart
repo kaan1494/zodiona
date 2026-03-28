@@ -1,4 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../../../services/advisor_chat_service.dart';
+import 'advisor_chat_page.dart';
 
 class AdvisorPage extends StatefulWidget {
   const AdvisorPage({
@@ -591,7 +596,7 @@ class _AvatarRow extends StatelessWidget {
   }
 }
 
-class _ConsultationDetailPage extends StatelessWidget {
+class _ConsultationDetailPage extends StatefulWidget {
   const _ConsultationDetailPage({
     required this.title,
     required this.description,
@@ -601,6 +606,106 @@ class _ConsultationDetailPage extends StatelessWidget {
   final String title;
   final String description;
   final List<_AdvisorData> advisors;
+
+  @override
+  State<_ConsultationDetailPage> createState() =>
+      _ConsultationDetailPageState();
+}
+
+class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
+  bool _isLoadingChat = false;
+
+  Future<void> _onSelectAdvisor(_AdvisorData advisor) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() => _isLoadingChat = true);
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final data = userDoc.data() ?? {};
+      final isPremium = data['isPremium'] as bool? ?? false;
+
+      if (!mounted) return;
+
+      if (!isPremium) {
+        _showPremiumRequiredDialog();
+        return;
+      }
+
+      final service = AdvisorChatService();
+      final chatId = await service.getOrCreateChat(
+        advisorName: advisor.name,
+        consultationType: widget.title,
+        userProfile: data,
+      );
+
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AdvisorChatPage(
+            chatId: chatId,
+            advisorName: advisor.name,
+            consultationType: widget.title,
+            advisorImagePath: advisor.imagePath,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingChat = false);
+    }
+  }
+
+  void _showPremiumRequiredDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1E5A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0x55F2D9A6)),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium, color: Color(0xFFF2D9A6)),
+            SizedBox(width: 8),
+            Text(
+              'Premium Üyelik Gerekli',
+              style: TextStyle(
+                color: Color(0xFFF2D9A6),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Danışmana soru sorabilmek için premium üyeliğe sahip olman gerekiyor.\n\nProfil > Promosyon Kodu Kullan bölümünden bir kod girerek premium erişim kazanabilirsin.',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.85),
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Tamam',
+              style: TextStyle(color: Color(0xFFF2D9A6)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -631,6 +736,15 @@ class _ConsultationDetailPage extends StatelessWidget {
               ),
             ),
           ),
+          if (_isLoadingChat)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Color(0x88000000),
+                child: Center(
+                  child: CircularProgressIndicator(color: Color(0xFFF2D9A6)),
+                ),
+              ),
+            ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 18),
@@ -657,7 +771,7 @@ class _ConsultationDetailPage extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            title,
+                            widget.title,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
@@ -667,7 +781,7 @@ class _ConsultationDetailPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            description,
+                            widget.description,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(
@@ -703,8 +817,11 @@ class _ConsultationDetailPage extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          ...advisors.map(
-                            (advisor) => _AdvisorDetailCard(advisor: advisor),
+                          ...widget.advisors.map(
+                            (advisor) => _AdvisorDetailCard(
+                              advisor: advisor,
+                              onSelect: () => _onSelectAdvisor(advisor),
+                            ),
                           ),
                         ],
                       ),
@@ -721,9 +838,10 @@ class _ConsultationDetailPage extends StatelessWidget {
 }
 
 class _AdvisorDetailCard extends StatelessWidget {
-  const _AdvisorDetailCard({required this.advisor});
+  const _AdvisorDetailCard({required this.advisor, required this.onSelect});
 
   final _AdvisorData advisor;
+  final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -793,7 +911,7 @@ class _AdvisorDetailCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: () {},
+                  onPressed: onSelect,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFF5E1B9),
                     foregroundColor: const Color(0xFF2E3B67),
