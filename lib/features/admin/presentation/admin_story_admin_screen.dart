@@ -61,6 +61,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   bool _isSidebarExpanded = true;
   String _userSearchQuery = '';
   String _premiumSearchQuery = '';
+  AdvisorChatSummary? _selectedAdvisorChat;
 
   bool _isActive = true;
   bool _isSaving = false;
@@ -1353,89 +1354,120 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
   Widget _advisorChatsSection() {
     final service = AdvisorChatService();
-    return Column(
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionTitle('Danışman Mesajları'),
-        const SizedBox(height: 8),
-        StreamBuilder<List<AdvisorChatSummary>>(
-          stream: service.allChatsStream(),
-          builder: (context, snap) {
-            if (snap.hasError) {
-              return Text(
-                'Yüklenemedi: ${snap.error}',
-                style: const TextStyle(color: Colors.orangeAccent),
-              );
-            }
-            if (snap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final chats = snap.data ?? [];
-            if (chats.isEmpty) {
-              return const Text(
-                'Henüz kullanıcıdan gelen mesaj yok.',
-                style: TextStyle(color: Colors.white70),
-              );
-            }
-            return Column(
-              children: chats.map((chat) {
-                final updatedAt = chat.updatedAt;
-                final timeStr = updatedAt != null
-                    ? _formatDateTime(updatedAt)
-                    : '-';
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: chat.unreadByAdmin
-                          ? const Color(0xFF5C3EFF)
-                          : Colors.grey.shade700,
-                      child: Icon(
-                        chat.unreadByAdmin
-                            ? Icons.mark_email_unread
-                            : Icons.chat_bubble_outline,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                    title: Text(
-                      '${chat.userName.isNotEmpty ? chat.userName : 'Bilinmiyor'} → ${chat.advisorName}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      '${chat.consultationType}\n'
-                      '${chat.lastMessage.isNotEmpty ? chat.lastMessage : '(henüz mesaj yok)'}\n'
-                      '$timeStr',
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    isThreeLine: true,
-                    trailing: chat.unreadByAdmin
-                        ? Container(
-                            width: 10,
-                            height: 10,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF5C3EFF),
-                              shape: BoxShape.circle,
+        // ── Sol: sohbet listesi ──────────────────────────────────
+        SizedBox(
+          width: 340,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _sectionTitle('Danışman Mesajları'),
+              const SizedBox(height: 8),
+              StreamBuilder<List<AdvisorChatSummary>>(
+                stream: service.allChatsStream(),
+                builder: (context, snap) {
+                  if (snap.hasError) {
+                    return Text(
+                      'Yüklenemedi: ${snap.error}',
+                      style: const TextStyle(color: Colors.orangeAccent),
+                    );
+                  }
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final chats = snap.data ?? [];
+                  if (chats.isEmpty) {
+                    return const Text(
+                      'Henüz kullanıcıdan gelen mesaj yok.',
+                      style: TextStyle(color: Colors.white70),
+                    );
+                  }
+                  return Column(
+                    children: chats.map((chat) {
+                      final isSelected = _selectedAdvisorChat?.id == chat.id;
+                      final timeStr = chat.updatedAt != null
+                          ? _formatDateTime(chat.updatedAt)
+                          : '-';
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        color: isSelected
+                            ? const Color(0xFF0F3460)
+                            : null,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: isSelected
+                              ? const BorderSide(
+                                  color: Color(0xFFFFD700), width: 1.5)
+                              : BorderSide.none,
+                        ),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: chat.unreadByAdmin
+                                ? const Color(0xFF5C3EFF)
+                                : Colors.grey.shade700,
+                            child: Icon(
+                              chat.unreadByAdmin
+                                  ? Icons.mark_email_unread
+                                  : Icons.chat_bubble_outline,
+                              color: Colors.white,
+                              size: 18,
                             ),
-                          )
-                        : null,
-                    onTap: () => _openAdvisorChatDetail(chat),
-                  ),
-                );
-              }).toList(),
-            );
-          },
+                          ),
+                          title: Text(
+                            '${chat.userName.isNotEmpty ? chat.userName : 'Bilinmiyor'} → ${chat.advisorName}',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Text(
+                            '${chat.consultationType}\n'
+                            '${chat.lastMessage.isNotEmpty ? chat.lastMessage : '(henüz mesaj yok)'}\n'
+                            '$timeStr',
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          isThreeLine: true,
+                          trailing: chat.unreadByAdmin
+                              ? Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF5C3EFF),
+                                    shape: BoxShape.circle,
+                                  ),
+                                )
+                              : null,
+                          onTap: () => _openAdvisorChatDetail(chat),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
+        // ── Sağ: seçili sohbet detayı ────────────────────────────
+        if (_selectedAdvisorChat != null) ...
+          [
+            const SizedBox(width: 16),
+            Expanded(
+              child: _AdvisorChatDetailPanel(
+                key: ValueKey(_selectedAdvisorChat!.id),
+                chat: _selectedAdvisorChat!,
+                onClose: () =>
+                    setState(() => _selectedAdvisorChat = null),
+              ),
+            ),
+          ],
       ],
     );
   }
 
   void _openAdvisorChatDetail(AdvisorChatSummary chat) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => _AdvisorChatDetailDialog(chat: chat),
-    );
+    AdvisorChatService().markReadByAdmin(chat.id);
+    setState(() => _selectedAdvisorChat = chat);
   }
 
   Widget _supportSection() {
@@ -1973,25 +2005,24 @@ class _PieSlice {
 // ─────────────────────────────────────────────────────────────────────────────
 // Advisor Chat Detail Dialog
 // ─────────────────────────────────────────────────────────────────────────────
-class _AdvisorChatDetailDialog extends StatefulWidget {
-  const _AdvisorChatDetailDialog({required this.chat});
+class _AdvisorChatDetailPanel extends StatefulWidget {
+  const _AdvisorChatDetailPanel({
+    super.key,
+    required this.chat,
+    required this.onClose,
+  });
   final AdvisorChatSummary chat;
+  final VoidCallback onClose;
 
   @override
-  State<_AdvisorChatDetailDialog> createState() =>
-      _AdvisorChatDetailDialogState();
+  State<_AdvisorChatDetailPanel> createState() =>
+      _AdvisorChatDetailPanelState();
 }
 
-class _AdvisorChatDetailDialogState extends State<_AdvisorChatDetailDialog> {
+class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
   final _replyController = TextEditingController();
   final _scrollController = ScrollController();
   bool _sending = false;
-
-  @override
-  void initState() {
-    super.initState();
-    AdvisorChatService().markReadByAdmin(widget.chat.id);
-  }
 
   @override
   void dispose() {
@@ -2027,252 +2058,250 @@ class _AdvisorChatDetailDialogState extends State<_AdvisorChatDetailDialog> {
   @override
   Widget build(BuildContext context) {
     final profile = widget.chat.userProfile;
-    return Dialog(
-      backgroundColor: const Color(0xFF1A1A2E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      insetPadding: const EdgeInsets.all(24),
-      child: SizedBox(
-        width: 860,
-        height: 640,
-        child: Row(
-          children: [
-            // ── Sol panel: kullanıcı profili ──────────────────────
-            Container(
-              width: 240,
-              decoration: const BoxDecoration(
-                color: Color(0xFF16213E),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16),
-                ),
-              ),
-              padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Kullanıcı Profili',
-                      style: TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _profileRow('Ad Soyad', widget.chat.userName),
-                    _profileRow('E-posta', widget.chat.userEmail),
-                    if (profile['birthDate'] != null)
-                      _profileRow(
-                        'Doğum Tarihi',
-                        profile['birthDate'] as String,
-                      ),
-                    if (profile['zodiacSign'] != null)
-                      _profileRow('Burç', profile['zodiacSign'] as String),
-                    if (profile['moonSign'] != null)
-                      _profileRow('Ay Burcu', profile['moonSign'] as String),
-                    if (profile['risingSign'] != null)
-                      _profileRow('Yükselen', profile['risingSign'] as String),
-                    if (profile['gender'] != null)
-                      _profileRow('Cinsiyet', profile['gender'] as String),
-                    if (profile['job'] != null)
-                      _profileRow('Meslek', profile['job'] as String),
-                    if (profile['relationshipStatus'] != null)
-                      _profileRow(
-                        'İlişki Durumu',
-                        profile['relationshipStatus'] as String,
-                      ),
-                    if (profile['birthPlace'] != null)
-                      _profileRow(
-                        'Doğum Yeri',
-                        profile['birthPlace'] as String,
-                      ),
-                    const Divider(color: Colors.white24, height: 24),
-                    _profileRow('Danışman', widget.chat.advisorName),
-                    _profileRow('Konu', widget.chat.consultationType),
-                  ],
-                ),
+    return Container(
+      height: 620,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Sol: kullanıcı profili ──
+          Container(
+            width: 200,
+            decoration: const BoxDecoration(
+              color: Color(0xFF16213E),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
               ),
             ),
-            // ── Sağ panel: mesajlar + cevap ───────────────────────
-            Expanded(
+            padding: const EdgeInsets.all(14),
+            child: SingleChildScrollView(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Başlık
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF0F3460),
-                      borderRadius: BorderRadius.only(
-                        topRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${widget.chat.userName} — ${widget.chat.advisorName}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white70),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
+                  const Text(
+                    'Kullanıcı Profili',
+                    style: TextStyle(
+                      color: Color(0xFFFFD700),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Mesaj listesi
-                  Expanded(
-                    child: StreamBuilder<List<AdvisorChatMessage>>(
-                      stream: AdvisorChatService().messagesStream(
-                        widget.chat.id,
-                      ),
-                      builder: (ctx, snap) {
-                        if (snap.connectionState == ConnectionState.waiting) {
-                          return const Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFFFFD700),
-                            ),
-                          );
-                        }
-                        final messages = snap.data ?? [];
-                        if (messages.isEmpty) {
-                          return const Center(
-                            child: Text(
-                              'Henüz mesaj yok.',
-                              style: TextStyle(color: Colors.white54),
-                            ),
-                          );
-                        }
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (_scrollController.hasClients) {
-                            _scrollController.jumpTo(
-                              _scrollController.position.maxScrollExtent,
-                            );
-                          }
-                        });
-                        return ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(12),
-                          itemCount: messages.length,
-                          itemBuilder: (ctx, i) {
-                            final msg = messages[i];
-                            final isAdmin = msg.senderType == 'admin';
-                            return Align(
-                              alignment: isAdmin
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                constraints: const BoxConstraints(
-                                  maxWidth: 400,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isAdmin
-                                      ? const Color(0xFF0F3460)
-                                      : const Color(0xFF2A2A4A),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isAdmin ? 'Admin' : widget.chat.userName,
-                                      style: TextStyle(
-                                        color: isAdmin
-                                            ? const Color(0xFFFFD700)
-                                            : Colors.white70,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      msg.text,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  // Cevap kutusu
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF16213E),
-                      borderRadius: BorderRadius.only(
-                        bottomRight: Radius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _replyController,
-                            style: const TextStyle(color: Colors.white),
-                            maxLines: null,
-                            decoration: InputDecoration(
-                              hintText: 'Cevabınızı yazın...',
-                              hintStyle: const TextStyle(color: Colors.white38),
-                              filled: true,
-                              fillColor: const Color(0xFF1A1A2E),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                            ),
-                            onSubmitted: (_) => _sendReply(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _sending
-                            ? const SizedBox(
-                                width: 36,
-                                height: 36,
-                                child: CircularProgressIndicator(
-                                  color: Color(0xFFFFD700),
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : IconButton(
-                                icon: const Icon(
-                                  Icons.send,
-                                  color: Color(0xFFFFD700),
-                                ),
-                                onPressed: _sendReply,
-                              ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 10),
+                  _profileRow('Ad Soyad', widget.chat.userName),
+                  _profileRow('E-posta', widget.chat.userEmail),
+                  if (profile['birthDate'] != null)
+                    _profileRow(
+                        'Doğum Tarihi', profile['birthDate'] as String),
+                  if (profile['zodiacSign'] != null)
+                    _profileRow('Burç', profile['zodiacSign'] as String),
+                  if (profile['moonSign'] != null)
+                    _profileRow('Ay Burcu', profile['moonSign'] as String),
+                  if (profile['risingSign'] != null)
+                    _profileRow('Yükselen', profile['risingSign'] as String),
+                  if (profile['gender'] != null)
+                    _profileRow('Cinsiyet', profile['gender'] as String),
+                  if (profile['job'] != null)
+                    _profileRow('Meslek', profile['job'] as String),
+                  if (profile['relationshipStatus'] != null)
+                    _profileRow(
+                        'İlişki Durumu',
+                        profile['relationshipStatus'] as String),
+                  if (profile['birthPlace'] != null)
+                    _profileRow(
+                        'Doğum Yeri', profile['birthPlace'] as String),
+                  const Divider(color: Colors.white24, height: 20),
+                  _profileRow('Danışman', widget.chat.advisorName),
+                  _profileRow('Konu', widget.chat.consultationType),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          // ── Sağ: mesajlar + cevap ──
+          Expanded(
+            child: Column(
+              children: [
+                // Başlık
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0F3460),
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${widget.chat.userName} — ${widget.chat.advisorName}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon:
+                            const Icon(Icons.close, color: Colors.white70, size: 20),
+                        onPressed: widget.onClose,
+                      ),
+                    ],
+                  ),
+                ),
+                // Mesajlar
+                Expanded(
+                  child: StreamBuilder<List<AdvisorChatMessage>>(
+                    stream: AdvisorChatService()
+                        .messagesStream(widget.chat.id),
+                    builder: (ctx, snap) {
+                      if (snap.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                              color: Color(0xFFFFD700)),
+                        );
+                      }
+                      if (snap.hasError) {
+                        return Center(
+                          child: Text(
+                            'Hata: ${snap.error}',
+                            style: const TextStyle(
+                                color: Colors.orangeAccent),
+                          ),
+                        );
+                      }
+                      final messages = snap.data ?? [];
+                      if (messages.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'Henüz mesaj yok.',
+                            style: TextStyle(color: Colors.white54),
+                          ),
+                        );
+                      }
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_scrollController.hasClients) {
+                          _scrollController.jumpTo(
+                            _scrollController.position.maxScrollExtent,
+                          );
+                        }
+                      });
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: messages.length,
+                        itemBuilder: (ctx, i) {
+                          final msg = messages[i];
+                          final isAdmin = msg.senderType == 'admin';
+                          return Align(
+                            alignment: isAdmin
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              constraints:
+                                  const BoxConstraints(maxWidth: 360),
+                              decoration: BoxDecoration(
+                                color: isAdmin
+                                    ? const Color(0xFF0F3460)
+                                    : const Color(0xFF2A2A4A),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAdmin
+                                        ? 'Admin'
+                                        : widget.chat.userName,
+                                    style: TextStyle(
+                                      color: isAdmin
+                                          ? const Color(0xFFFFD700)
+                                          : Colors.white70,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    msg.text,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                // Cevap kutusu
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF16213E),
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _replyController,
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: null,
+                          decoration: InputDecoration(
+                            hintText: 'Cevabınızı yazın...',
+                            hintStyle:
+                                const TextStyle(color: Colors.white38),
+                            filled: true,
+                            fillColor: const Color(0xFF1A1A2E),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding:
+                                const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                          ),
+                          onSubmitted: (_) => _sendReply(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _sending
+                          ? const SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: CircularProgressIndicator(
+                                  color: Color(0xFFFFD700),
+                                  strokeWidth: 2),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.send,
+                                  color: Color(0xFFFFD700)),
+                              onPressed: _sendReply,
+                            ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2293,7 +2322,8 @@ class _AdvisorChatDetailDialogState extends State<_AdvisorChatDetailDialog> {
           ),
           Text(
             value.isEmpty ? '—' : value,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+            style:
+                const TextStyle(color: Colors.white, fontSize: 12),
           ),
         ],
       ),
