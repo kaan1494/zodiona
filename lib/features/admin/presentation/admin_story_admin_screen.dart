@@ -2113,9 +2113,28 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                   _profileRow('Ad Soyad', widget.chat.userName),
                   _profileRow('E-posta', widget.chat.userEmail),
                   if (profile['birthDate'] != null)
+                    _profileRow('Doğum Tarihi', () {
+                      final bd = profile['birthDate'];
+                      DateTime? dt;
+                      if (bd is Timestamp) {
+                        dt = bd.toDate();
+                      } else if (bd is DateTime) {
+                        dt = bd;
+                      } else if (bd is int) {
+                        dt = DateTime.fromMillisecondsSinceEpoch(bd);
+                      }
+                      if (dt == null) return '-';
+                      final d = dt.day.toString().padLeft(2, '0');
+                      final m = dt.month.toString().padLeft(2, '0');
+                      return '$d.$m.${dt.year}';
+                    }()),
+                  if (profile['birthTime'] != null &&
+                      profile['birthTime'].toString().isNotEmpty)
                     _profileRow(
-                      'Doğum Tarihi',
-                      profile['birthDate'].toString(),
+                      'Doğum Saati',
+                      profile['birthTimeUnknown'] == true
+                          ? 'Bilinmiyor'
+                          : profile['birthTime'].toString(),
                     ),
                   if (profile['zodiacSign'] != null)
                     _profileRow('Burç', profile['zodiacSign'].toString()),
