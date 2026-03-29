@@ -39,6 +39,7 @@ class AdvisorChatSummary {
     required this.consultationType,
     required this.lastMessage,
     required this.unreadByAdmin,
+    required this.unreadByUser,
     required this.updatedAt,
     required this.userProfile,
   });
@@ -56,6 +57,7 @@ class AdvisorChatSummary {
       consultationType: data['consultationType'] as String? ?? '',
       lastMessage: data['lastMessage'] as String? ?? '',
       unreadByAdmin: data['unreadByAdmin'] as bool? ?? false,
+      unreadByUser: data['unreadByUser'] as bool? ?? false,
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       userProfile: data['userProfile'] as Map<String, dynamic>? ?? {},
     );
@@ -69,6 +71,7 @@ class AdvisorChatSummary {
   final String consultationType;
   final String lastMessage;
   final bool unreadByAdmin;
+  final bool unreadByUser;
   final DateTime? updatedAt;
   final Map<String, dynamic> userProfile;
 }
@@ -170,6 +173,24 @@ class AdvisorChatService {
           (snap) =>
               snap.docs.map((d) => AdvisorChatSummary.fromDoc(d)).toList(),
         );
+  }
+
+  /// Kullanıcı: kendi konuşmalarını listele
+  Stream<List<AdvisorChatSummary>> userChatsStream(String userId) {
+    return _chatsRef
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snap) {
+          final list =
+              snap.docs.map((d) => AdvisorChatSummary.fromDoc(d)).toList();
+          list.sort((a, b) {
+            if (a.updatedAt == null && b.updatedAt == null) return 0;
+            if (a.updatedAt == null) return 1;
+            if (b.updatedAt == null) return -1;
+            return b.updatedAt!.compareTo(a.updatedAt!);
+          });
+          return list;
+        });
   }
 
   /// Admin: belirli chat'i okundu işaretle

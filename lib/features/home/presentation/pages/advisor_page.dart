@@ -22,7 +22,7 @@ class AdvisorPage extends StatefulWidget {
 class _AdvisorPageState extends State<AdvisorPage> {
   int _selectedTabIndex = 0;
 
-  static const List<String> _tabs = ['Danışmanlık', 'Raporlar', 'Yorumlarım'];
+  static const List<String> _tabs = ['Danışmanlık', 'Raporlar', 'Mesajlarım'];
 
   @override
   void initState() {
@@ -50,93 +50,65 @@ class _AdvisorPageState extends State<AdvisorPage> {
 
   static const List<_AdvisorData> _defaultAdvisors = [
     _AdvisorData(
-      name: 'Selin Acar',
+      name: 'Ece Bingör',
       priceText: '₺4.799,99',
       bio:
           'Semboller ve klasik astrolojiyi birleştirerek net, uygulanabilir danışmanlık akışı sunar. İlişki ve kariyer başlıklarında pratik yol haritası ile çalışır.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
-      name: 'Mina Duru',
+      name: 'Ebru Yıldırım',
       priceText: '₺4.799,99',
       bio:
           'Ruhsal farkındalık ve modern astrolojiyi birlikte kullanır. Duygusal döngüleri sade bir dille açıklayıp karar süreçlerinde destek olur.',
       imagePath: 'assets/admin_story_presets/story_06.png',
     ),
-    _AdvisorData(
-      name: 'Ece Narin',
-      priceText: '₺4.799,99',
-      bio:
-          'Doğum haritası odaklı derin analizlerde güçlüdür. Dönemsel etkileri görünür kılar, kişinin odağını ve önceliğini netleştirmeye yardımcı olur.',
-      imagePath: 'assets/admin_story_presets/story_07.png',
-    ),
   ];
 
   static const List<_AdvisorData> _horaryAdvisors = [
     _AdvisorData(
-      name: 'Zeynep Çalım',
+      name: 'Ece Bingör',
       priceText: '₺899,99',
       bio:
           '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
-      name: 'Selin Kasar',
+      name: 'Ebru Yıldırım',
       priceText: '₺899,99',
       bio:
           '1992 yılında İstanbul’da doğdu. YTÜ İngilizce Ekonomi mezunu olan Selin, denetim ve bankacılık deneyiminin ardından kişisel gelişim ve astrolojiye odaklanarak danışmanlık vermeye başladı.',
       imagePath: 'assets/admin_story_presets/story_06.png',
     ),
-    _AdvisorData(
-      name: 'Ebru Yetiş',
-      priceText: '₺899,99',
-      bio:
-          '“Yukarıda ne varsa aşağıda o vardır.” 1969 yılında İzmir’de doğdu. İstanbul Üniversitesi İngiliz Filolojisi mezunu; uzun yıllara yayılan akademik kariyerini astroloji danışmanlığı ile birleştirmektedir.',
-      imagePath: 'assets/admin_story_presets/story_07.png',
-    ),
-    _AdvisorData(
-      name: 'Çağla Çerçi',
-      priceText: '₺899,99',
-      bio:
-          'Küçük yaşlardan itibaren gökyüzüne duyduğu hayranlık, onu yıldızların dilini çözmeye yöneltti. Görsel İletişim Tasarımı mezunu olan Çağla, modern astroloji ile sezgisel yorumları birleştirir.',
-      imagePath: 'assets/admin_story_presets/story_08.png',
-    ),
   ];
 
   static const List<_AdvisorData> _birthChartAdvisors = [
     _AdvisorData(
-      name: 'Zeynep Çalım',
+      name: 'Ece Bingör',
       priceText: '₺1.799,99',
       bio:
           '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
-      name: 'Ebru Yetiş',
+      name: 'Ebru Yıldırım',
       priceText: '₺1.799,99',
       bio:
           '“Yukarıda ne varsa aşağıda o vardır.” 1969 yılında İzmir’de doğdu. İstanbul Üniversitesi İngiliz Filolojisi mezunu; uzun yıllara yayılan akademik kariyerini astroloji danışmanlığı ile birleştirmektedir.',
       imagePath: 'assets/admin_story_presets/story_07.png',
     ),
-    _AdvisorData(
-      name: 'Çağla Çerçi',
-      priceText: '₺1.799,99',
-      bio:
-          'Küçük yaşlardan itibaren gökyüzüne duyduğu hayranlık, onu yıldızların dilini çözmeye yöneltti. Görsel İletişim Tasarımı mezunu olan Çağla, modern astroloji ile sezgisel yorumları birleştirir.',
-      imagePath: 'assets/admin_story_presets/story_08.png',
-    ),
   ];
 
   static const List<_AdvisorData> _astrocartographyAdvisors = [
     _AdvisorData(
-      name: 'Zeynep Çalım',
+      name: 'Ece Bingör',
       priceText: '₺1.399,00',
       bio:
           '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
-      name: 'Ebru Yetiş',
+      name: 'Ebru Yıldırım',
       priceText: '₺1.399,00',
       bio:
           '“Yukarıda ne varsa aşağıda o vardır.” 1969 yılında İzmir’de doğdu. İstanbul Üniversitesi İngiliz Filolojisi mezunu; uzun yıllara yayılan akademik kariyerini astroloji danışmanlığı ile birleştirmektedir.',
@@ -146,14 +118,14 @@ class _AdvisorPageState extends State<AdvisorPage> {
 
   static const List<_AdvisorData> _electionAdvisors = [
     _AdvisorData(
-      name: 'Zeynep Çalım',
+      name: 'Ece Bingör',
       priceText: '₺1.399,00',
       bio:
           '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
-      name: 'Çağla Çerçi',
+      name: 'Ebru Yıldırım',
       priceText: '₺1.399,00',
       bio:
           'Küçük yaşlardan itibaren gökyüzüne duyduğu hayranlık, onu yıldızların dilini çözmeye yöneltti. Görsel İletişim Tasarımı mezunu olan Çağla, modern astroloji ile sezgisel yorumları birleştirir.',
@@ -316,7 +288,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
                         onCardTap: _openConsultationDetail,
                       ),
                       1 => const _ReportsTab(key: ValueKey<int>(1)),
-                      _ => const _CommentsTab(key: ValueKey<int>(2)),
+                      _ => _MyChatsTab(key: const ValueKey<int>(2)),
                     },
                   ),
                 ),
@@ -530,28 +502,164 @@ class _ReportsTab extends StatelessWidget {
   }
 }
 
-class _CommentsTab extends StatelessWidget {
-  const _CommentsTab({super.key});
+class _MyChatsTab extends StatelessWidget {
+  const _MyChatsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topCenter,
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      return const Center(
+        child: Text(
+          'Oturum açılmamış.',
+          style: TextStyle(color: Colors.white70),
+        ),
+      );
+    }
+    return StreamBuilder<List<AdvisorChatSummary>>(
+      stream: AdvisorChatService().userChatsStream(uid),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFFFD700)),
+          );
+        }
+        if (snap.hasError) {
+          return Center(
+            child: Text(
+              'Hata: ${snap.error}',
+              style: const TextStyle(color: Colors.orangeAccent),
+            ),
+          );
+        }
+        final chats = snap.data ?? [];
+        if (chats.isEmpty) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF454B86).withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0x80C6CEEF)),
+              ),
+              child: Text(
+                'Henüz bir danışmanla iletişim kurmadınız.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.84),
+                  height: 1.26,
+                ),
+              ),
+            ),
+          );
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: chats.length,
+          itemBuilder: (context, i) {
+            final chat = chats[i];
+            return _ChatSummaryCard(chat: chat);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ChatSummaryCard extends StatelessWidget {
+  const _ChatSummaryCard({required this.chat});
+  final AdvisorChatSummary chat;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AdvisorChatPage(
+              chatId: chat.id,
+              advisorName: chat.advisorName,
+              consultationType: chat.consultationType,
+              advisorImagePath: 'assets/admin_story_presets/story_05.png',
+            ),
+          ),
+        );
+      },
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: const Color(0xFF454B86).withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0x80C6CEEF)),
-        ),
-        child: Text(
-          'Şu anda aktif bir soru veya satın aldığın bir rapor görünmüyor.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.white.withValues(alpha: 0.84),
-            height: 1.26,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: chat.unreadByUser
+                ? const Color(0xFFFFD700)
+                : const Color(0x80C6CEEF),
+            width: chat.unreadByUser ? 1.5 : 1,
           ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: const Color(0xFF5C3EFF).withValues(alpha: 0.5),
+              child: Icon(
+                chat.unreadByUser
+                    ? Icons.mark_email_unread
+                    : Icons.chat_bubble_outline,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    chat.advisorName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    chat.consultationType,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 11,
+                    ),
+                  ),
+                  if (chat.lastMessage.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      chat.lastMessage,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (chat.unreadByUser)
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFD700),
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
         ),
       ),
     );
