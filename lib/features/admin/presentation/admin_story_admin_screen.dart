@@ -2113,24 +2113,27 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                   _profileRow('Ad Soyad', widget.chat.userName),
                   _profileRow('E-posta', widget.chat.userEmail),
                   if (profile['birthDate'] != null)
-                    _profileRow('Doğum Tarihi', profile['birthDate'] as String),
+                    _profileRow(
+                      'Doğum Tarihi',
+                      profile['birthDate'].toString(),
+                    ),
                   if (profile['zodiacSign'] != null)
-                    _profileRow('Burç', profile['zodiacSign'] as String),
+                    _profileRow('Burç', profile['zodiacSign'].toString()),
                   if (profile['moonSign'] != null)
-                    _profileRow('Ay Burcu', profile['moonSign'] as String),
+                    _profileRow('Ay Burcu', profile['moonSign'].toString()),
                   if (profile['risingSign'] != null)
-                    _profileRow('Yükselen', profile['risingSign'] as String),
+                    _profileRow('Yükselen', profile['risingSign'].toString()),
                   if (profile['gender'] != null)
-                    _profileRow('Cinsiyet', profile['gender'] as String),
+                    _profileRow('Cinsiyet', profile['gender'].toString()),
                   if (profile['job'] != null)
-                    _profileRow('Meslek', profile['job'] as String),
+                    _profileRow('Meslek', profile['job'].toString()),
                   if (profile['relationshipStatus'] != null)
                     _profileRow(
                       'İlişki Durumu',
-                      profile['relationshipStatus'] as String,
+                      profile['relationshipStatus'].toString(),
                     ),
                   if (profile['birthPlace'] != null)
-                    _profileRow('Doğum Yeri', profile['birthPlace'] as String),
+                    _profileRow('Doğum Yeri', profile['birthPlace'].toString()),
                   const Divider(color: Colors.white24, height: 20),
                   _profileRow('Danışman', widget.chat.advisorName),
                   _profileRow('Konu', widget.chat.consultationType),
