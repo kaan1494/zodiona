@@ -177,20 +177,16 @@ class AdvisorChatService {
 
   /// Kullanıcı: kendi konuşmalarını listele
   Stream<List<AdvisorChatSummary>> userChatsStream(String userId) {
-    return _chatsRef
-        .where('userId', isEqualTo: userId)
-        .snapshots()
-        .map((snap) {
-          final list =
-              snap.docs.map((d) => AdvisorChatSummary.fromDoc(d)).toList();
-          list.sort((a, b) {
-            if (a.updatedAt == null && b.updatedAt == null) return 0;
-            if (a.updatedAt == null) return 1;
-            if (b.updatedAt == null) return -1;
-            return b.updatedAt!.compareTo(a.updatedAt!);
-          });
-          return list;
-        });
+    return _chatsRef.where('userId', isEqualTo: userId).snapshots().map((snap) {
+      final list = snap.docs.map((d) => AdvisorChatSummary.fromDoc(d)).toList();
+      list.sort((a, b) {
+        if (a.updatedAt == null && b.updatedAt == null) return 0;
+        if (a.updatedAt == null) return 1;
+        if (b.updatedAt == null) return -1;
+        return b.updatedAt!.compareTo(a.updatedAt!);
+      });
+      return list;
+    });
   }
 
   /// Admin: belirli chat'i okundu işaretle

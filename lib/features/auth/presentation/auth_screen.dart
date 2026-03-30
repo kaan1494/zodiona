@@ -659,9 +659,7 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const AdminAccessGateScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const AdminAccessGateScreen()),
             ),
             child: Text(
               'Admin Girişi',
@@ -692,9 +690,7 @@ class _AuthScreenState extends State<AuthScreen> {
         const SizedBox(height: 8),
         TextButton(
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AdminAccessGateScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const AdminAccessGateScreen()),
           ),
           child: Text(
             'Admin Girişi',

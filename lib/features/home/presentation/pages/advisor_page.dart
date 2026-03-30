@@ -53,15 +53,15 @@ class _AdvisorPageState extends State<AdvisorPage> {
       name: 'Ece Bingör',
       priceText: '₺4.799,99',
       bio:
-          'Semboller ve klasik astrolojiyi birleştirerek net, uygulanabilir danışmanlık akışı sunar. İlişki ve kariyer başlıklarında pratik yol haritası ile çalışır.',
-      imagePath: 'assets/admin_story_presets/story_05.png',
+          'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
+      imagePath: 'assets/danısman/ecebingör.jpg',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺4.799,99',
       bio:
-          'Ruhsal farkındalık ve modern astrolojiyi birlikte kullanır. Duygusal döngüleri sade bir dille açıklayıp karar süreçlerinde destek olur.',
-      imagePath: 'assets/admin_story_presets/story_06.png',
+          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
+      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
@@ -70,15 +70,15 @@ class _AdvisorPageState extends State<AdvisorPage> {
       name: 'Ece Bingör',
       priceText: '₺899,99',
       bio:
-          '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
-      imagePath: 'assets/admin_story_presets/story_05.png',
+          'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
+      imagePath: 'assets/danısman/ecebingör.jpg',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺899,99',
       bio:
-          '1992 yılında İstanbul’da doğdu. YTÜ İngilizce Ekonomi mezunu olan Selin, denetim ve bankacılık deneyiminin ardından kişisel gelişim ve astrolojiye odaklanarak danışmanlık vermeye başladı.',
-      imagePath: 'assets/admin_story_presets/story_06.png',
+          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
+      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
@@ -87,15 +87,15 @@ class _AdvisorPageState extends State<AdvisorPage> {
       name: 'Ece Bingör',
       priceText: '₺1.799,99',
       bio:
-          '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
-      imagePath: 'assets/admin_story_presets/story_05.png',
+          'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
+      imagePath: 'assets/danısman/ecebingör.jpg',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺1.799,99',
       bio:
-          '“Yukarıda ne varsa aşağıda o vardır.” 1969 yılında İzmir’de doğdu. İstanbul Üniversitesi İngiliz Filolojisi mezunu; uzun yıllara yayılan akademik kariyerini astroloji danışmanlığı ile birleştirmektedir.',
-      imagePath: 'assets/admin_story_presets/story_07.png',
+          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
+      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
@@ -104,14 +104,14 @@ class _AdvisorPageState extends State<AdvisorPage> {
       name: 'Ece Bingör',
       priceText: '₺1.399,00',
       bio:
-          '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
+          'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺1.399,00',
       bio:
-          '“Yukarıda ne varsa aşağıda o vardır.” 1969 yılında İzmir’de doğdu. İstanbul Üniversitesi İngiliz Filolojisi mezunu; uzun yıllara yayılan akademik kariyerini astroloji danışmanlığı ile birleştirmektedir.',
+          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
       imagePath: 'assets/admin_story_presets/story_07.png',
     ),
   ];
@@ -121,14 +121,14 @@ class _AdvisorPageState extends State<AdvisorPage> {
       name: 'Ece Bingör',
       priceText: '₺1.399,00',
       bio:
-          '1977 yılında Antakya’da doğdu. Küçük yaşlardan beri astroloji kitaplarına merak saldı; 2012 yılında katıldığı seminerlerden sonra astrolojiyi profesyonel çalışma alanına taşıdı.',
+          'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/admin_story_presets/story_05.png',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺1.399,00',
       bio:
-          'Küçük yaşlardan itibaren gökyüzüne duyduğu hayranlık, onu yıldızların dilini çözmeye yöneltti. Görsel İletişim Tasarımı mezunu olan Çağla, modern astroloji ile sezgisel yorumları birleştirir.',
+          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
       imagePath: 'assets/admin_story_presets/story_08.png',
     ),
   ];
