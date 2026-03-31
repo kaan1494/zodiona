@@ -2589,7 +2589,7 @@ class _WeeklyHoroscopeMgmtSectionState
               controller: _bodyController,
               style: const TextStyle(color: Colors.white, height: 1.4),
               maxLines: 8,
-              maxLength: 1200,
+              maxLength: 5000,
               decoration: InputDecoration(
                 hintText: 'Haftalık genel yorumu buraya yazın...',
                 hintStyle: const TextStyle(color: Colors.white38),
