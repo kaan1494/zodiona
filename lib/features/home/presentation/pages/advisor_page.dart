@@ -105,14 +105,14 @@ class _AdvisorPageState extends State<AdvisorPage> {
       priceText: '₺1.399,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
-      imagePath: 'assets/admin_story_presets/story_05.png',
+      imagePath: 'assets/danısman/ecebingör.jpg',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺1.399,00',
       bio:
           'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/admin_story_presets/story_07.png',
+      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
@@ -122,14 +122,14 @@ class _AdvisorPageState extends State<AdvisorPage> {
       priceText: '₺1.399,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
-      imagePath: 'assets/admin_story_presets/story_05.png',
+      imagePath: 'assets/danısman/ecebingör.jpg',
     ),
     _AdvisorData(
       name: 'Ebru Yıldırım',
       priceText: '₺1.399,00',
       bio:
           'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/admin_story_presets/story_08.png',
+      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
@@ -317,9 +317,9 @@ class _AdvisorTabs extends StatelessWidget {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFF121F61),
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x5EC2CCF8)),
+        border: Border.all(color: Colors.transparent),
       ),
       child: Row(
         children: List.generate(tabs.length, (index) {
@@ -378,9 +378,9 @@ class _ConsultationTab extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF494E85).withValues(alpha: 0.88),
+              color: const Color(0xFF494E85).withValues(alpha: 0.42),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0x5AAAB4E7)),
+              border: Border.all(color: const Color(0x40AAB4E7)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,12 +592,12 @@ class _ChatSummaryCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF454B86).withValues(alpha: 0.75),
+          color: const Color(0xFF2A1650).withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: chat.unreadByUser
                 ? const Color(0xFFFFD700)
-                : const Color(0x80C6CEEF),
+                : const Color(0x509B7FD4),
             width: chat.unreadByUser ? 1.5 : 1,
           ),
         ),
@@ -605,7 +605,7 @@ class _ChatSummaryCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: const Color(0xFF5C3EFF).withValues(alpha: 0.5),
+              backgroundColor: const Color(0xFF6B2FA0).withValues(alpha: 0.55),
               child: Icon(
                 chat.unreadByUser
                     ? Icons.mark_email_unread
@@ -957,9 +957,9 @@ class _AdvisorDetailCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF4A4F87).withValues(alpha: 0.9),
+        color: const Color(0xFF4A4F87).withValues(alpha: 0.40),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x6FBCC5EC)),
+        border: Border.all(color: const Color(0x44BCC5EC)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -19,6 +19,7 @@ enum _AdminPanelTab {
   support,
   premium,
   advisorChats,
+  weeklyHoroscope,
 }
 
 class AdminStoryAdminScreen extends StatefulWidget {
@@ -257,6 +258,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return 'Admin - Premium Kullanıcılar';
       case _AdminPanelTab.advisorChats:
         return 'Admin - Danışman Mesajları';
+      case _AdminPanelTab.weeklyHoroscope:
+        return 'Admin - Haftalık Yorumlar';
     }
   }
 
@@ -594,6 +597,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             title: 'Danışman Mesajları',
             tab: _AdminPanelTab.advisorChats,
           ),
+          _buildNavItem(
+            icon: Icons.calendar_today_outlined,
+            title: 'Haftalık Yorumlar',
+            tab: _AdminPanelTab.weeklyHoroscope,
+          ),
         ],
       ),
     );
@@ -662,6 +670,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return _usersSection(premiumOnly: true);
       case _AdminPanelTab.advisorChats:
         return _advisorChatsSection();
+      case _AdminPanelTab.weeklyHoroscope:
+        return const _WeeklyHoroscopeMgmtSection();
     }
   }
 
@@ -2368,6 +2378,271 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
             value.isEmpty ? '—' : value,
             style: const TextStyle(color: Colors.white, fontSize: 12),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Haftalık Genel Yorum Yönetim Bölümü
+// ─────────────────────────────────────────────────────────────
+
+class _WeeklyHoroscopeMgmtSection extends StatefulWidget {
+  const _WeeklyHoroscopeMgmtSection();
+
+  @override
+  State<_WeeklyHoroscopeMgmtSection> createState() =>
+      _WeeklyHoroscopeMgmtSectionState();
+}
+
+class _WeeklyHoroscopeMgmtSectionState
+    extends State<_WeeklyHoroscopeMgmtSection> {
+  static const List<String> _signs = [
+    'Koç',
+    'Boğa',
+    'İkizler',
+    'Yengeç',
+    'Aslan',
+    'Başak',
+    'Terazi',
+    'Akrep',
+    'Yay',
+    'Oğlak',
+    'Kova',
+    'Balık',
+  ];
+
+  String _selectedSign = 'Koç';
+  bool _isLoading = false;
+  bool _isSaving = false;
+
+  final _titleController = TextEditingController();
+  final _bodyController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSign(_selectedSign);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSign(String sign) async {
+    setState(() => _isLoading = true);
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('weekly_horoscopes_general')
+          .doc(sign)
+          .get();
+      final data = doc.data();
+      _titleController.text = (data?['title'] as String?) ?? '';
+      _bodyController.text = (data?['body'] as String?) ?? '';
+    } catch (_) {
+      _titleController.clear();
+      _bodyController.clear();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _save() async {
+    final title = _titleController.text.trim();
+    final body = _bodyController.text.trim();
+    if (title.isEmpty || body.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Başlık ve yorum boş olamaz.')),
+      );
+      return;
+    }
+    setState(() => _isSaving = true);
+    try {
+      await FirebaseFirestore.instance
+          .collection('weekly_horoscopes_general')
+          .doc(_selectedSign)
+          .set({
+            'title': title,
+            'body': body,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$_selectedSign haftalık yorumu kaydedildi.'),
+            backgroundColor: const Color(0xFF3B1F8C),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kayıt hatası: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Haftalık Genel Yorum Yönetimi',
+            style: TextStyle(
+              color: Color(0xFFF2D28E),
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Bir burç seçin, başlık ve yorumu yazın, kaydedin. '
+            'Uygulama bu burca sahip kullanıcılara haftalık genel yorum olarak bu metni gösterir.',
+            style: TextStyle(color: Colors.white60, fontSize: 13),
+          ),
+          const SizedBox(height: 20),
+          // Burç seçim grid
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _signs.map((sign) {
+              final isSelected = sign == _selectedSign;
+              return ChoiceChip(
+                label: Text(sign),
+                selected: isSelected,
+                onSelected: (_) {
+                  setState(() => _selectedSign = sign);
+                  _loadSign(sign);
+                },
+                selectedColor: const Color(0xFFF2D28E),
+                backgroundColor: const Color(0xFF2A1E5C),
+                labelStyle: TextStyle(
+                  color: isSelected ? const Color(0xFF1F1344) : Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFFF2D28E) : Colors.white24,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 24),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            // Başlık alanı
+            const Text(
+              'Başlık',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _titleController,
+              style: const TextStyle(color: Colors.white),
+              maxLength: 80,
+              decoration: InputDecoration(
+                hintText: 'Örn: Koç haftalık genel yorum',
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: const Color(0xFF1E1550),
+                counterStyle: const TextStyle(color: Colors.white38),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFF2D28E)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Yorum alanı
+            const Text(
+              'Yorum',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _bodyController,
+              style: const TextStyle(color: Colors.white, height: 1.4),
+              maxLines: 8,
+              maxLength: 1200,
+              decoration: InputDecoration(
+                hintText: 'Haftalık genel yorumu buraya yazın...',
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: const Color(0xFF1E1550),
+                counterStyle: const TextStyle(color: Colors.white38),
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFF2D28E)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF2D28E),
+                  foregroundColor: const Color(0xFF1F1344),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Color(0xFF1F1344)),
+                        ),
+                      )
+                    : const Text(
+                        'Kaydet',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ],
       ),
     );

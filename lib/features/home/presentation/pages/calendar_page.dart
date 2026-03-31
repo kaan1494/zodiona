@@ -476,13 +476,13 @@ class _DailyMoonDetailPageState extends State<_DailyMoonDetailPage> {
     final dayData = _buildDailyTexts(_selectedDate);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030C35),
+      backgroundColor: const Color(0xFF0D0B2A),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF02103E), Color(0xFF02153E), Color(0xFF031229)],
+            colors: [Color(0xFF1A1040), Color(0xFF130D35), Color(0xFF0D0B2A)],
           ),
         ),
         child: SafeArea(
@@ -798,12 +798,54 @@ class _MoonDiskPainter extends CustomPainter {
   final double illumination;
   final bool waxing;
 
+  /// Ay'ın aydınlanmayan (karanlık) tarafının yolunu oluşturur.
+  /// Daire yayı + terminatör elips yayı birleşiminden oluşur.
+  Path _buildDarkPath(Offset center, double radius) {
+    final circleRect = Rect.fromCircle(center: center, radius: radius);
+    // Terminatör elipsinin yatay yarı ekseni; hilal→0.5→dolunay arası değişir
+    final a = math.max(0.5, radius * (1.0 - 2.0 * illumination).abs());
+    final terminatorRect = Rect.fromCenter(
+      center: Offset(center.dx, center.dy),
+      width: a * 2,
+      height: radius * 2.04,
+    );
+
+    final path = Path();
+    if (waxing) {
+      // Karanlık taraf SOL — dairenin sol yayı (saat yönü tersine, -π)
+      path.arcTo(circleRect, -math.pi / 2, -math.pi, false);
+      if (illumination <= 0.5) {
+        // Hilal: terminatör sağa kıvrılır (saç yayı saat yönü tersine)
+        path.arcTo(terminatorRect, math.pi / 2, -math.pi, false);
+      } else {
+        // Şişkin: terminatör sola kıvrılır (saat yönüyle)
+        path.arcTo(terminatorRect, math.pi / 2, math.pi, false);
+      }
+    } else {
+      // Karanlık taraf SAĞ (küçülen) — dairenin sağ yayı (saat yönünde, +π)
+      path.arcTo(circleRect, -math.pi / 2, math.pi, false);
+      if (illumination <= 0.5) {
+        // Hilal: terminatör sola kıvrılır (saat yönüyle)
+        path.arcTo(terminatorRect, math.pi / 2, math.pi, false);
+      } else {
+        // Şişkin: terminatör sağa kıvrılır (saat yönü tersine)
+        path.arcTo(terminatorRect, math.pi / 2, -math.pi, false);
+      }
+    }
+    path.close();
+    return path;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final center = rect.center;
     final radius = size.shortestSide / 2;
 
+    // BlendMode.clear'ın çalışabilmesi için ayrı bir katman açıyoruz
+    canvas.saveLayer(rect, Paint());
+
+    // Ay yüzey dokusu
     final base = Paint()
       ..shader = const RadialGradient(
         center: Alignment(-0.28, -0.22),
@@ -813,6 +855,7 @@ class _MoonDiskPainter extends CustomPainter {
       ).createShader(rect);
     canvas.drawCircle(center, radius, base);
 
+    // Kraterler
     final craterRandom = math.Random(9327);
     for (var i = 0; i < 64; i++) {
       final angle = craterRandom.nextDouble() * 2 * math.pi;
@@ -839,6 +882,7 @@ class _MoonDiskPainter extends CustomPainter {
       canvas.drawCircle(craterCenter, craterR * 0.95, rim);
     }
 
+    // Kenar karartma (limb darkening)
     final limbDarkening = Paint()
       ..shader = RadialGradient(
         center: const Alignment(0.1, 0.1),
@@ -848,36 +892,32 @@ class _MoonDiskPainter extends CustomPainter {
       ).createShader(rect);
     canvas.drawCircle(center, radius, limbDarkening);
 
-    final litWidth = size.width * illumination;
-    final shadowWidth = size.width - litWidth;
-    if (shadowWidth > 0.0) {
-      final shadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.78)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    // Karanlık tarafı şeffaf yaparak arka planın görünmesini sağla
+    if (illumination < 0.001) {
+      // Yeni Ay: tüm disk karanlık
+      canvas.drawCircle(center, radius, Paint()..blendMode = BlendMode.clear);
+    } else if (illumination < 0.999) {
+      final darkPath = _buildDarkPath(center, radius);
+      canvas.drawPath(darkPath, Paint()..blendMode = BlendMode.clear);
 
-      final hardShadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.58)
-        ..style = PaintingStyle.fill;
-
-      final shadowRect = waxing
-          ? Rect.fromLTWH(0, 0, shadowWidth, size.height)
-          : Rect.fromLTWH(
-              size.width - shadowWidth,
-              0,
-              shadowWidth,
-              size.height,
-            );
-      canvas.drawRect(shadowRect, hardShadowPaint);
-
-      final terminatorX = waxing ? shadowWidth : size.width - shadowWidth;
-      final curveRect = Rect.fromCenter(
-        center: Offset(terminatorX, center.dy),
-        width: radius * 0.9,
-        height: size.height * 1.02,
+      // Terminatör boyunca yumuşak parıltı (geçişi pürüzsüzleştirir)
+      final a = math.max(0.5, radius * (1.0 - 2.0 * illumination).abs());
+      final terminatorRect = Rect.fromCenter(
+        center: Offset(center.dx, center.dy),
+        width: a * 2,
+        height: radius * 2.04,
       );
-      canvas.drawOval(curveRect, shadowPaint);
+      canvas.drawOval(
+        terminatorRect,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = radius * 0.10
+          ..color = Colors.white.withValues(alpha: 0.22)
+          ..maskFilter = MaskFilter.blur(BlurStyle.normal, radius * 0.07),
+      );
     }
 
+    // Speküler parlaklık
     final specular = Paint()
       ..shader = const RadialGradient(
         center: Alignment(-0.5, -0.5),
@@ -885,6 +925,8 @@ class _MoonDiskPainter extends CustomPainter {
         colors: [Color(0x55FFFFFF), Color(0x00FFFFFF)],
       ).createShader(rect);
     canvas.drawCircle(center, radius, specular);
+
+    canvas.restore();
   }
 
   @override
@@ -1068,17 +1110,17 @@ String _categoryIcon(_DetailCategory category) {
 List<Color> _cardScheme(_DetailCategory category) {
   switch (category) {
     case _DetailCategory.beauty:
-      return const [Color(0xFF647FB4), Color(0xFF506A98), Color(0xFF2B2D73)];
+      return const [Color(0xCC3D2060), Color(0xBB2A1650), Color(0xAA1C1040)];
     case _DetailCategory.dream:
-      return const [Color(0xFFB776C6), Color(0xFF9555A8), Color(0xFF5C3D81)];
+      return const [Color(0xCC5A1E7A), Color(0xBB421560), Color(0xAA2B0E45)];
     case _DetailCategory.career:
-      return const [Color(0xFF6783B7), Color(0xFF4F699B), Color(0xFF2C3A6A)];
+      return const [Color(0xCC1E2B6A), Color(0xBB162055), Color(0xAA0E1640)];
     case _DetailCategory.money:
-      return const [Color(0xFFBB7BC8), Color(0xFF9C60B0), Color(0xFF654885)];
+      return const [Color(0xCC5E1A7A), Color(0xBB461260), Color(0xAA2E0D45)];
     case _DetailCategory.health:
-      return const [Color(0xFF7D72C1), Color(0xFF5E4F9E), Color(0xFF423A82)];
+      return const [Color(0xCC2A1E7A), Color(0xBB1E1660), Color(0xAA140E45)];
     case _DetailCategory.intimacy:
-      return const [Color(0xFF6682B4), Color(0xFF4C679A), Color(0xFF2C3B6D)];
+      return const [Color(0xCC6A1A5A), Color(0xBB501045), Color(0xAA350B32)];
   }
 }
 

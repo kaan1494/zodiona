@@ -22,7 +22,7 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030B2A),
+      backgroundColor: const Color(0xFF0A0520),
       body: Stack(
         children: [
           Positioned.fill(
@@ -39,7 +39,7 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xAA04184A), Color(0xCC04133C)],
+                  colors: [Color(0xAA1A0848), Color(0xCC130535)],
                 ),
               ),
             ),
@@ -286,8 +286,8 @@ class _BirthChartInfoCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF131B5A).withValues(alpha: 0.92),
-              const Color(0xFF07133F).withValues(alpha: 0.92),
+              const Color(0xFF3D1E7A).withValues(alpha: 0.92),
+              const Color(0xFF2E1568).withValues(alpha: 0.92),
             ],
           ),
           border: Border.all(color: Colors.white10),
@@ -352,7 +352,7 @@ class _GlyphAvatar extends StatelessWidget {
           colors: [
             color.withValues(alpha: 0.96),
             color.withValues(alpha: 0.22),
-            const Color(0xFF060E3A),
+            const Color(0xFF1E0850),
           ],
           stops: const [0.0, 0.58, 1.0],
         ),
@@ -396,7 +396,7 @@ class _BirthChartContentPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030B2A),
+      backgroundColor: const Color(0xFF0A0520),
       body: Stack(
         children: [
           Positioned.fill(
@@ -413,7 +413,7 @@ class _BirthChartContentPage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xAA04184A), Color(0xCC04133C)],
+                  colors: [Color(0xAA1A0848), Color(0xCC130535)],
                 ),
               ),
             ),
@@ -466,7 +466,7 @@ class _BirthChartContentPage extends StatelessWidget {
                                 colors: [
                                   color.withValues(alpha: 0.95),
                                   color.withValues(alpha: 0.2),
-                                  const Color(0xFF060E3A),
+                                  const Color(0xFF1E0850),
                                 ],
                                 stops: const [0.0, 0.55, 1.0],
                               ),
@@ -512,8 +512,8 @@ class _BirthChartContentPage extends StatelessWidget {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                const Color(0xFF131B5A).withValues(alpha: 0.88),
-                                const Color(0xFF07133F).withValues(alpha: 0.88),
+                                const Color(0xFF3D1E7A).withValues(alpha: 0.88),
+                                const Color(0xFF2E1568).withValues(alpha: 0.88),
                               ],
                             ),
                             border: Border.all(color: Colors.white10),
@@ -550,7 +550,7 @@ class _NatalChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2 - 8;
 
-    final outerFill = Paint()..color = const Color(0xFF11284E);
+    final outerFill = Paint()..color = const Color(0xFF1A0848);
     final innerFill = Paint()..color = const Color(0xFFF2F3F7);
     final border = Paint()
       ..style = PaintingStyle.stroke

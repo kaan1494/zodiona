@@ -61,7 +61,7 @@ class _AdvisorChatPageState extends State<AdvisorChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030B2A),
+      backgroundColor: const Color(0xFF0A0520),
       body: Stack(
         children: [
           Positioned.fill(
@@ -77,7 +77,7 @@ class _AdvisorChatPageState extends State<AdvisorChatPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xCC04184A), Color(0xF004133C)],
+                  colors: [Color(0xCC1A0848), Color(0xF0130535)],
                 ),
               ),
             ),

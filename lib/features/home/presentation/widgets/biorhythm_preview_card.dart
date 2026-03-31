@@ -69,7 +69,7 @@ class BiorhythmPreviewCard extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xB751397E), Color(0xB53C2572)],
+                  colors: [Color(0xCC3D1E7A), Color(0xB32E1568)],
                 ),
                 border: Border.all(color: Colors.white24),
               ),

@@ -96,6 +96,59 @@ class _PeriodicHoroscopeSectionState extends State<PeriodicHoroscopeSection> {
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Row(
                     children: [
+                      if (_selectedPeriod == HoroscopePeriod.weekly)
+                        StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                          stream: FirebaseFirestore.instance
+                              .collection('weekly_horoscopes_general')
+                              .doc(sign)
+                              .snapshots(),
+                          builder: (ctx, adminSnap) {
+                            final adminData = adminSnap.data?.data();
+                            final adminTitle = adminData?['title'] as String?;
+                            final adminBody = adminData?['body'] as String?;
+                            final hasAdminContent =
+                                (adminTitle?.isNotEmpty ?? false) &&
+                                (adminBody?.isNotEmpty ?? false);
+                            final displayTitle = hasAdminContent
+                                ? adminTitle!
+                                : general.title;
+                            final displayBody = hasAdminContent
+                                ? adminBody!
+                                : general.body;
+                            return _PeriodCommentCard(
+                              width: cardWidth,
+                              height: _cardHeight,
+                              chipText: 'Genel',
+                              dateText: dateLabel,
+                              title: displayTitle,
+                              body: displayBody,
+                              trailingIcon: Icons.public,
+                              onTap: () => _openFullCommentSheet(
+                                title: displayTitle,
+                                body: displayBody,
+                                chipText: 'Genel',
+                                dateText: dateLabel,
+                              ),
+                            );
+                          },
+                        )
+                      else
+                        _PeriodCommentCard(
+                          width: cardWidth,
+                          height: _cardHeight,
+                          chipText: 'Genel',
+                          dateText: dateLabel,
+                          title: general.title,
+                          body: general.body,
+                          trailingIcon: Icons.public,
+                          onTap: () => _openFullCommentSheet(
+                            title: general.title,
+                            body: general.body,
+                            chipText: 'Genel',
+                            dateText: dateLabel,
+                          ),
+                        ),
+                      const SizedBox(width: 12),
                       _PeriodCommentCard(
                         width: cardWidth,
                         height: _cardHeight,
@@ -108,22 +161,6 @@ class _PeriodicHoroscopeSectionState extends State<PeriodicHoroscopeSection> {
                           title: personal.title,
                           body: personal.body,
                           chipText: 'Sana Özel',
-                          dateText: dateLabel,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _PeriodCommentCard(
-                        width: cardWidth,
-                        height: _cardHeight,
-                        chipText: 'Genel',
-                        dateText: dateLabel,
-                        title: general.title,
-                        body: general.body,
-                        trailingIcon: Icons.public,
-                        onTap: () => _openFullCommentSheet(
-                          title: general.title,
-                          body: general.body,
-                          chipText: 'Genel',
                           dateText: dateLabel,
                         ),
                       ),
@@ -262,7 +299,7 @@ class _PeriodicHoroscopeSectionState extends State<PeriodicHoroscopeSection> {
               gradient: const LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF1D265A), Color(0xFF161E44)],
+                colors: [Color(0xFF2E1870), Color(0xFF221258)],
               ),
               border: Border.all(color: Colors.white24),
             ),
@@ -413,7 +450,7 @@ class _PeriodCommentCard extends StatelessWidget {
             gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xDD1D265A), Color(0xCC1A2148)],
+              colors: [Color(0xCC3D1E7A), Color(0xB32E1568)],
             ),
             border: Border.all(color: Colors.white24),
           ),

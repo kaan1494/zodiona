@@ -71,7 +71,7 @@ class _DailyAffirmationCardState extends State<DailyAffirmationCard> {
             gradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xCC06216C), Color(0xB3051549)],
+              colors: [Color(0xCC3D1E7A), Color(0xB32E1568)],
             ),
             border: Border.all(color: Colors.white24),
           ),
@@ -128,7 +128,7 @@ class _DailyAffirmationCardState extends State<DailyAffirmationCard> {
             gradient: const LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF0B2D82), Color(0xFF071A57)],
+              colors: [Color(0xFF2E1870), Color(0xFF1E1058)],
             ),
             border: Border.all(color: Colors.white24),
           ),

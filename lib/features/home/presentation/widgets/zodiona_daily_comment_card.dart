@@ -59,7 +59,7 @@ class ZodionaDailyCommentCard extends StatelessWidget {
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xCC142A72), Color(0xB1162A63)],
+                      colors: [Color(0xCC3D1E7A), Color(0xB12E1568)],
                     ),
                     border: Border.all(color: Colors.white24),
                     boxShadow: const [
@@ -134,7 +134,7 @@ class ZodionaDailyCommentCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0xFF1B2B6B), Color(0xFF121E4D)],
+                colors: [Color(0xFF2E1870), Color(0xFF1E1058)],
               ),
             ),
             child: SafeArea(

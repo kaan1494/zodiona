@@ -18,9 +18,9 @@ class BirthChartPreviewCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x66072A8E), Color(0x7A081E67)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xCC3D1E7A), Color(0xB32E1568)],
             ),
             border: Border.all(color: Colors.white24),
           ),

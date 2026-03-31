@@ -28,7 +28,7 @@ class BiorhythmDetailPage extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030B2A),
+      backgroundColor: const Color(0xFF0A0520),
       body: Stack(
         children: [
           Positioned.fill(
@@ -45,7 +45,7 @@ class BiorhythmDetailPage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xAA04184A), Color(0xCC04133C)],
+                  colors: [Color(0xAA1A0848), Color(0xCC130535)],
                 ),
               ),
             ),
@@ -146,7 +146,7 @@ class BiorhythmDetailPage extends StatelessWidget {
           heightFactor: 0.88,
           child: Container(
             decoration: const BoxDecoration(
-              color: Color(0xFF0D2A47),
+              color: Color(0xFF1E1058),
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: SafeArea(

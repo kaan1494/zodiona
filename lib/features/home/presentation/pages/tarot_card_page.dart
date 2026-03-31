@@ -254,7 +254,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030B2A),
+      backgroundColor: const Color(0xFF0A0520),
       body: Stack(
         children: [
           Positioned.fill(
@@ -271,7 +271,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xBB04184A), Color(0xDD04133C)],
+                  colors: [Color(0xBB1A0848), Color(0xDD130535)],
                 ),
               ),
             ),
