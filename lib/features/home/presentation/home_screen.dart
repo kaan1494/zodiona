@@ -69,28 +69,30 @@ class _HomeScreenState extends State<HomeScreen> {
           .doc(zodiacSign)
           .snapshots()
           .listen((snap) async {
-        if (!snap.exists || !mounted) return;
-        final data = snap.data()!;
-        final updatedAtRaw = data['updatedAt'];
-        if (updatedAtRaw == null || updatedAtRaw is! Timestamp) return;
+            if (!snap.exists || !mounted) return;
+            final data = snap.data()!;
+            final updatedAtRaw = data['updatedAt'];
+            if (updatedAtRaw == null || updatedAtRaw is! Timestamp) return;
 
-        final updatedAt = (updatedAtRaw as Timestamp).toDate();
-        final prefs = await SharedPreferences.getInstance();
-        final lastSeenMillis =
-            prefs.getInt('lastSeenHoroscope_$zodiacSign') ?? 0;
-        final lastSeen =
-            DateTime.fromMillisecondsSinceEpoch(lastSeenMillis);
-
-        if (updatedAt.isAfter(lastSeen) && mounted) {
-          setState(() {
-            _pendingHoroscope = HoroscopeNotificationData(
-              title: data['title'] as String? ?? '$zodiacSign Haftalık Yorumu',
-              body: data['body'] as String? ?? '',
-              zodiacSign: zodiacSign,
+            final updatedAt = updatedAtRaw.toDate();
+            final prefs = await SharedPreferences.getInstance();
+            final lastSeenMillis =
+                prefs.getInt('lastSeenHoroscope_$zodiacSign') ?? 0;
+            final lastSeen = DateTime.fromMillisecondsSinceEpoch(
+              lastSeenMillis,
             );
+
+            if (updatedAt.isAfter(lastSeen) && mounted) {
+              setState(() {
+                _pendingHoroscope = HoroscopeNotificationData(
+                  title:
+                      data['title'] as String? ?? '$zodiacSign Haftalık Yorumu',
+                  body: data['body'] as String? ?? '',
+                  zodiacSign: zodiacSign,
+                );
+              });
+            }
           });
-        }
-      });
     } catch (_) {}
   }
 
