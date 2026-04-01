@@ -18,6 +18,7 @@ import 'widgets/periodic_horoscope_section.dart';
 import 'widgets/celestia_card_preview.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/horoscope_notification_service.dart';
 import '../../../utils/zodiac.dart';
@@ -35,19 +36,62 @@ class _HomeScreenState extends State<HomeScreen> {
   int _advisorPageSeed = 0;
 
   HoroscopeNotificationData? _pendingHoroscope;
+  StreamSubscription<User?>? _authSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _horoscopeSub;
 
   @override
   void initState() {
     super.initState();
     NotificationService.initialize();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkHoroscope());
+    // Auth hazır olduğunda Firestore stream'ini başlat
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null && _horoscopeSub == null) {
+        _setupHoroscopeStream(user.uid);
+      } else if (user == null) {
+        _horoscopeSub?.cancel();
+        _horoscopeSub = null;
+      }
+    });
   }
 
-  Future<void> _checkHoroscope() async {
-    final data = await HoroscopeNotificationService.checkNewHoroscope();
-    if (data != null && mounted) {
-      setState(() => _pendingHoroscope = data);
-    }
+  Future<void> _setupHoroscopeStream(String uid) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (!mounted) return;
+      final zodiacSign = userDoc.data()?['zodiacSign'] as String?;
+      if (zodiacSign == null || zodiacSign.isEmpty) return;
+
+      _horoscopeSub = FirebaseFirestore.instance
+          .collection('weekly_horoscopes_general')
+          .doc(zodiacSign)
+          .snapshots()
+          .listen((snap) async {
+        if (!snap.exists || !mounted) return;
+        final data = snap.data()!;
+        final updatedAtRaw = data['updatedAt'];
+        if (updatedAtRaw == null || updatedAtRaw is! Timestamp) return;
+
+        final updatedAt = (updatedAtRaw as Timestamp).toDate();
+        final prefs = await SharedPreferences.getInstance();
+        final lastSeenMillis =
+            prefs.getInt('lastSeenHoroscope_$zodiacSign') ?? 0;
+        final lastSeen =
+            DateTime.fromMillisecondsSinceEpoch(lastSeenMillis);
+
+        if (updatedAt.isAfter(lastSeen) && mounted) {
+          setState(() {
+            _pendingHoroscope = HoroscopeNotificationData(
+              title: data['title'] as String? ?? '$zodiacSign Haftalık Yorumu',
+              body: data['body'] as String? ?? '',
+              zodiacSign: zodiacSign,
+            );
+          });
+        }
+      });
+    } catch (_) {}
   }
 
   void _dismissHoroscope() {
@@ -55,6 +99,13 @@ class _HomeScreenState extends State<HomeScreen> {
       HoroscopeNotificationService.markAsSeen(_pendingHoroscope!.zodiacSign);
     }
     setState(() => _pendingHoroscope = null);
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    _horoscopeSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _openProfile() async {
