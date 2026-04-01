@@ -31,6 +31,17 @@ class AdminStoryAdminScreen extends StatefulWidget {
 
 class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   static const List<_PresetStoryImage> _presetImages = [
+    _PresetStoryImage('S 01', 'assets/admin_story_presets/s1.png'),
+    _PresetStoryImage('S 02', 'assets/admin_story_presets/s2.png'),
+    _PresetStoryImage('S 03', 'assets/admin_story_presets/s3.png'),
+    _PresetStoryImage('S 04', 'assets/admin_story_presets/s4.png'),
+    _PresetStoryImage('S 05', 'assets/admin_story_presets/s5.png'),
+    _PresetStoryImage('S 06', 'assets/admin_story_presets/s6.png'),
+    _PresetStoryImage('S 07', 'assets/admin_story_presets/s7.png'),
+    _PresetStoryImage('S 08', 'assets/admin_story_presets/s8.png'),
+    _PresetStoryImage('S 09', 'assets/admin_story_presets/s9.png'),
+    _PresetStoryImage('S 10', 'assets/admin_story_presets/s10.png'),
+    _PresetStoryImage('S 11', 'assets/admin_story_presets/s11.png'),
     _PresetStoryImage('Story 01', 'assets/admin_story_presets/story_01.png'),
     _PresetStoryImage('Story 02', 'assets/admin_story_presets/story_02.png'),
     _PresetStoryImage('Story 03', 'assets/admin_story_presets/story_03.png'),
