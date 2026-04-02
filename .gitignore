@@ -22,6 +22,8 @@ migrate_working_dir/
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
 #.vscode/
+# tasks.json API key'leri içerdiği için git'te tutulmaz
+.vscode/tasks.json
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -65,3 +67,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node / Firebase Functions
+node_modules/
+functions/node_modules/

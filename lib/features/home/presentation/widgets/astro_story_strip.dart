@@ -14,11 +14,7 @@ Widget _storyImage({
   required Widget error,
 }) {
   if (source.startsWith('assets/')) {
-    return Image.asset(
-      source,
-      fit: fit,
-      errorBuilder: (_, _, _) => error,
-    );
+    return Image.asset(source, fit: fit, errorBuilder: (_, _, _) => error);
   }
 
   if (source.startsWith('data:image')) {
@@ -26,11 +22,7 @@ Widget _storyImage({
       final commaIndex = source.indexOf(',');
       if (commaIndex > 0) {
         final bytes = base64Decode(source.substring(commaIndex + 1));
-        return Image.memory(
-          bytes,
-          fit: fit,
-          errorBuilder: (_, _, _) => error,
-        );
+        return Image.memory(bytes, fit: fit, errorBuilder: (_, _, _) => error);
       }
     } catch (_) {
       return error;
@@ -38,11 +30,7 @@ Widget _storyImage({
     return error;
   }
 
-  return Image.network(
-    source,
-    fit: fit,
-    errorBuilder: (_, _, _) => error,
-  );
+  return Image.network(source, fit: fit, errorBuilder: (_, _, _) => error);
 }
 
 class AstroStoryStrip extends StatelessWidget {
@@ -59,13 +47,15 @@ class AstroStoryStrip extends StatelessWidget {
       stream: userStream,
       builder: (context, userSnap) {
         final data = userSnap.data?.data() ?? const <String, dynamic>{};
-        final sun = ((data['zodiacSign'] as String?)?.trim().isNotEmpty ?? false)
+        final sun =
+            ((data['zodiacSign'] as String?)?.trim().isNotEmpty ?? false)
             ? (data['zodiacSign'] as String).trim()
             : 'Burcun';
         final moon = ((data['moonSign'] as String?)?.trim().isNotEmpty ?? false)
             ? (data['moonSign'] as String).trim()
             : 'Ay Burcun';
-        final rising = ((data['risingSign'] as String?)?.trim().isNotEmpty ?? false)
+        final rising =
+            ((data['risingSign'] as String?)?.trim().isNotEmpty ?? false)
             ? (data['risingSign'] as String).trim()
             : 'Yukselen';
 
@@ -335,7 +325,9 @@ class _AstroStoryViewerScreenState extends State<AstroStoryViewerScreen>
                                 minHeight: 3,
                                 value: i < _segmentIndex
                                     ? 1
-                                    : (i == _segmentIndex ? _progress.value : 0),
+                                    : (i == _segmentIndex
+                                          ? _progress.value
+                                          : 0),
                                 backgroundColor: Colors.white24,
                                 valueColor: const AlwaysStoppedAnimation<Color>(
                                   Colors.white,
@@ -365,24 +357,28 @@ class _AstroStoryViewerScreenState extends State<AstroStoryViewerScreen>
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        _segment.text,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(top: 8, bottom: 24),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _segment.text,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  height: 1.4,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
                   ],
                 ),
               ),

@@ -13,7 +13,6 @@ from timezonefinder import TimezoneFinder
 
 app = FastAPI(title="Zodiona Astro API", version="1.0.0")
 
-
 def _resolve_allowed_origins() -> list[str]:
     raw = os.getenv("CORS_ALLOW_ORIGINS", "*").strip()
     if not raw:
@@ -213,3 +212,7 @@ def astro(
         moonSign=sign_from_longitude(moon_lon.degrees),
         ascendant=sign_from_longitude(asc_lon),
     )
+
+
+# ── Burç bildirimi ────────────────────────────────────────────────────────────
+

@@ -139,8 +139,8 @@ class _AdvisorPageState extends State<AdvisorPage> {
       description:
           'Önündeki 12 ayın ana temalarını, fırsat pencerelerini ve dikkat gerektiren eşikleri birlikte yorumlarız. Böylece yılını daha planlı ve bilinçli yönetebilirsin.',
       avatars: [
-        'assets/admin_story_presets/story_05.png',
-        'assets/admin_story_presets/story_06.png',
+        'assets/danısman/ecebingör.jpg',
+        'assets/danısman/ebruyıldıırm.jpg',
       ],
       extraCount: 1,
       detailDescription:
@@ -152,8 +152,8 @@ class _AdvisorPageState extends State<AdvisorPage> {
       description:
           'Seninle seçtiğin kişinin harita dinamiklerini karşılaştırarak güçlü bağları, zorlanma noktalarını ve ilişkiyi büyütecek iletişim anahtarlarını görünür kılar.',
       avatars: [
-        'assets/admin_story_presets/story_06.png',
-        'assets/admin_story_presets/story_07.png',
+        'assets/danısman/ecebingör.jpg',
+        'assets/danısman/ebruyıldıırm.jpg',
       ],
       detailDescription:
           'İki haritanın birbirini nasıl tamamladığını; duygusal ihtiyaçlar, beklentiler ve çatışma alanları üzerinden ele alır. Amaç, ilişkiyi daha sağlıklı bir ritimde ilerletebilmen için farkındalık ve yön kazandırmaktır.',
@@ -164,9 +164,8 @@ class _AdvisorPageState extends State<AdvisorPage> {
       description:
           'Zamanı kritik bir soruya odaklanıp sorunun sorulduğu ana ait harita ile kısa vadede en net yönü bulmaya yardımcı olan özel bir analiz sunar.',
       avatars: [
-        'assets/admin_story_presets/story_05.png',
-        'assets/admin_story_presets/story_06.png',
-        'assets/admin_story_presets/story_07.png',
+        'assets/danısman/ecebingör.jpg',
+        'assets/danısman/ebruyıldıırm.jpg',
       ],
       extraCount: 1,
       detailDescription:
@@ -178,8 +177,8 @@ class _AdvisorPageState extends State<AdvisorPage> {
       description:
           'Potansiyelini, güçlü taraflarını ve gelişim alanlarını kişisel harita yerleşimlerin üzerinden okuyarak daha net bir öz farkındalık sağlar.',
       avatars: [
-        'assets/admin_story_presets/story_06.png',
-        'assets/admin_story_presets/story_05.png',
+        'assets/danısman/ecebingör.jpg',
+        'assets/danısman/ebruyıldıırm.jpg',
       ],
       extraCount: 1,
       detailDescription:
@@ -191,8 +190,8 @@ class _AdvisorPageState extends State<AdvisorPage> {
       description:
           'Yeni adımlar için en uygun zaman aralıklarını seçmene yardımcı olur; taşınma, iş değişimi ya da resmi başlangıçlarda doğru ritmi yakalamanı destekler.',
       avatars: [
-        'assets/admin_story_presets/story_05.png',
-        'assets/admin_story_presets/story_08.png',
+        'assets/danısman/ecebingör.jpg',
+        'assets/danısman/ebruyıldıırm.jpg',
       ],
       detailDescription:
           'Hayatındaki önemli adımlar için en doğru anı bulmana yardımcı olur. Yeni bir işe başlamak, taşınmak, bir ilişkiyi başlatmak ya da önemli kararlar almak istiyorsan; gökyüzünün desteğini yanında hissetmek için bu analiz ideal bir zamanlama rehberi sunar.',
@@ -203,8 +202,8 @@ class _AdvisorPageState extends State<AdvisorPage> {
       description:
           'Haritandaki gezegen etkilerini coğrafi hatlarla eşleştirerek yaşam, kariyer ve ilişki temalarında hangi bölgelerin seni daha fazla desteklediğini gösterir.',
       avatars: [
-        'assets/admin_story_presets/story_05.png',
-        'assets/admin_story_presets/story_07.png',
+        'assets/danısman/ecebingör.jpg',
+        'assets/danısman/ebruyıldıırm.jpg',
       ],
       detailDescription:
           'Doğum haritandaki gezegen hatlarını dünyanın farklı coğrafyalarıyla eşleştirerek, hangi yerlerin senin için daha şanslı, destekleyici ya da dönüştürücü olduğunu ortaya koyar. Kariyer fırsatları, yaşam amacı, ruhsal büyüme ve ilişkiler için güçlü bir konum rehberi sağlar.',

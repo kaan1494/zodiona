@@ -20,6 +20,7 @@ enum _AdminPanelTab {
   premium,
   advisorChats,
   weeklyHoroscope,
+  kozmikAiChats,
 }
 
 class AdminStoryAdminScreen extends StatefulWidget {
@@ -74,6 +75,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   String _userSearchQuery = '';
   String _premiumSearchQuery = '';
   AdvisorChatSummary? _selectedAdvisorChat;
+  String? _selectedKozmikUid;
+  String? _selectedKozmikName;
 
   bool _isActive = true;
   bool _isSaving = false;
@@ -271,6 +274,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return 'Admin - Danışman Mesajları';
       case _AdminPanelTab.weeklyHoroscope:
         return 'Admin - Haftalık Yorumlar';
+      case _AdminPanelTab.kozmikAiChats:
+        return 'Admin - Kozmik AI Sohbetleri';
     }
   }
 
@@ -613,6 +618,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             title: 'Haftalık Yorumlar',
             tab: _AdminPanelTab.weeklyHoroscope,
           ),
+          _buildNavItem(
+            icon: Icons.psychology_outlined,
+            title: 'Kozmik AI Sohbetleri',
+            tab: _AdminPanelTab.kozmikAiChats,
+          ),
         ],
       ),
     );
@@ -683,6 +693,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return _advisorChatsSection();
       case _AdminPanelTab.weeklyHoroscope:
         return const _WeeklyHoroscopeMgmtSection();
+      case _AdminPanelTab.kozmikAiChats:
+        return const SizedBox.shrink(); // two-pane, rendered in build()
     }
   }
 
@@ -1718,6 +1730,17 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
           _buildSidebar(),
           if (_activeTab == _AdminPanelTab.advisorChats)
             Expanded(child: _advisorChatsTwoPane())
+          else if (_activeTab == _AdminPanelTab.kozmikAiChats)
+            Expanded(
+              child: _KozmikAiChatsTwoPane(
+                selectedUid: _selectedKozmikUid,
+                selectedName: _selectedKozmikName,
+                onUserSelected: (uid, name) => setState(() {
+                  _selectedKozmikUid = uid;
+                  _selectedKozmikName = name;
+                }),
+              ),
+            )
           else
             Expanded(
               child: SingleChildScrollView(
@@ -2865,5 +2888,432 @@ class _SegmentDraft {
     textController.dispose();
     imageController.dispose();
     durationController.dispose();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Kozmik AI Sohbetleri — Admin Two-Pane
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _KozmikAiChatsTwoPane extends StatefulWidget {
+  const _KozmikAiChatsTwoPane({
+    required this.selectedUid,
+    required this.selectedName,
+    required this.onUserSelected,
+  });
+
+  final String? selectedUid;
+  final String? selectedName;
+  final void Function(String uid, String name) onUserSelected;
+
+  @override
+  State<_KozmikAiChatsTwoPane> createState() => _KozmikAiChatsTwoPaneState();
+}
+
+class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
+  String? _selectedChatId;
+
+  @override
+  void didUpdateWidget(_KozmikAiChatsTwoPane old) {
+    super.didUpdateWidget(old);
+    if (old.selectedUid != widget.selectedUid) {
+      _selectedChatId = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Sol: kullanıcı listesi (280 px) ──────────────────────
+        Container(
+          width: 280,
+          color: const Color(0xFF0D1B2A),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Text(
+                  'Kozmik AI Sohbetleri',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              const Divider(height: 1, color: Colors.white12),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .orderBy('name')
+                      .snapshots(),
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final users = snap.data?.docs ?? [];
+                    if (users.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'Kullanıcı bulunamadı.',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      itemCount: users.length,
+                      itemBuilder: (_, i) {
+                        final data = users[i].data();
+                        final uid = users[i].id;
+                        final name = (data['name'] as String? ?? 'İsimsiz')
+                            .trim();
+                        final email = data['email'] as String? ?? '';
+                        final isSelected = widget.selectedUid == uid;
+
+                        return ListTile(
+                          selected: isSelected,
+                          selectedTileColor: const Color(0x22F2C98A),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 2,
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: const Color(0xFF3D1E7A),
+                            radius: 18,
+                            child: Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : '?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            email,
+                            style: const TextStyle(fontSize: 11),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => widget.onUserSelected(uid, name),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const VerticalDivider(width: 1, color: Colors.white12),
+
+        // ── Orta: seçili kullanıcının sohbet listesi (260 px) ────
+        if (widget.selectedUid != null) ...[
+          Container(
+            width: 260,
+            color: const Color(0xFF0E1420),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                  child: Text(
+                    widget.selectedName ?? '',
+                    style: const TextStyle(
+                      color: Color(0xFFF2D293),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white12),
+                Expanded(
+                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(widget.selectedUid)
+                        .collection('kozmikRehberChats')
+                        .orderBy('updatedAt', descending: true)
+                        .snapshots(),
+                    builder: (context, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final docs = snap.data?.docs ?? [];
+                      if (docs.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Henüz AI sohbeti yok.',
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 13,
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: docs.length,
+                        itemBuilder: (_, i) {
+                          final data = docs[i].data();
+                          final chatId = docs[i].id;
+                          final type =
+                              data['type'] as String? ?? 'dogumHaritasi';
+                          final preview = data['previewText'] as String? ?? '';
+                          final updatedAt = (data['updatedAt'] as Timestamp?)
+                              ?.toDate();
+                          final msgCount =
+                              (data['messages'] as List<dynamic>?)?.length ?? 0;
+                          final typeLabel = switch (type) {
+                            'dogumHaritasi' => 'Doğum Haritası',
+                            'burcYorumu' => 'Burç Yorumu',
+                            'uyumAnalizi' => 'Uyum Analizi',
+                            _ => type,
+                          };
+                          final dateStr = updatedAt != null
+                              ? '${updatedAt.day.toString().padLeft(2, '0')}.'
+                                    '${updatedAt.month.toString().padLeft(2, '0')}.'
+                                    '${updatedAt.year}'
+                              : '';
+                          final isSelected = _selectedChatId == chatId;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            color: isSelected ? const Color(0xFF1A3A5C) : null,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: isSelected
+                                  ? const BorderSide(
+                                      color: Color(0xFFF2D293),
+                                      width: 1.5,
+                                    )
+                                  : BorderSide.none,
+                            ),
+                            child: ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.auto_awesome,
+                                color: Color(0xFFF2D293),
+                                size: 18,
+                              ),
+                              title: Text(
+                                typeLabel,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '$dateStr · $msgCount mesaj'
+                                '${preview.isNotEmpty ? '\n$preview' : ''}',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              isThreeLine: preview.isNotEmpty,
+                              onTap: () =>
+                                  setState(() => _selectedChatId = chatId),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const VerticalDivider(width: 1, color: Colors.white12),
+        ],
+
+        // ── Sağ: mesaj detayı ─────────────────────────────────────
+        Expanded(
+          child: widget.selectedUid == null
+              ? const Center(
+                  child: Text(
+                    'Bir kullanıcı seçin',
+                    style: TextStyle(color: Colors.white38, fontSize: 16),
+                  ),
+                )
+              : _selectedChatId == null
+              ? const Center(
+                  child: Text(
+                    'Bir sohbet seçin',
+                    style: TextStyle(color: Colors.white38, fontSize: 16),
+                  ),
+                )
+              : _KozmikChatMessagesPanel(
+                  key: ValueKey(_selectedChatId),
+                  uid: widget.selectedUid!,
+                  chatId: _selectedChatId!,
+                  userName: widget.selectedName ?? '',
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Mesaj detay paneli ───────────────────────────────────────
+class _KozmikChatMessagesPanel extends StatelessWidget {
+  const _KozmikChatMessagesPanel({
+    super.key,
+    required this.uid,
+    required this.chatId,
+    required this.userName,
+  });
+
+  final String uid;
+  final String chatId;
+  final String userName;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('kozmikRehberChats')
+          .doc(chatId)
+          .snapshots(),
+      builder: (context, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final data = snap.data?.data();
+        final msgs = (data?['messages'] as List<dynamic>? ?? []);
+        final type = data?['type'] as String? ?? 'dogumHaritasi';
+        final typeLabel = switch (type) {
+          'dogumHaritasi' => 'Doğum Haritası',
+          'burcYorumu' => 'Burç Yorumu',
+          'uyumAnalizi' => 'Uyum Analizi',
+          _ => type,
+        };
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: const Color(0xFF0D1422),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: Color(0xFFF2D293),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$userName — $typeLabel',
+                    style: const TextStyle(
+                      color: Color(0xFFF2D293),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${msgs.length} mesaj',
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Colors.white12),
+
+            // Messages
+            Expanded(
+              child: msgs.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Mesaj bulunamadı.',
+                        style: TextStyle(color: Colors.white38),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: msgs.length,
+                      itemBuilder: (_, i) {
+                        final msg = msgs[i] as Map<String, dynamic>;
+                        final role = msg['role'] as String? ?? 'user';
+                        final content = msg['content'] as String? ?? '';
+                        final isUser = role == 'user';
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                margin: const EdgeInsets.only(
+                                  right: 10,
+                                  top: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isUser
+                                      ? const Color(0xFF3D1E7A)
+                                      : const Color(0xFF1A3A2A),
+                                ),
+                                child: Icon(
+                                  isUser ? Icons.person : Icons.auto_awesome,
+                                  size: 15,
+                                  color: isUser
+                                      ? Colors.white70
+                                      : const Color(0xFFF2D293),
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isUser ? userName : 'Kozmik Rehber',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: isUser
+                                            ? Colors.white70
+                                            : const Color(0xFFF2D293),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      content,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        height: 1.5,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

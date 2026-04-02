@@ -1,7 +1,5 @@
-import 'dart:convert';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class TarotSelectedCard {
   final String asset;
@@ -31,28 +29,37 @@ class TarotSelectedCard {
 class TarotSelectionService {
   static const _cooldownHours = 8;
 
-  static String _uid() {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    // Misafir kullanıcı veya oturum açılmamışsa cihaz geneli key kullan
-    return uid ?? 'guest';
+  static String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
+  static DocumentReference<Map<String, dynamic>>? get _doc {
+    final uid = _uid;
+    if (uid == null) return null;
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('tarotData')
+        .doc('current');
   }
 
-  static String get _keyCards => 'tarot_selected_cards_${_uid()}';
-  static String get _keyTimestamp => 'tarot_selection_timestamp_${_uid()}';
-
   static Future<void> saveSelection(List<TarotSelectedCard> cards) async {
-    final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(cards.map((c) => c.toJson()).toList());
-    await prefs.setString(_keyCards, encoded);
-    await prefs.setInt(_keyTimestamp, DateTime.now().millisecondsSinceEpoch);
+    final doc = _doc;
+    if (doc == null) return;
+    await doc.set({
+      'cards': cards.map((c) => c.toJson()).toList(),
+      'timestamp': FieldValue.serverTimestamp(),
+    });
   }
 
   static Future<List<TarotSelectedCard>> getPreviousSelection() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_keyCards);
-    if (raw == null) return [];
+    final doc = _doc;
+    if (doc == null) return [];
+    final snap = await doc.get();
+    if (!snap.exists) return [];
+    final data = snap.data();
+    if (data == null) return [];
+    final list = data['cards'] as List<dynamic>?;
+    if (list == null) return [];
     try {
-      final list = jsonDecode(raw) as List<dynamic>;
       return list
           .map((e) => TarotSelectedCard.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -62,21 +69,27 @@ class TarotSelectionService {
   }
 
   static Future<bool> isOnCooldown() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ts = prefs.getInt(_keyTimestamp);
-    if (ts == null) return false;
-    final elapsed = DateTime.now().millisecondsSinceEpoch - ts;
-    return elapsed < _cooldownHours * 60 * 60 * 1000;
+    final remaining = await cooldownRemaining();
+    return remaining > Duration.zero;
   }
 
   static Future<Duration> cooldownRemaining() async {
-    final prefs = await SharedPreferences.getInstance();
-    final ts = prefs.getInt(_keyTimestamp);
-    if (ts == null) return Duration.zero;
-    final elapsed = DateTime.now().millisecondsSinceEpoch - ts;
-    final cooldownMs = _cooldownHours * 60 * 60 * 1000;
-    final remaining = cooldownMs - elapsed;
-    if (remaining <= 0) return Duration.zero;
-    return Duration(milliseconds: remaining);
+    final doc = _doc;
+    if (doc == null) return Duration.zero;
+    final snap = await doc.get();
+    if (!snap.exists) return Duration.zero;
+    final data = snap.data();
+    if (data == null) return Duration.zero;
+    final ts = data['timestamp'];
+    DateTime? savedAt;
+    if (ts is Timestamp) {
+      savedAt = ts.toDate();
+    }
+    if (savedAt == null) return Duration.zero;
+    final elapsed = DateTime.now().difference(savedAt);
+    const cooldown = Duration(hours: _cooldownHours);
+    final remaining = cooldown - elapsed;
+    if (remaining.isNegative) return Duration.zero;
+    return remaining;
   }
 }

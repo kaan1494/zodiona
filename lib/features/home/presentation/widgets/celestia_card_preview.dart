@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
 
+import '../../../../services/tarot_selection_service.dart';
+import '../pages/previous_insights_page.dart';
 import '../pages/tarot_card_page.dart';
 
-class CelestiaCardPreview extends StatelessWidget {
+class CelestiaCardPreview extends StatefulWidget {
   const CelestiaCardPreview({super.key});
+
+  @override
+  State<CelestiaCardPreview> createState() => _CelestiaCardPreviewState();
+}
+
+class _CelestiaCardPreviewState extends State<CelestiaCardPreview> {
+  bool _hasPrevious = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkHistory();
+  }
+
+  Future<void> _checkHistory() async {
+    final prev = await TarotSelectionService.getPreviousSelection();
+    if (mounted) {
+      setState(() => _hasPrevious = prev.isNotEmpty);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +107,30 @@ class CelestiaCardPreview extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (_hasPrevious) ...[
+                  const SizedBox(height: 14),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PreviousInsightsPage(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Önceki Göksel İçgörülerin',
+                      style: TextStyle(
+                        color: const Color(0xFFF2D9A6).withValues(alpha: 0.85),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: const Color(
+                          0xFFF2D9A6,
+                        ).withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 18),
               ],
             ),

@@ -14,6 +14,7 @@ import 'widgets/astro_story_strip.dart';
 import 'widgets/biorhythm_preview_card.dart';
 import 'widgets/birth_chart_preview_card.dart';
 import 'widgets/daily_affirmation_card.dart';
+import 'widgets/kozmik_rehber_card.dart';
 import 'widgets/periodic_horoscope_section.dart';
 import 'widgets/celestia_card_preview.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
@@ -561,6 +562,8 @@ class _MainHomePage extends StatelessWidget {
               const ZodionaDailyCommentCard(),
               const SizedBox(height: 18),
               const DailyAffirmationCard(),
+              const SizedBox(height: 18),
+              const KozmikRehberCard(),
               const SizedBox(height: 18),
               BirthChartPreviewCard(onTap: () => _openBirthChart(context)),
               const SizedBox(height: 18),
