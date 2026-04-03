@@ -1013,8 +1013,8 @@ class _CompatibilityFriendDetailPageState
                         labelColor: Colors.white,
                         unselectedLabelColor: Colors.white70,
                         tabs: [
-                          const Tab(text: 'Ikiniz Arasinda'),
-                          Tab(text: '$resolvedFriendName icin'),
+                          const Tab(text: 'İkiniz Arasında'),
+                          Tab(text: '$resolvedFriendName için'),
                         ],
                       ),
                     ),
@@ -1217,86 +1217,80 @@ class _CompatibilityFriendDetailPageState
                 ),
               ),
               const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _CircleAvatarSign(
-                    label: currentUserName,
-                    avatarId: currentUserAvatarId,
-                  ),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.topCenter,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final double buttonLeft = constraints.maxWidth * 2 / 3 + 30;
+                  return Stack(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 22),
-                        child: _CircleAvatarSign(
-                          label: friendName,
-                          avatarId: friendAvatarId,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _CircleAvatarSign(
+                            label: currentUserName,
+                            avatarId: currentUserAvatarId,
+                          ),
+                          _CircleAvatarSign(
+                            label: friendName,
+                            avatarId: friendAvatarId,
+                          ),
+                        ],
                       ),
                       Positioned(
-                        bottom: -10,
-                        right: 0,
-                        left: 0,
-                        child: Center(
-                          child: GestureDetector(
-                            onTap: () =>
-                                _showFriendInfoSheet(context, friendName),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
+                        left: buttonLeft,
+                        top: 24,
+                        child: GestureDetector(
+                          onTap: () =>
+                              _showFriendInfoSheet(context, friendName),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF4B1FA8), Color(0xFF2E1568)],
                               ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF4B1FA8),
-                                    Color(0xFF2E1568),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFFF2D293),
-                                  width: 1.2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFFF2D293,
-                                    ).withValues(alpha: 0.25),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
+                              border: Border.all(
+                                color: const Color(0xFFF2D293),
+                                width: 1.2,
                               ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.auto_awesome,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFF2D293,
+                                  ).withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  color: Color(0xFFF2D293),
+                                  size: 13,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Profil',
+                                  style: TextStyle(
                                     color: Color(0xFFF2D293),
-                                    size: 13,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
                                   ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Profil',
-                                    style: TextStyle(
-                                      color: Color(0xFFF2D293),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ],
+                  );
+                },
               ),
               const SizedBox(height: 16),
               const _MetricRow(label: 'Duygusal Bağ', value: 88),

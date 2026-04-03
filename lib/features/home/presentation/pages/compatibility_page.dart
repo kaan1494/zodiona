@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'add_friend_flow_page.dart';
+import 'kozmik_rehber_uyum_chat_page.dart';
 import '../../../../services/astro_api_service.dart';
 import '../../../../utils/zodiac.dart';
 
@@ -919,10 +920,10 @@ class _CompatibilityFriendList extends StatelessWidget {
                                         ),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 _ProfileAvatarBadge(
                                   avatarId: _defaultAvatarIdForSign(currentSun),
-                                  size: 64,
+                                  size: 52,
                                   borderColor: const Color(0xD2F2D9A3),
                                 ),
                               ],
@@ -931,10 +932,10 @@ class _CompatibilityFriendList extends StatelessWidget {
                           const SizedBox(width: 4),
                           const Column(
                             children: [
-                              SizedBox(height: 27),
+                              SizedBox(height: 22),
                               SizedBox(
-                                width: 38,
-                                height: 68,
+                                width: 32,
+                                height: 56,
                                 child: CustomPaint(
                                   painter: _CompatibilityBondPainter(),
                                 ),
@@ -963,10 +964,10 @@ class _CompatibilityFriendList extends StatelessWidget {
                                         ),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 _ProfileAvatarBadge(
                                   avatarId: friendAvatarId,
-                                  size: 64,
+                                  size: 52,
                                   borderColor: const Color(0xD2F2D9A3),
                                 ),
                               ],
@@ -1011,6 +1012,52 @@ class _CompatibilityFriendList extends StatelessWidget {
                         ],
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => KozmikRehberUyumChatPage(
+                          friendId: friendId,
+                          friendData: map,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFFF2D293).withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFFF2D293),
+                          size: 15,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Kozmik Rehber\'de Yorumla',
+                          style: TextStyle(
+                            color: Color(0xFFF2D293),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

@@ -242,9 +242,10 @@ class _TabBarPills extends StatelessWidget {
                 child: Text(
                   labels[index],
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: active ? const Color(0xFF00174D) : Colors.white,
                     fontWeight: FontWeight.w700,
+                    fontSize: 11,
                   ),
                 ),
               ),

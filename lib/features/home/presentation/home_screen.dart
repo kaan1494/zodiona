@@ -167,7 +167,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           SafeArea(
-            bottom: false,
             child: Column(
               children: [
                 const Spacer(),

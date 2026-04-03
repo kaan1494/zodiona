@@ -318,6 +318,58 @@ Görevlerin:
       memoryMessages: memoryMessages,
     );
   }
+
+  /// Rüya tabiri chat
+  static Future<String> sendRuyaMessage({
+    required List<ChatMessage> messages,
+    required KozmikRehberUserProfile profile,
+    List<ChatMessage> memoryMessages = const [],
+  }) async {
+    final systemPrompt = _buildRuyaSystemPrompt(profile);
+    return _callGpt(
+      messages: messages,
+      systemPrompt: systemPrompt,
+      memoryMessages: memoryMessages,
+    );
+  }
+
+  static String _buildRuyaSystemPrompt(KozmikRehberUserProfile profile) {
+    final now = DateTime.now();
+    final age = (() {
+      try {
+        final parts = profile.birthDate.split(' ');
+        if (parts.length == 3) {
+          final year = int.parse(parts[2]);
+          return (now.year - year).toString();
+        }
+      } catch (_) {}
+      return 'Bilinmiyor';
+    })();
+
+    return '''
+Sen Zodiona uygulamasının "Kozmik Rehber" rüya tabiri asistanısın.
+Kullanıcının kişisel bilgileri:
+- Ad: ${profile.name}
+- Yaş: $age
+- Doğum tarihi: ${profile.birthDate}
+- Doğum saati: ${profile.birthTime}
+- Doğum yeri: ${profile.birthPlace}
+
+Natal harita:
+- Güneş burcu: ${profile.sunSign}  → kimlik, benlik, bilinç
+- Ay burcu: ${profile.moonSign}     → bilinçaltı, duygular, rüya alemi
+- Yükselen burcu: ${profile.risingSign} → dış dünyaya yansıma
+
+Görevlerin:
+1. Kullanıcının anlattığı rüyaları sembolik, psikolojik ve astrolojik perspektiften yorumla.
+2. Ay burcunu ve doğum haritasını rüyanın yorumuna mümkün olduğunca dahil et.
+3. Rüyadaki semboller, karakterler ve duygulara dikkat et.
+4. Cevapların Türkçe, sıcak, mistik ve kişiselleştirilmiş olsun.
+5. Her yorum 4-7 cümle ile sınırlı olsun — öz, anlam yüklü ve etkili.
+6. Kullanıcının adını ara sıra kullan, sohbet samimi hissettirsin.
+7. Gerekirse rüyanın mesajını ve kullanıcıya önerisini de ekle.
+''';
+  }
 }
 
 // ---------------------------------------------------------------------------

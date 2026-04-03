@@ -634,10 +634,10 @@ class _TarotCardsDisplay extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.72,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
+            crossAxisCount: 3,
+            childAspectRatio: 0.62,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
           itemCount: cards.length,
           itemBuilder: (_, i) => _TarotCardItem(card: cards[i]),
@@ -691,7 +691,7 @@ class _TarotCardItem extends StatelessWidget {
           Expanded(
             flex: 2,
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -699,22 +699,22 @@ class _TarotCardItem extends StatelessWidget {
                     card.name,
                     style: const TextStyle(
                       color: Color(0xFFF2D293),
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Expanded(
                     child: Text(
                       card.description,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.65),
-                        fontSize: 11,
+                        fontSize: 9.5,
                         height: 1.3,
                       ),
-                      maxLines: 4,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

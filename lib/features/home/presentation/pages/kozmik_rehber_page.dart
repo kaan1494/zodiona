@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'kozmik_rehber_chat_page.dart';
 import 'kozmik_rehber_history_page.dart';
+import 'kozmik_rehber_ruya_chat_page.dart';
 import 'kozmik_rehber_tarot_chat_page.dart';
 import 'kozmik_rehber_uyum_chat_page.dart';
 
@@ -125,7 +126,7 @@ class KozmikRehberPage extends StatelessWidget {
                     children: [
                       _MenuButton(
                         label: 'Doğum Haritası',
-                        icon: Icons.circle_outlined,
+                        icon: Icons.hub_rounded,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -158,6 +159,18 @@ class KozmikRehberPage extends StatelessWidget {
                           );
                         },
                       ),
+                      const SizedBox(height: 14),
+                      _MenuButton(
+                        label: 'Rüya Tabiri',
+                        icon: Icons.bedtime_rounded,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const KozmikRehberRuyaChatPage(),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -173,11 +186,6 @@ class KozmikRehberPage extends StatelessWidget {
                           builder: (_) => const KozmikRehberHistoryPage(),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    _SmallButton(
-                      label: 'Hesap',
-                      icon: Icons.person_outline_rounded,
                     ),
                   ],
                 ),

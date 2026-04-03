@@ -303,7 +303,7 @@ class _AstroStoryViewerScreenState extends State<AstroStoryViewerScreen>
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0x55000000), Color(0x99000000)],
+                    colors: [Color(0x22000000), Color(0x55000000)],
                   ),
                 ),
               ),
@@ -364,8 +364,11 @@ class _AstroStoryViewerScreenState extends State<AstroStoryViewerScreen>
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.35),
+                            color: Colors.black.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.08),
+                            ),
                           ),
                           child: Text(
                             _segment.text,

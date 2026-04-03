@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../services/tarot_selection_service.dart';
+import 'kozmik_rehber_tarot_chat_page.dart';
 
 class PreviousInsightsPage extends StatefulWidget {
   const PreviousInsightsPage({super.key});
@@ -133,14 +134,14 @@ class _PreviousInsightsPageState extends State<PreviousInsightsPage> {
                                   14,
                                   0,
                                   14,
-                                  32,
+                                  16,
                                 ),
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      childAspectRatio: 0.58,
-                                      crossAxisSpacing: 12,
-                                      mainAxisSpacing: 12,
+                                      crossAxisCount: 3,
+                                      childAspectRatio: 0.55,
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 8,
                                     ),
                                 itemCount: _cards.length,
                                 itemBuilder: (context, index) {
@@ -156,6 +157,61 @@ class _PreviousInsightsPageState extends State<PreviousInsightsPage> {
                           ),
                         ),
                 ),
+                if (_loaded && _cards.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const KozmikRehberTarotChatPage(),
+                        ),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                          ),
+                          border: Border.all(
+                            color: const Color(
+                              0xFFF2D293,
+                            ).withValues(alpha: 0.5),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFF7B52C1,
+                              ).withValues(alpha: 0.4),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              color: Color(0xFFF2D293),
+                              size: 18,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Kozmik Rehber\'de Yorumla',
+                              style: TextStyle(
+                                color: Color(0xFFF2D293),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -197,40 +253,42 @@ class _InsightCard extends StatelessWidget {
             ),
             // Name
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+              padding: const EdgeInsets.fromLTRB(6, 8, 6, 3),
               child: Text(
                 card.name,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Color(0xFFF2D9A6),
-                  fontSize: 15,
+                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             // Description snippet
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               child: Text(
                 card.description,
                 textAlign: TextAlign.center,
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.70),
-                  fontSize: 11,
-                  height: 1.4,
+                  fontSize: 9,
+                  height: 1.3,
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             // Detail button
             Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+              padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
               child: GestureDetector(
                 onTap: onTap,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 5),
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: const Color(0xFFF2D9A6).withValues(alpha: 0.45),
@@ -238,11 +296,11 @@ class _InsightCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
-                    'Daha Derin Anlamını Gör',
+                    'Detay',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Color(0xFFF2D9A6),
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

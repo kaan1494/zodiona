@@ -896,17 +896,6 @@ class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
                                   height: 1.34,
                                 ),
                           ),
-                          const SizedBox(height: 6),
-                          Center(
-                            child: Text(
-                              'Devamını Oku',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    color: Colors.white,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                            ),
-                          ),
                           const SizedBox(height: 16),
                           const Divider(
                             color: Color(0xC6C9CDE4),
@@ -1000,36 +989,19 @@ class _AdvisorDetailCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {},
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFE5D8B3),
-                    side: const BorderSide(color: Color(0xFFE5D8B3)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text('Danışmanı İncele'),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: onSelect,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFF5E1B9),
+                foregroundColor: const Color(0xFF2E3B67),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: onSelect,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFF5E1B9),
-                    foregroundColor: const Color(0xFF2E3B67),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text('Danışmanı Seç'),
-                ),
-              ),
-            ],
+              child: const Text('Danışmanı Seç'),
+            ),
           ),
         ],
       ),
