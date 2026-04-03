@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
@@ -2912,6 +2913,39 @@ class _KozmikAiChatsTwoPane extends StatefulWidget {
 
 class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
   String? _selectedChatId;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  Set<String> _uidsWithChats = {};
+  StreamSubscription<QuerySnapshot>? _chatsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(
+        () => _searchQuery = _searchController.text.toLowerCase().trim(),
+      );
+    });
+    // Sohbeti olan kullanıcıların UID'lerini collectionGroup ile izle
+    _chatsSub = FirebaseFirestore.instance
+        .collectionGroup('kozmikRehberChats')
+        .snapshots()
+        .listen((snap) {
+          final uids = <String>{};
+          for (final doc in snap.docs) {
+            final segments = doc.reference.path.split('/');
+            if (segments.length >= 2) uids.add(segments[1]);
+          }
+          if (mounted) setState(() => _uidsWithChats = uids);
+        });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _chatsSub?.cancel();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(_KozmikAiChatsTwoPane old) {
@@ -2940,7 +2974,46 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              const Divider(height: 1, color: Colors.white12),
+              // Arama kutusu
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Ad veya e-posta ara...',
+                    hintStyle: const TextStyle(
+                      color: Colors.white38,
+                      fontSize: 12,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Colors.white38,
+                      size: 18,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.white38,
+                              size: 16,
+                            ),
+                            onPressed: () => _searchController.clear(),
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.07),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
@@ -2951,13 +3024,32 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
                     if (snap.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    final users = snap.data?.docs ?? [];
+                    // Sadece kozmik sohbeti olan kullanıcıları göster
+                    final allUsers = snap.data?.docs ?? [];
+                    final users = allUsers.where((doc) {
+                      if (!_uidsWithChats.contains(doc.id)) return false;
+                      if (_searchQuery.isEmpty) return true;
+                      final data = doc.data();
+                      final name = (data['name'] as String? ?? '')
+                          .toLowerCase();
+                      final email = (data['email'] as String? ?? '')
+                          .toLowerCase();
+                      return name.contains(_searchQuery) ||
+                          email.contains(_searchQuery);
+                    }).toList();
                     if (users.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
                         child: Text(
-                          'Kullanıcı bulunamadı.',
-                          style: TextStyle(color: Colors.white70),
+                          _searchQuery.isNotEmpty
+                              ? 'Arama sonucu bulunamadı.'
+                              : _uidsWithChats.isEmpty
+                              ? 'Henüz sohbet yapan kullanıcı yok.'
+                              : 'Kullanıcı bulunamadı.',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
                         ),
                       );
                     }

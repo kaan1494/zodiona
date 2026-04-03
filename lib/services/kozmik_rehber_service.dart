@@ -110,24 +110,42 @@ Görevlerin:
 
   /// [messages]: Şimdiye kadarki sohbet geçmişi (kullanıcı + asistan)
   /// [profile]:  Kullanıcının doğum haritası bilgileri
+  /// [memoryMessages]: Önceki oturumlardan gelen tarihsel mesajlar (tutarlılık için)
   /// Döndürür: GPT'nin cevap metni
   static Future<String> sendMessage({
     required List<ChatMessage> messages,
     required KozmikRehberUserProfile profile,
+    List<ChatMessage> memoryMessages = const [],
   }) async {
     if (_apiKey.isEmpty) {
       throw Exception(
-        'OPENAI_API_KEY tanımlı değil. tasks.json dosyasını kontrol et.',
+        'OPENAI_API_KEY tanımlı değil. launch.json dosyasını kontrol et.',
       );
     }
 
     final systemPrompt = _buildSystemPrompt(profile);
 
+    // Toplam bağlam 50 mesajla sınırlı:
+    // Mevcut oturum öncelikli, kalan slotlar önceki oturum hafızasıyla doldurulur.
+    const int maxContext = 50;
+    final List<ChatMessage> contextMessages;
+    if (messages.length >= maxContext) {
+      // Yeterli mevcut mesaj var — sadece son 50'yi al
+      contextMessages = messages.sublist(messages.length - maxContext);
+    } else {
+      // Boş slotları hafıza mesajlarıyla doldur
+      final memSlots = maxContext - messages.length;
+      final memStart = memoryMessages.length > memSlots
+          ? memoryMessages.length - memSlots
+          : 0;
+      contextMessages = [...memoryMessages.sublist(memStart), ...messages];
+    }
+
     final body = jsonEncode({
       'model': _model,
       'messages': [
         {'role': 'system', 'content': systemPrompt},
-        ...messages.map((m) => {'role': m.role, 'content': m.content}),
+        ...contextMessages.map((m) => {'role': m.role, 'content': m.content}),
       ],
       'max_tokens': 512,
       'temperature': 0.75,

@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+        );
+    }
+
+    match /astro_stories/{storyId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isOwner(userId);
+
+      match /tarotData/{doc} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Kozmik Rehber sohbet geçmişi
+      match /kozmikRehberChats/{chatId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow write: if isOwner(userId);
+      }
+
+      // Kozmik Rehber global hafıza (çapraz sohbet tutarlılığı için)
+      match /kozmikRehberMemory/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    match /supportMessages/{messageId} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.contactEmail is string
+        && request.resource.data.subject is string
+        && request.resource.data.question is string
+        && request.resource.data.message is string
+        && request.resource.data.isRead == false
+        && request.resource.data.status == "new";
+
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /advisor_chats/{chatId} {
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow read, update: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read, write: if signedIn();
+      }
+    }
+
+    match /weekly_horoscopes_general/{sign} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Admin için tüm kullanıcıların kozmik sohbetlerini collectionGroup ile sorgulama
+    match /{path=**}/kozmikRehberChats/{chatId} {
+      allow read: if isAdmin();
+    }
+  }
+}

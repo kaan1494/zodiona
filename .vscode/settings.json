@@ -1,0 +1,9 @@
+{
+  "terminal.integrated.profiles.windows": {
+    "Zodiona PowerShell": {
+      "source": "PowerShell",
+      "args": ["-NoExit", "-File", "${workspaceFolder}/.vscode/terminal-setup.ps1"]
+    }
+  },
+  "terminal.integrated.defaultProfile.windows": "Zodiona PowerShell"
+}

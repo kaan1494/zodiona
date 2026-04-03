@@ -32,6 +32,9 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
   // Aktif sohbet belgesi ID'si (null = henüz kaydedilmedi)
   String? _chatId;
 
+  // Önceki oturumlardan gelen global hafıza (tutarlılık için GPT'ye geçirilir)
+  List<ChatMessage> _memoryMessages = [];
+
   static const List<String> _suggestedQuestions = [
     'Doğum haritama göre en uygun kariyer alanım nedir?',
     'Güçlü olduğumu sandığım ama aslında beni yoran tarafım ne?',
@@ -50,10 +53,29 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
+    // Kullanıcı belgesi + geçmiş sohbet + global hafıza eş zamanlı yükle
+    final results = await Future.wait([
+      FirebaseFirestore.instance.collection('users').doc(uid).get(),
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('kozmikRehberMemory')
+          .doc('global')
+          .get(),
+    ]);
+    final userDoc = results[0];
+    final memoryDoc = results[1];
+
+    // Global hafızayı yükle
+    final rawMemory = memoryDoc.data()?['messages'] as List<dynamic>? ?? [];
+    final memory = rawMemory
+        .map(
+          (m) => ChatMessage(
+            role: (m as Map<String, dynamic>)['role'] as String,
+            content: m['content'] as String,
+          ),
+        )
+        .toList();
 
     // Geçmiş sohbet yükleme
     List<ChatMessage> loaded = [];
@@ -79,11 +101,13 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
     if (!mounted) return;
     setState(() {
       _profile = KozmikRehberUserProfile.fromFirestore(userDoc.data() ?? {});
+      _memoryMessages = memory;
       _messages.addAll(loaded);
     });
   }
 
   /// Mevcut sohbeti Firestore'a kaydeder / günceller.
+  /// Mesajlar 50 ile sınırlandırılır.
   Future<void> _saveChat() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -95,7 +119,14 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
 
     final lastMsg = _messages.isNotEmpty ? _messages.last.content : '';
     final preview = lastMsg.length > 120 ? lastMsg.substring(0, 120) : lastMsg;
+
+    // Firestore'da en fazla 50 mesaj sakla
+    const int maxStored = 50;
+    final start = _messages.length > maxStored
+        ? _messages.length - maxStored
+        : 0;
     final msgs = _messages
+        .sublist(start)
         .map((m) => {'role': m.role, 'content': m.content})
         .toList();
 
@@ -115,6 +146,31 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
         'messages': msgs,
       });
     }
+  }
+
+  /// Global hafızayı günceller — son 50 mesaj tüm oturumlar boyunca korunur.
+  Future<void> _updateMemory() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    const int memorySize = 50;
+    final start = _messages.length > memorySize
+        ? _messages.length - memorySize
+        : 0;
+    final memoryToSave = _messages.sublist(start);
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('kozmikRehberMemory')
+        .doc('global')
+        .set({
+          'updatedAt': FieldValue.serverTimestamp(),
+          'messages': memoryToSave
+              .map((m) => {'role': m.role, 'content': m.content})
+              .toList(),
+        });
+    _memoryMessages = memoryToSave;
   }
 
   @override
@@ -148,12 +204,14 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
       final reply = await KozmikRehberService.sendMessage(
         messages: List.unmodifiable(_messages),
         profile: _profile!,
+        memoryMessages: _memoryMessages,
       );
       if (!mounted) return;
       setState(() {
         _messages.add(ChatMessage(role: 'assistant', content: reply));
       });
       await _saveChat();
+      await _updateMemory();
     } catch (e) {
       if (!mounted) return;
       setState(() {
