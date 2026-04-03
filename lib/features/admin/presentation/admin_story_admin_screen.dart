@@ -3004,14 +3004,20 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
                   stream: FirebaseFirestore.instance
                       .collection('users')
                       .where('hasKozmikChats', isEqualTo: true)
-                      .orderBy('name')
                       .snapshots(),
                   builder: (context, snap) {
                     if (snap.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    // Arama filtresi
-                    final allUsers = snap.data?.docs ?? [];
+                    // Arama filtresi + client-side sıralama
+                    final allUsers = snap.data?.docs ?? []
+                      ..sort((a, b) {
+                        final na = (a.data()['name'] as String? ?? '')
+                            .toLowerCase();
+                        final nb = (b.data()['name'] as String? ?? '')
+                            .toLowerCase();
+                        return na.compareTo(nb);
+                      });
                     final users = allUsers.where((doc) {
                       if (_searchQuery.isEmpty) return true;
                       final data = doc.data();

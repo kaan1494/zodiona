@@ -101,7 +101,7 @@ class KozmikRehberPage extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Text(
-                    'Merhaba!\nBen senin Kozmik Rehberinim. '
+                    'Merhaba Canım!\nBen senin Kozmik Rehberinim. '
                     'Gezegen geçişleri, burç yorumları, doğum haritası '
                     've daha fazlası hakkında sorularını benimle '
                     'paylaşabilirsin. Yıldızların fısıltılarını birlikte '
