@@ -35,10 +35,9 @@ class _KozmikRehberUyumChatPageState extends State<KozmikRehberUyumChatPage> {
 
   KozmikRehberUserProfile? _userProfile;
   KozmikRehberFriendProfile? _friendProfile;
-  String? _friendName;
+  List<ChatMessage> _memoryMessages = [];
 
   String? _chatId;
-  List<ChatMessage> _memoryMessages = [];
 
   // Arkadaş listesi için (sadece arkadaş seçim ekranında kullanılır)
   Map<String, Map<String, dynamic>> _friends = {};
@@ -120,7 +119,6 @@ class _KozmikRehberUyumChatPageState extends State<KozmikRehberUyumChatPage> {
     setState(() {
       _selectedFriendId = friendId;
       _friendProfile = KozmikRehberFriendProfile.fromData(data);
-      _friendName = _friendProfile!.name;
     });
   }
 
@@ -152,10 +150,7 @@ class _KozmikRehberUyumChatPageState extends State<KozmikRehberUyumChatPage> {
     if (friendId != null && _friends.containsKey(friendId)) {
       _selectFriend(friendId, _friends[friendId]!);
     } else if (friendId != null) {
-      // Arkadaş silinmiş olabilir, sadece ismi kullan
-      final fname = data['friendName'] as String? ?? 'Arkadaş';
       setState(() {
-        _friendName = fname;
         _selectedFriendId = friendId;
       });
     }

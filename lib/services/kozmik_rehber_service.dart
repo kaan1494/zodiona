@@ -305,63 +305,17 @@ Görevlerin:
     }
   }
 
-
+  static Future<String> sendMessage({
     required List<ChatMessage> messages,
     required KozmikRehberUserProfile profile,
     List<ChatMessage> memoryMessages = const [],
   }) async {
-    if (_apiKey.isEmpty) {
-      throw Exception(
-        'OPENAI_API_KEY tanımlı değil. launch.json dosyasını kontrol et.',
-      );
-    }
-
     final systemPrompt = _buildSystemPrompt(profile);
-
-    // Toplam bağlam 50 mesajla sınırlı:
-    // Mevcut oturum öncelikli, kalan slotlar önceki oturum hafızasıyla doldurulur.
-    const int maxContext = 50;
-    final List<ChatMessage> contextMessages;
-    if (messages.length >= maxContext) {
-      // Yeterli mevcut mesaj var — sadece son 50'yi al
-      contextMessages = messages.sublist(messages.length - maxContext);
-    } else {
-      // Boş slotları hafıza mesajlarıyla doldur
-      final memSlots = maxContext - messages.length;
-      final memStart = memoryMessages.length > memSlots
-          ? memoryMessages.length - memSlots
-          : 0;
-      contextMessages = [...memoryMessages.sublist(memStart), ...messages];
-    }
-
-    final body = jsonEncode({
-      'model': _model,
-      'messages': [
-        {'role': 'system', 'content': systemPrompt},
-        ...contextMessages.map((m) => {'role': m.role, 'content': m.content}),
-      ],
-      'max_tokens': 512,
-      'temperature': 0.75,
-    });
-
-    final response = await http
-        .post(
-          Uri.parse('https://api.openai.com/v1/chat/completions'),
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Authorization': 'Bearer $_apiKey',
-          },
-          body: body,
-        )
-        .timeout(const Duration(seconds: 30));
-
-    if (response.statusCode == 200) {
-      final json =
-          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      return (json['choices'] as List).first['message']['content'] as String;
-    } else {
-      throw Exception('OpenAI hatası ${response.statusCode}: ${response.body}');
-    }
+    return _callGpt(
+      messages: messages,
+      systemPrompt: systemPrompt,
+      memoryMessages: memoryMessages,
+    );
   }
 }
 
