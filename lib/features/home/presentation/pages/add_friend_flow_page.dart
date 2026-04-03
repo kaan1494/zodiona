@@ -1226,33 +1226,70 @@ class _CompatibilityFriendDetailPageState
                   ),
                   Stack(
                     clipBehavior: Clip.none,
-                    alignment: Alignment.topRight,
+                    alignment: Alignment.topCenter,
                     children: [
-                      _CircleAvatarSign(
-                        label: friendName,
-                        avatarId: friendAvatarId,
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 22),
+                        child: _CircleAvatarSign(
+                          label: friendName,
+                          avatarId: friendAvatarId,
+                        ),
                       ),
                       Positioned(
-                        top: -6,
-                        right: -6,
-                        child: GestureDetector(
-                          onTap: () =>
-                              _showFriendInfoSheet(context, friendName),
-                          child: Container(
-                            width: 26,
-                            height: 26,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFF2E1568),
-                              border: Border.all(
-                                color: const Color(0xFFF2D293),
-                                width: 1.5,
+                        bottom: -10,
+                        right: 0,
+                        left: 0,
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () =>
+                                _showFriendInfoSheet(context, friendName),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
                               ),
-                            ),
-                            child: const Icon(
-                              Icons.info_outline_rounded,
-                              color: Color(0xFFF2D293),
-                              size: 15,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF4B1FA8),
+                                    Color(0xFF2E1568),
+                                  ],
+                                ),
+                                border: Border.all(
+                                  color: const Color(0xFFF2D293),
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFF2D293,
+                                    ).withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    color: Color(0xFFF2D293),
+                                    size: 13,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Profil',
+                                    style: TextStyle(
+                                      color: Color(0xFFF2D293),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'kozmik_rehber_chat_page.dart';
 import 'kozmik_rehber_history_page.dart';
+import 'kozmik_rehber_tarot_chat_page.dart';
+import 'kozmik_rehber_uyum_chat_page.dart';
 
 class KozmikRehberPage extends StatelessWidget {
   const KozmikRehberPage({super.key});
@@ -134,15 +136,29 @@ class KozmikRehberPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 14),
                       _MenuButton(
-                        label: 'Burç Yorumu',
-                        icon: Icons.stars_rounded,
-                        onTap: () {},
+                        label: 'Tarot Yorumu',
+                        icon: Icons.style_rounded,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const KozmikRehberTarotChatPage(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
                       _MenuButton(
                         label: 'Uyum Analizi',
                         icon: Icons.favorite_border_rounded,
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const KozmikRehberUyumChatPage(),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'kozmik_rehber_chat_page.dart';
+import 'kozmik_rehber_tarot_chat_page.dart';
+import 'kozmik_rehber_uyum_chat_page.dart';
 
 class KozmikRehberHistoryPage extends StatelessWidget {
   const KozmikRehberHistoryPage({super.key});
@@ -133,11 +135,23 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                     0;
 
                                 final typeLabel = switch (type) {
-                                  'dogumHaritasi' => 'Doğum Haritası',
+                                  'dogumHaritasi' => 'Doğum Haritası Analizi',
                                   'burcYorumu' => 'Burç Yorumu',
+                                  'tarotYorumu' => 'Tarot Yorumu',
                                   'uyumAnalizi' => 'Uyum Analizi',
                                   _ => type,
                                 };
+
+                                final typeIcon = switch (type) {
+                                  'dogumHaritasi' => Icons.circle_outlined,
+                                  'burcYorumu' => Icons.stars_rounded,
+                                  'tarotYorumu' => Icons.style_rounded,
+                                  'uyumAnalizi' => Icons.favorite_rounded,
+                                  _ => Icons.auto_awesome,
+                                };
+
+                                // Uyum: arkadaş adını subtitle olarak göster
+                                final friendName = data['friendName'] as String?;
 
                                 final dateStr = updatedAt != null
                                     ? '${updatedAt.day.toString().padLeft(2, '0')}.'
@@ -147,13 +161,35 @@ class KozmikRehberHistoryPage extends StatelessWidget {
 
                                 return GestureDetector(
                                   onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (_) => KozmikRehberChatPage(
-                                          chatId: chatId,
-                                        ),
-                                      ),
-                                    );
+                                    switch (type) {
+                                      case 'uyumAnalizi':
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                KozmikRehberUyumChatPage(
+                                              chatId: chatId,
+                                            ),
+                                          ),
+                                        );
+                                      case 'tarotYorumu':
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                KozmikRehberTarotChatPage(
+                                              chatId: chatId,
+                                            ),
+                                          ),
+                                        );
+                                      default:
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                KozmikRehberChatPage(
+                                              chatId: chatId,
+                                            ),
+                                          ),
+                                        );
+                                    }
                                   },
                                   child: Container(
                                     margin: const EdgeInsets.only(bottom: 12),
@@ -191,9 +227,9 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                                 ],
                                               ),
                                             ),
-                                            child: const Icon(
-                                              Icons.auto_awesome,
-                                              color: Color(0xFFF2D293),
+                                            child: Icon(
+                                              typeIcon,
+                                              color: const Color(0xFFF2D293),
                                               size: 20,
                                             ),
                                           ),
@@ -226,6 +262,28 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                                     ),
                                                   ],
                                                 ),
+                                                // Uyum: arkadaş adı subtitle
+                                                if (friendName != null &&
+                                                    friendName.isNotEmpty) ...[
+                                                  const SizedBox(height: 3),
+                                                  Row(
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.person_outline,
+                                                        color: Colors.white54,
+                                                        size: 13,
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        friendName,
+                                                        style: const TextStyle(
+                                                          color: Colors.white54,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                                 if (preview.isNotEmpty) ...[
                                                   const SizedBox(height: 5),
                                                   Text(

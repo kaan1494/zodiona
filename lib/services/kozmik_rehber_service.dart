@@ -55,7 +55,66 @@ class KozmikRehberUserProfile {
   }
 }
 
-/// Tek bir sohbet mesajını temsil eder.
+/// Uyum analizinde arkadaşın bilgilerini taşır.
+class KozmikRehberFriendProfile {
+  const KozmikRehberFriendProfile({
+    required this.name,
+    required this.sunSign,
+    required this.moonSign,
+    required this.risingSign,
+    required this.birthDate,
+    required this.birthTime,
+    required this.birthPlace,
+    required this.gender,
+    required this.job,
+    required this.relationshipType,
+    this.age,
+  });
+
+  final String name;
+  final String sunSign;
+  final String moonSign;
+  final String risingSign;
+  final String birthDate;
+  final String birthTime;
+  final String birthPlace;
+  final String gender;
+  final String job;
+  final String relationshipType;
+  final int? age;
+
+  factory KozmikRehberFriendProfile.fromData(Map<String, dynamic> data) {
+    String birthDateStr = 'Bilinmiyor';
+    int? age;
+    final raw = data['birthDate'];
+    if (raw != null) {
+      try {
+        final dt = (raw as dynamic).toDate() as DateTime;
+        birthDateStr = '${dt.day} ${_monthName(dt.month)} ${dt.year}';
+        age = DateTime.now().year - dt.year;
+      } catch (_) {}
+    }
+    final city = _sanitize(data['birthCity'], '');
+    final country = _sanitize(data['birthCountry'], '');
+    final place = [city, country].where((s) => s.isNotEmpty).join(', ');
+
+    return KozmikRehberFriendProfile(
+      name: _sanitize(data['name'], 'Arkadaş'),
+      sunSign: _displaySign(_sanitize(data['zodiacSign'], 'Bilinmiyor')),
+      moonSign: _displaySign(_sanitize(data['moonSign'], 'Bilinmiyor')),
+      risingSign: _displaySign(_sanitize(data['risingSign'], 'Bilinmiyor')),
+      birthDate: birthDateStr,
+      birthTime: _sanitize(data['birthTime'], 'Bilinmiyor'),
+      birthPlace: place.isEmpty ? 'Bilinmiyor' : place,
+      gender: _sanitize(data['gender'], 'Bilinmiyor'),
+      job: _sanitize(data['job'], 'Bilinmiyor'),
+      relationshipType: _sanitize(data['relationshipType'], 'Bilinmiyor'),
+      age: age,
+    );
+  }
+}
+
+
 class ChatMessage {
   const ChatMessage({required this.role, required this.content});
 
@@ -108,11 +167,145 @@ Görevlerin:
 ''';
   }
 
-  /// [messages]: Şimdiye kadarki sohbet geçmişi (kullanıcı + asistan)
-  /// [profile]:  Kullanıcının doğum haritası bilgileri
-  /// [memoryMessages]: Önceki oturumlardan gelen tarihsel mesajlar (tutarlılık için)
-  /// Döndürür: GPT'nin cevap metni
-  static Future<String> sendMessage({
+  static String _buildUyumSystemPrompt(
+    KozmikRehberUserProfile user,
+    KozmikRehberFriendProfile friend,
+  ) {
+    return '''
+Sen Zodiona uygulamasının "Kozmik Rehber" astroloji asistanısın.
+Kullanıcı iki kişi arasındaki uyumu ve ilişkiyi sormak istiyor.
+
+— KULLANICI —
+Ad: ${user.name}
+Doğum: ${user.birthDate} | Saat: ${user.birthTime} | Yer: ${user.birthPlace}
+Güneş: ${user.sunSign} | Ay: ${user.moonSign} | Yükselen: ${user.risingSign}
+
+— ${friend.name.toUpperCase()} (Arkadaş / Partner) —
+Ad: ${friend.name}
+Doğum: ${friend.birthDate} | Saat: ${friend.birthTime} | Yer: ${friend.birthPlace}
+Güneş: ${friend.sunSign} | Ay: ${friend.moonSign} | Yükselen: ${friend.risingSign}
+Cinsiyet: ${friend.gender} | Meslek: ${friend.job}
+İlişki türü: ${friend.relationshipType}${friend.age != null ? ' | Yaş: ${friend.age}' : ''}
+
+Görevlerin:
+1. İki kişi arasındaki astrolojik uyumu bu bilgileri kullanarak değerlendir.
+2. Cevapların Türkçe, sıcak, samimi ve kişiselleştirilmiş olsun.
+3. Her cevap 3-7 cümle ile sınırlı olsun — öz ve etkili.
+4. Venüs, Mars, Ay uyumlarına dikkat et, ilişki dinamiklerini vurgula.
+5. Olumlu ve yapıcı bir ton kullan; zayıf noktaları nazikçe belirt.
+''';
+  }
+
+  static String _buildTarotSystemPrompt(
+    KozmikRehberUserProfile profile,
+    List<Map<String, String>> cards,
+  ) {
+    final cardList = cards
+        .asMap()
+        .entries
+        .map((e) => '${e.key + 1}. ${e.value['name']}: ${e.value['description']}')
+        .join('\n');
+    return '''
+Sen Zodiona uygulamasının "Kozmik Rehber" tarot ve astroloji asistanısın.
+Kullanıcının adı: ${profile.name}
+Güneş: ${profile.sunSign} | Ay: ${profile.moonSign} | Yükselen: ${profile.risingSign}
+
+Kullanıcının seçtiği tarot kartları:
+$cardList
+
+Görevlerin:
+1. Kullanıcının tarot kartları hakkındaki sorularını bu kart isimleri ve açıklamalarını referans alarak yanıtla.
+2. Her kartın sembolizmini, mesajını ve kullanıcının hayatına yansımasını yorumla.
+3. Varsa kartlar arasındaki ilişkiyi ve genel mesajı da belirt.
+4. Cevapların Türkçe, mistik, sıcak ve ilham verici olsun.
+5. Her cevap 3-7 cümle ile sınırlı olsun — öz ve etkili.
+6. Astroloji ve tarot dilini kullan ama aşırı teknik olmaktan kaçın.
+''';
+  }
+
+  /// Uyum analizi chat
+  static Future<String> sendUyumMessage({
+    required List<ChatMessage> messages,
+    required KozmikRehberUserProfile userProfile,
+    required KozmikRehberFriendProfile friendProfile,
+    List<ChatMessage> memoryMessages = const [],
+  }) async {
+    final systemPrompt = _buildUyumSystemPrompt(userProfile, friendProfile);
+    return _callGpt(
+      messages: messages,
+      systemPrompt: systemPrompt,
+      memoryMessages: memoryMessages,
+    );
+  }
+
+  /// Tarot yorumu chat
+  static Future<String> sendTarotMessage({
+    required List<ChatMessage> messages,
+    required KozmikRehberUserProfile profile,
+    required List<Map<String, String>> cards,
+    List<ChatMessage> memoryMessages = const [],
+  }) async {
+    final systemPrompt = _buildTarotSystemPrompt(profile, cards);
+    return _callGpt(
+      messages: messages,
+      systemPrompt: systemPrompt,
+      memoryMessages: memoryMessages,
+    );
+  }
+
+  static Future<String> _callGpt({
+    required List<ChatMessage> messages,
+    required String systemPrompt,
+    List<ChatMessage> memoryMessages = const [],
+  }) async {
+    if (_apiKey.isEmpty) {
+      throw Exception(
+        'OPENAI_API_KEY tanımlı değil. launch.json dosyasını kontrol et.',
+      );
+    }
+    const int maxContext = 50;
+    final List<ChatMessage> contextMessages;
+    if (messages.length >= maxContext) {
+      contextMessages = messages.sublist(messages.length - maxContext);
+    } else {
+      final memSlots = maxContext - messages.length;
+      final memStart = memoryMessages.length > memSlots
+          ? memoryMessages.length - memSlots
+          : 0;
+      contextMessages = [...memoryMessages.sublist(memStart), ...messages];
+    }
+
+    final body = jsonEncode({
+      'model': _model,
+      'messages': [
+        {'role': 'system', 'content': systemPrompt},
+        ...contextMessages.map((m) => {'role': m.role, 'content': m.content}),
+      ],
+      'max_tokens': 512,
+      'temperature': 0.75,
+    });
+
+    final response = await http
+        .post(
+          Uri.parse('https://api.openai.com/v1/chat/completions'),
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': 'Bearer $_apiKey',
+          },
+          body: body,
+        )
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode == 200) {
+      final json =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      return (json['choices'] as List).first['message']['content'] as String;
+    } else {
+      throw Exception('OpenAI hatası ${response.statusCode}: ${response.body}');
+    }
+  }
+
+
     required List<ChatMessage> messages,
     required KozmikRehberUserProfile profile,
     List<ChatMessage> memoryMessages = const [],
