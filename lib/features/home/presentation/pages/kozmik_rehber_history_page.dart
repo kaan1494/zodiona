@@ -151,7 +151,8 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                 };
 
                                 // Uyum: arkadaş adını subtitle olarak göster
-                                final friendName = data['friendName'] as String?;
+                                final friendName =
+                                    data['friendName'] as String?;
 
                                 final dateStr = updatedAt != null
                                     ? '${updatedAt.day.toString().padLeft(2, '0')}.'
@@ -167,8 +168,8 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                           MaterialPageRoute<void>(
                                             builder: (_) =>
                                                 KozmikRehberUyumChatPage(
-                                              chatId: chatId,
-                                            ),
+                                                  chatId: chatId,
+                                                ),
                                           ),
                                         );
                                       case 'tarotYorumu':
@@ -176,8 +177,8 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                           MaterialPageRoute<void>(
                                             builder: (_) =>
                                                 KozmikRehberTarotChatPage(
-                                              chatId: chatId,
-                                            ),
+                                                  chatId: chatId,
+                                                ),
                                           ),
                                         );
                                       default:
@@ -185,8 +186,8 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                           MaterialPageRoute<void>(
                                             builder: (_) =>
                                                 KozmikRehberChatPage(
-                                              chatId: chatId,
-                                            ),
+                                                  chatId: chatId,
+                                                ),
                                           ),
                                         );
                                     }

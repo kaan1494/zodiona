@@ -141,8 +141,7 @@ class KozmikRehberPage extends StatelessWidget {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const KozmikRehberTarotChatPage(),
+                              builder: (_) => const KozmikRehberTarotChatPage(),
                             ),
                           );
                         },
@@ -154,8 +153,7 @@ class KozmikRehberPage extends StatelessWidget {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const KozmikRehberUyumChatPage(),
+                              builder: (_) => const KozmikRehberUyumChatPage(),
                             ),
                           );
                         },

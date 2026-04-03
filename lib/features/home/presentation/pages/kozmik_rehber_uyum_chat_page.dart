@@ -171,8 +171,9 @@ class _KozmikRehberUyumChatPageState extends State<KozmikRehberUyumChatPage> {
     final preview = lastMsg.length > 120 ? lastMsg.substring(0, 120) : lastMsg;
 
     const int maxStored = 50;
-    final start =
-        _messages.length > maxStored ? _messages.length - maxStored : 0;
+    final start = _messages.length > maxStored
+        ? _messages.length - maxStored
+        : 0;
     final msgs = _messages
         .sublist(start)
         .map((m) => {'role': m.role, 'content': m.content})
@@ -203,7 +204,10 @@ class _KozmikRehberUyumChatPageState extends State<KozmikRehberUyumChatPage> {
 
   Future<void> _send() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _isLoading || _userProfile == null || _friendProfile == null) {
+    if (text.isEmpty ||
+        _isLoading ||
+        _userProfile == null ||
+        _friendProfile == null) {
       return;
     }
 
@@ -508,14 +512,13 @@ class _KozmikRehberUyumChatPageState extends State<KozmikRehberUyumChatPage> {
                             itemBuilder: (context, index) {
                               return GestureDetector(
                                 onTap: () {
-                                  _controller.text =
-                                      _suggestedQuestions[index];
+                                  _controller.text = _suggestedQuestions[index];
                                   _controller.selection =
                                       TextSelection.fromPosition(
-                                    TextPosition(
-                                      offset: _controller.text.length,
-                                    ),
-                                  );
+                                        TextPosition(
+                                          offset: _controller.text.length,
+                                        ),
+                                      );
                                 },
                                 child: Container(
                                   width: 180,
@@ -777,7 +780,9 @@ class _FriendInfoCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [Color(0xCC3D1E7A), Color(0x993D1E7A)],
         ),
-        border: Border.all(color: const Color(0xFFF2D293).withValues(alpha: 0.25)),
+        border: Border.all(
+          color: const Color(0xFFF2D293).withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -822,10 +827,7 @@ class _FriendInfoCard extends StatelessWidget {
           const SizedBox(height: 8),
           _InfoRow(icon: Icons.cake_outlined, text: friend.birthDate),
           if (friend.birthTime != 'Bilinmiyor')
-            _InfoRow(
-              icon: Icons.schedule_outlined,
-              text: friend.birthTime,
-            ),
+            _InfoRow(icon: Icons.schedule_outlined, text: friend.birthTime),
           if (friend.birthPlace != 'Bilinmiyor')
             _InfoRow(icon: Icons.location_on_outlined, text: friend.birthPlace),
           if (friend.job != 'Bilinmiyor')

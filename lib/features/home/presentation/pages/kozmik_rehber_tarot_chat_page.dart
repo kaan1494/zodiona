@@ -18,8 +18,7 @@ class KozmikRehberTarotChatPage extends StatefulWidget {
       _KozmikRehberTarotChatPageState();
 }
 
-class _KozmikRehberTarotChatPageState
-    extends State<KozmikRehberTarotChatPage> {
+class _KozmikRehberTarotChatPageState extends State<KozmikRehberTarotChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -98,10 +97,7 @@ class _KozmikRehberTarotChatPageState
       final rawCards = data['cards'] as List<dynamic>? ?? [];
       if (rawCards.isNotEmpty) {
         chatCards = rawCards
-            .map(
-              (c) =>
-                  TarotSelectedCard.fromJson(c as Map<String, dynamic>),
-            )
+            .map((c) => TarotSelectedCard.fromJson(c as Map<String, dynamic>))
             .toList();
       }
     }
@@ -131,8 +127,9 @@ class _KozmikRehberTarotChatPageState
     final preview = lastMsg.length > 120 ? lastMsg.substring(0, 120) : lastMsg;
 
     const int maxStored = 50;
-    final start =
-        _messages.length > maxStored ? _messages.length - maxStored : 0;
+    final start = _messages.length > maxStored
+        ? _messages.length - maxStored
+        : 0;
     final msgs = _messages
         .sublist(start)
         .map((m) => {'role': m.role, 'content': m.content})
@@ -316,9 +313,7 @@ class _KozmikRehberTarotChatPageState
                                 ),
                                 children: [
                                   // Seçilen kartlar
-                                  _TarotCardsDisplay(
-                                    cards: _selectedCards,
-                                  ),
+                                  _TarotCardsDisplay(cards: _selectedCards),
                                   const SizedBox(height: 16),
 
                                   // Divider
@@ -372,11 +367,12 @@ class _KozmikRehberTarotChatPageState
                                                   _suggestedQuestions[index];
                                               _controller.selection =
                                                   TextSelection.fromPosition(
-                                                TextPosition(
-                                                  offset:
-                                                      _controller.text.length,
-                                                ),
-                                              );
+                                                    TextPosition(
+                                                      offset: _controller
+                                                          .text
+                                                          .length,
+                                                    ),
+                                                  );
                                             },
                                             child: Container(
                                               width: 190,
@@ -433,9 +429,9 @@ class _KozmikRehberTarotChatPageState
                         Container(
                           padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF130535).withValues(
-                              alpha: 0.95,
-                            ),
+                            color: const Color(
+                              0xFF130535,
+                            ).withValues(alpha: 0.95),
                             border: const Border(
                               top: BorderSide(color: Colors.white12),
                             ),
@@ -447,8 +443,7 @@ class _KozmikRehberTarotChatPageState
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(24),
                                     color: Colors.white.withValues(alpha: 0.08),
-                                    border:
-                                        Border.all(color: Colors.white24),
+                                    border: Border.all(color: Colors.white24),
                                   ),
                                   child: TextField(
                                     controller: _controller,
@@ -618,7 +613,11 @@ class _TarotCardsDisplay extends StatelessWidget {
           padding: const EdgeInsets.only(top: 8, bottom: 12),
           child: Row(
             children: [
-              const Icon(Icons.style_rounded, color: Color(0xFFF2D293), size: 18),
+              const Icon(
+                Icons.style_rounded,
+                color: Color(0xFFF2D293),
+                size: 18,
+              ),
               const SizedBox(width: 8),
               const Text(
                 'Seçtiğin Kartlar',
@@ -678,7 +677,7 @@ class _TarotCardItem extends StatelessWidget {
               child: Image.asset(
                 card.asset,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: const Color(0xFF2E1568),
                   child: const Icon(
                     Icons.style_rounded,

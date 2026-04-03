@@ -114,7 +114,6 @@ class KozmikRehberFriendProfile {
   }
 }
 
-
 class ChatMessage {
   const ChatMessage({required this.role, required this.content});
 
@@ -203,7 +202,9 @@ Görevlerin:
     final cardList = cards
         .asMap()
         .entries
-        .map((e) => '${e.key + 1}. ${e.value['name']}: ${e.value['description']}')
+        .map(
+          (e) => '${e.key + 1}. ${e.value['name']}: ${e.value['description']}',
+        )
         .join('\n');
     return '''
 Sen Zodiona uygulamasının "Kozmik Rehber" tarot ve astroloji asistanısın.
