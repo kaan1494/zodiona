@@ -2915,8 +2915,6 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
   String? _selectedChatId;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  Set<String> _uidsWithChats = {};
-  StreamSubscription<QuerySnapshot>? _chatsSub;
 
   @override
   void initState() {
@@ -2926,24 +2924,11 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
         () => _searchQuery = _searchController.text.toLowerCase().trim(),
       );
     });
-    // Sohbeti olan kullanıcıların UID'lerini collectionGroup ile izle
-    _chatsSub = FirebaseFirestore.instance
-        .collectionGroup('kozmikRehberChats')
-        .snapshots()
-        .listen((snap) {
-          final uids = <String>{};
-          for (final doc in snap.docs) {
-            final segments = doc.reference.path.split('/');
-            if (segments.length >= 2) uids.add(segments[1]);
-          }
-          if (mounted) setState(() => _uidsWithChats = uids);
-        });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _chatsSub?.cancel();
     super.dispose();
   }
 
@@ -3018,16 +3003,16 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: FirebaseFirestore.instance
                       .collection('users')
+                      .where('hasKozmikChats', isEqualTo: true)
                       .orderBy('name')
                       .snapshots(),
                   builder: (context, snap) {
                     if (snap.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
-                    // Sadece kozmik sohbeti olan kullanıcıları göster
+                    // Arama filtresi
                     final allUsers = snap.data?.docs ?? [];
                     final users = allUsers.where((doc) {
-                      if (!_uidsWithChats.contains(doc.id)) return false;
                       if (_searchQuery.isEmpty) return true;
                       final data = doc.data();
                       final name = (data['name'] as String? ?? '')
@@ -3043,9 +3028,7 @@ class _KozmikAiChatsTwoPaneState extends State<_KozmikAiChatsTwoPane> {
                         child: Text(
                           _searchQuery.isNotEmpty
                               ? 'Arama sonucu bulunamadı.'
-                              : _uidsWithChats.isEmpty
-                              ? 'Henüz sohbet yapan kullanıcı yok.'
-                              : 'Kullanıcı bulunamadı.',
+                              : 'Henüz sohbet yapan kullanıcı yok.',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 13,

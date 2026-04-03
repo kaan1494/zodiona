@@ -139,6 +139,10 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
         'messages': msgs,
       });
       _chatId = docRef.id;
+      // Admin panelinin bu kullanıcıyı görebilmesi için flag yaz
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'hasKozmikChats': true,
+      });
     } else {
       await ref.doc(_chatId).update({
         'updatedAt': FieldValue.serverTimestamp(),

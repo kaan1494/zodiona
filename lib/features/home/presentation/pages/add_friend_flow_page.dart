@@ -571,30 +571,23 @@ class _AddCompatibilityFriendPageState
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
         ),
-        const SizedBox(height: 20),
-        InkWell(
-          onTap: _pickRelationship,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            height: 54,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFF2C98A)),
-              color: Colors.white.withValues(alpha: 0.05),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            child: Row(
-              children: [
-                Expanded(
+        const SizedBox(height: 22),
+        DropdownButtonFormField<String>(
+          dropdownColor: const Color(0xFF1A214B),
+          initialValue: _relationship,
+          items: _relationshipOptions
+              .map(
+                (item) => DropdownMenuItem<String>(
+                  value: item,
                   child: Text(
-                    _relationship ?? 'Iliski sec',
+                    item,
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
-                const Icon(Icons.keyboard_arrow_down, color: Colors.white70),
-              ],
-            ),
-          ),
+              )
+              .toList(),
+          decoration: _inputDecoration('Iliski sec'),
+          onChanged: (value) => setState(() => _relationship = value),
         ),
       ],
     );
@@ -760,116 +753,6 @@ class _AddCompatibilityFriendPageState
         setState(() => _isSaving = false);
       }
     }
-  }
-
-  Future<void> _pickRelationship() async {
-    final currentIndex = _relationshipOptions.indexOf(_relationship ?? '');
-    int selectedIndex = currentIndex >= 0 ? currentIndex : 0;
-
-    await showCupertinoModalPopup<void>(
-      context: context,
-      builder: (context) {
-        final media = MediaQuery.of(context);
-        return MediaQuery(
-          data: media.copyWith(textScaler: const TextScaler.linear(1.0)),
-          child: Container(
-            height: 290,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF6B6792), Color(0xFF5D5A86)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
-                  child: Row(
-                    children: [
-                      CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text(
-                          'Iptal',
-                          style: TextStyle(
-                            color: Color(0xFFE9DFEF),
-                            fontSize: 26 / 2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const Expanded(
-                        child: Text(
-                          'Iliskiniz',
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Color(0xFFE9DFEF),
-                            fontSize: 30 / 2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      CupertinoButton(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        onPressed: () {
-                          setState(
-                            () => _relationship =
-                                _relationshipOptions[selectedIndex],
-                          );
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text(
-                          'Bitti',
-                          style: TextStyle(
-                            color: Color(0xFFF2C98A),
-                            fontSize: 26 / 2,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: CupertinoPicker(
-                    backgroundColor: Colors.transparent,
-                    scrollController: FixedExtentScrollController(
-                      initialItem: selectedIndex,
-                    ),
-                    itemExtent: 34,
-                    selectionOverlay: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onSelectedItemChanged: (value) => selectedIndex = value,
-                    children: _relationshipOptions
-                        .map(
-                          (item) => Center(
-                            child: Text(
-                              item,
-                              style: const TextStyle(
-                                color: Color(0xFFECE8F7),
-                                fontSize: 17,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   void _onPlaceChanged(String value) {
@@ -1169,6 +1052,143 @@ class _CompatibilityFriendDetailPageState
     );
   }
 
+  void _showFriendInfoSheet(BuildContext context, String friendName) {
+    final data = widget.friendData;
+
+    // Doğum tarihi
+    final birthDateRaw = data['birthDate'];
+    String birthDateStr = 'Bilinmiyor';
+    if (birthDateRaw is Timestamp) {
+      final dt = birthDateRaw.toDate();
+      const months = [
+        '',
+        'Ocak',
+        'Şubat',
+        'Mart',
+        'Nisan',
+        'Mayıs',
+        'Haziran',
+        'Temmuz',
+        'Ağustos',
+        'Eylül',
+        'Ekim',
+        'Kasım',
+        'Aralık',
+      ];
+      birthDateStr = '${dt.day} ${months[dt.month]} ${dt.year}';
+    }
+
+    final birthTime = (data['birthTime'] as String?)?.trim();
+    final birthTimeStr = (birthTime != null && birthTime.isNotEmpty)
+        ? birthTime
+        : 'Bilinmiyor';
+
+    final birthPlace =
+        (data['birthPlaceName'] as String?)?.trim().isNotEmpty == true
+        ? (data['birthPlaceName'] as String).trim()
+        : (data['birthPlace'] as String?)?.trim() ?? 'Bilinmiyor';
+
+    final gender = (data['gender'] as String?)?.trim() ?? 'Belirtilmemiş';
+    final job = (data['job'] as String?)?.trim() ?? 'Belirtilmemiş';
+    final relationship =
+        (data['relationshipType'] as String?)?.trim() ?? 'Belirtilmemiş';
+
+    final sun = _displaySign((data['zodiacSign'] as String?) ?? 'Bilinmiyor');
+    final moon = _displaySign((data['moonSign'] as String?) ?? 'Bilinmiyor');
+    final rising = _displaySign(
+      (data['risingSign'] as String?) ?? 'Bilinmiyor',
+    );
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF130535),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(top: BorderSide(color: Colors.white24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Icon(
+                  Icons.person_outline_rounded,
+                  color: Color(0xFFF2D293),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  friendName,
+                  style: const TextStyle(
+                    color: Color(0xFFF2D293),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white12, height: 1),
+            const SizedBox(height: 12),
+            _InfoRow(
+              icon: Icons.calendar_today_outlined,
+              label: 'Doğum Tarihi',
+              value: birthDateStr,
+            ),
+            _InfoRow(
+              icon: Icons.access_time_rounded,
+              label: 'Doğum Saati',
+              value: birthTimeStr,
+            ),
+            _InfoRow(
+              icon: Icons.location_on_outlined,
+              label: 'Doğum Yeri',
+              value: birthPlace,
+            ),
+            _InfoRow(icon: Icons.wc_rounded, label: 'Cinsiyet', value: gender),
+            _InfoRow(
+              icon: Icons.work_outline_rounded,
+              label: 'Meslek',
+              value: job,
+            ),
+            _InfoRow(
+              icon: Icons.favorite_border_rounded,
+              label: 'İlişki',
+              value: relationship,
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: Colors.white12, height: 1),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _SignChip(label: '☉ $sun'),
+                _SignChip(label: '☾ $moon'),
+                _SignChip(label: '↑ $rising'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBetweenTab(
     BuildContext context, {
     required String currentUserName,
@@ -1204,9 +1224,40 @@ class _CompatibilityFriendDetailPageState
                     label: currentUserName,
                     avatarId: currentUserAvatarId,
                   ),
-                  _CircleAvatarSign(
-                    label: friendName,
-                    avatarId: friendAvatarId,
+                  Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.topRight,
+                    children: [
+                      _CircleAvatarSign(
+                        label: friendName,
+                        avatarId: friendAvatarId,
+                      ),
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: GestureDetector(
+                          onTap: () =>
+                              _showFriendInfoSheet(context, friendName),
+                          child: Container(
+                            width: 26,
+                            height: 26,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF2E1568),
+                              border: Border.all(
+                                color: const Color(0xFFF2D293),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.info_outline_rounded,
+                              color: Color(0xFFF2D293),
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1403,6 +1454,72 @@ class _CardSurface extends StatelessWidget {
         border: Border.all(color: Colors.white24),
       ),
       child: child,
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white38, size: 17),
+          const SizedBox(width: 10),
+          Text(
+            '$label: ',
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SignChip extends StatelessWidget {
+  const _SignChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFF2D293),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
