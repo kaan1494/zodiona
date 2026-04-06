@@ -425,7 +425,7 @@ class _AuthScreenState extends State<AuthScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _mode == _AuthMode.signIn ? 'Giris Yap' : 'Kaydol',
+              _mode == _AuthMode.signIn ? 'Giriş Yap' : 'Kaydol',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -451,7 +451,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 16),
             _buildPasswordField(
               controller: _passwordController,
-              label: 'Sifre',
+              label: 'Şifre',
               obscure: _obscurePassword,
               onToggle: () {
                 setState(() => _obscurePassword = !_obscurePassword);
@@ -462,7 +462,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 16),
               _buildPasswordField(
                 controller: _confirmPasswordController,
-                label: 'Sifreyi Onayla',
+                label: 'Şifreyi Onayla',
                 obscure: _obscureConfirmPassword,
                 onToggle: () {
                   setState(
@@ -521,7 +521,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _showResetPasswordDialog,
-                  child: const Text('Sifremi unuttum'),
+                  child: const Text('Şifremi unuttum'),
                 ),
               ),
             ],
@@ -563,7 +563,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_mode == _AuthMode.signIn ? 'Giris Yap' : 'Kaydol'),
+                    : Text(_mode == _AuthMode.signIn ? 'Giriş Yap' : 'Kaydol'),
               ),
             ),
             const SizedBox(height: 24),
@@ -681,7 +681,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         TextButton(
           onPressed: () => _switchMode(_AuthMode.signIn),
-          child: const Text('Giris Yap'),
+          child: const Text('Giriş Yap'),
         ),
         TextButton(
           onPressed: _showSupportDialog,
@@ -867,7 +867,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _showResetPasswordDialog() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showSnack('Sifre sifirlama icin once e-posta adresi gir.');
+      _showSnack('Şifre sıfırlama için önce e-posta adresi gir.');
       return;
     }
 
@@ -875,7 +875,7 @@ class _AuthScreenState extends State<AuthScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Sifre sifirlama'),
+          title: const Text('Şifre sıfırlama'),
           content: Text(
             'Sifirlama baglantisi $email adresine gonderilecek. Onayliyor musun?',
           ),
@@ -957,11 +957,11 @@ class _AuthScreenState extends State<AuthScreen> {
         return 'Bu hesap devre disi birakilmis.';
       case 'user-not-found':
       case 'wrong-password':
-        return 'E-posta veya sifre hatali.';
+        return 'E-posta veya şifre hatalı.';
       case 'email-already-in-use':
         return 'Bu e-posta ile zaten bir hesap var.';
       case 'weak-password':
-        return 'Daha guclu bir sifre sec.';
+        return 'Daha güçlü bir şifre seç.';
       case 'operation-not-allowed':
         return 'Bu giris yontemi su anda devrede degil.';
       default:
@@ -1060,7 +1060,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   String? _validatePassword(String? value) {
     if (value == null || value.length < 6) {
-      return 'Sifre en az 6 karakter olmali.';
+      return 'Şifre en az 6 karakter olmalı.';
     }
     return null;
   }
@@ -1070,7 +1070,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return null;
     }
     if (value != _passwordController.text) {
-      return 'Sifreler eslesmiyor.';
+      return 'Şifreler eşleşmiyor.';
     }
     return null;
   }
@@ -1121,7 +1121,7 @@ class _SocialButton extends StatelessWidget {
                 children: [
                   Icon(icon, color: Colors.white),
                   const SizedBox(width: 8),
-                  Text(label),
+                  Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
                 ],
               ),
       ),

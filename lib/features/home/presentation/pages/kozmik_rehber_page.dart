@@ -36,161 +36,168 @@ class KozmikRehberPage extends StatelessWidget {
             ),
           ),
           SafeArea(
-            child: Column(
-              children: [
-                // Üst başlık
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Üst başlık
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                          ),
                         ),
+                        const Expanded(
+                          child: Text(
+                            'Kozmik Rehber',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFFF2D293),
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 48),
+                      ],
+                    ),
+                  ),
+                  // Logo / ikon alanı
+                  const SizedBox(height: 16),
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF5C2D91), Color(0xFF2E1568)],
                       ),
-                      const Expanded(
-                        child: Text(
-                          'Kozmik Rehber',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFFF2D293),
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+                      border: Border.all(
+                        color: const Color(0xFFF2D293),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFFF2D293,
+                          ).withValues(alpha: 0.25),
+                          blurRadius: 24,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      color: Color(0xFFF2D293),
+                      size: 38,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Karşılama metni
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Text(
+                      'Merhaba Canım!\nBen senin Kozmik Rehberinim. '
+                      'Gezegen geçişleri, burç yorumları, doğum haritası '
+                      've daha fazlası hakkında sorularını benimle '
+                      'paylaşabilirsin. Yıldızların fısıltılarını birlikte '
+                      'keşfedelim.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        height: 1.55,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 36),
+                  // Menü butonları
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        _MenuButton(
+                          label: 'Doğum Haritası',
+                          icon: Icons.hub_rounded,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const KozmikRehberChatPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _MenuButton(
+                          label: 'Tarot Yorumu',
+                          icon: Icons.style_rounded,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const KozmikRehberTarotChatPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _MenuButton(
+                          label: 'Uyum Analizi',
+                          icon: Icons.favorite_border_rounded,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const KozmikRehberUyumChatPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        _MenuButton(
+                          label: 'Rüya Tabiri',
+                          icon: Icons.bedtime_rounded,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const KozmikRehberRuyaChatPage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _SmallButton(
+                        label: 'Geçmiş',
+                        icon: Icons.history_rounded,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const KozmikRehberHistoryPage(),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48),
                     ],
                   ),
-                ),
-                // Logo / ikon alanı
-                const SizedBox(height: 16),
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF5C2D91), Color(0xFF2E1568)],
-                    ),
-                    border: Border.all(
-                      color: const Color(0xFFF2D293),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFF2D293).withValues(alpha: 0.25),
-                        blurRadius: 24,
-                        spreadRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: Color(0xFFF2D293),
-                    size: 38,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Karşılama metni
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Text(
-                    'Merhaba Canım!\nBen senin Kozmik Rehberinim. '
-                    'Gezegen geçişleri, burç yorumları, doğum haritası '
-                    've daha fazlası hakkında sorularını benimle '
-                    'paylaşabilirsin. Yıldızların fısıltılarını birlikte '
-                    'keşfedelim.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      height: 1.55,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 36),
-                // Menü butonları
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      _MenuButton(
-                        label: 'Doğum Haritası',
-                        icon: Icons.hub_rounded,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const KozmikRehberChatPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      _MenuButton(
-                        label: 'Tarot Yorumu',
-                        icon: Icons.style_rounded,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const KozmikRehberTarotChatPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      _MenuButton(
-                        label: 'Uyum Analizi',
-                        icon: Icons.favorite_border_rounded,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const KozmikRehberUyumChatPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 14),
-                      _MenuButton(
-                        label: 'Rüya Tabiri',
-                        icon: Icons.bedtime_rounded,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const KozmikRehberRuyaChatPage(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _SmallButton(
-                      label: 'Geçmiş',
-                      icon: Icons.history_rounded,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const KozmikRehberHistoryPage(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ],
