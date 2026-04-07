@@ -19,9 +19,7 @@ import 'widgets/periodic_horoscope_section.dart';
 import 'widgets/celestia_card_preview.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/notification_service.dart';
-import '../../../services/horoscope_notification_service.dart';
 import '../../../utils/zodiac.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,78 +34,14 @@ class _HomeScreenState extends State<HomeScreen> {
   int _advisorInitialTabIndex = 0;
   int _advisorPageSeed = 0;
 
-  HoroscopeNotificationData? _pendingHoroscope;
-  StreamSubscription<User?>? _authSub;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _horoscopeSub;
-
   @override
   void initState() {
     super.initState();
     NotificationService.initialize();
-    // Auth hazır olduğunda Firestore stream'ini başlat
-    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
-      if (user != null && _horoscopeSub == null) {
-        _setupHoroscopeStream(user.uid);
-      } else if (user == null) {
-        _horoscopeSub?.cancel();
-        _horoscopeSub = null;
-      }
-    });
-  }
-
-  Future<void> _setupHoroscopeStream(String uid) async {
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      if (!mounted) return;
-      final zodiacSign = userDoc.data()?['zodiacSign'] as String?;
-      if (zodiacSign == null || zodiacSign.isEmpty) return;
-
-      _horoscopeSub = FirebaseFirestore.instance
-          .collection('weekly_horoscopes_general')
-          .doc(zodiacSign)
-          .snapshots()
-          .listen((snap) async {
-            if (!snap.exists || !mounted) return;
-            final data = snap.data()!;
-            final updatedAtRaw = data['updatedAt'];
-            if (updatedAtRaw == null || updatedAtRaw is! Timestamp) return;
-
-            final updatedAt = updatedAtRaw.toDate();
-            final prefs = await SharedPreferences.getInstance();
-            final lastSeenMillis =
-                prefs.getInt('lastSeenHoroscope_$zodiacSign') ?? 0;
-            final lastSeen = DateTime.fromMillisecondsSinceEpoch(
-              lastSeenMillis,
-            );
-
-            if (updatedAt.isAfter(lastSeen) && mounted) {
-              setState(() {
-                _pendingHoroscope = HoroscopeNotificationData(
-                  title:
-                      data['title'] as String? ?? '$zodiacSign Haftalık Yorumu',
-                  body: data['body'] as String? ?? '',
-                  zodiacSign: zodiacSign,
-                );
-              });
-            }
-          });
-    } catch (_) {}
-  }
-
-  void _dismissHoroscope() {
-    if (_pendingHoroscope != null) {
-      HoroscopeNotificationService.markAsSeen(_pendingHoroscope!.zodiacSign);
-    }
-    setState(() => _pendingHoroscope = null);
   }
 
   @override
   void dispose() {
-    _authSub?.cancel();
-    _horoscopeSub?.cancel();
     super.dispose();
   }
 
@@ -180,11 +114,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          if (_pendingHoroscope != null)
-            _HoroscopeBanner(
-              data: _pendingHoroscope!,
-              onDismiss: _dismissHoroscope,
-            ),
         ],
       ),
     );
@@ -979,154 +908,6 @@ class _CosmicBackground extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Uygulama içi horoscope bildirim banner'ı
-// ---------------------------------------------------------------------------
-
-class _HoroscopeBanner extends StatefulWidget {
-  const _HoroscopeBanner({required this.data, required this.onDismiss});
-
-  final HoroscopeNotificationData data;
-  final VoidCallback onDismiss;
-
-  @override
-  State<_HoroscopeBanner> createState() => _HoroscopeBannerState();
-}
-
-class _HoroscopeBannerState extends State<_HoroscopeBanner>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<Offset> _slide;
-  late final Animation<double> _fade;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    );
-    _slide = Tween<Offset>(
-      begin: const Offset(0, -1.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeIn);
-    _ctrl.forward();
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _dismiss() async {
-    await _ctrl.reverse();
-    widget.onDismiss();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: SafeArea(
-        child: FadeTransition(
-          opacity: _fade,
-          child: SlideTransition(
-            position: _slide,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1B1F3B), Color(0xFF2D1B69)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x661B1F3B),
-                        blurRadius: 24,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.12),
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('✨', style: TextStyle(fontSize: 26)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${widget.data.zodiacSign} · Yeni Haftalık Yorum',
-                                style: const TextStyle(
-                                  color: Color(0xFFD4AF37),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                widget.data.title,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                widget.data.body,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.75),
-                                  fontSize: 12,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white54,
-                            size: 20,
-                          ),
-                          onPressed: _dismiss,
-                          splashRadius: 18,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
