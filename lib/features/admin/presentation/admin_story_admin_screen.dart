@@ -2497,6 +2497,7 @@ class _WeeklyHoroscopeMgmtSectionState
       return;
     }
     setState(() => _isSaving = true);
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await FirebaseFirestore.instance
           .collection('weekly_horoscopes_general')
@@ -2507,7 +2508,9 @@ class _WeeklyHoroscopeMgmtSectionState
             'updatedAt': FieldValue.serverTimestamp(),
           });
       // Push bildirimi arka planda gönder (hata olsa kayıt etkilenmesin)
-      unawaited(_sendHoroscopeNotification(_selectedSign, title, body, context));
+      unawaited(
+        _sendHoroscopeNotification(_selectedSign, title, body, messenger),
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2531,17 +2534,23 @@ class _WeeklyHoroscopeMgmtSectionState
     String sign,
     String title,
     String body,
-    BuildContext ctx,
+    ScaffoldMessengerState messenger,
   ) async {
     const baseUrl = String.fromEnvironment(
       'ASTRO_API_BASE_URL',
       defaultValue: 'https://zodiona-astro-api.onrender.com',
     );
-    const apiKey = String.fromEnvironment('NOTIFY_API_KEY', defaultValue: '');
+    const apiKey = String.fromEnvironment(
+      'NOTIFY_API_KEY',
+      defaultValue: 'zod-notify-2026',
+    );
     if (apiKey.isEmpty) {
-      if (ctx.mounted) {
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          const SnackBar(content: Text('NOTIFY_API_KEY tanımlı değil'), backgroundColor: Colors.red),
+      if (messenger.mounted) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('NOTIFY_API_KEY tanımlı değil'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       return;
@@ -2561,9 +2570,12 @@ class _WeeklyHoroscopeMgmtSectionState
           .toList();
 
       if (tokens.isEmpty) {
-        if (ctx.mounted) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(content: Text('$sign için FCM token bulunamadı'), backgroundColor: Colors.orange),
+        if (messenger.mounted) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('$sign için FCM token bulunamadı'),
+              backgroundColor: Colors.orange,
+            ),
           );
         }
         return;
@@ -2578,25 +2590,33 @@ class _WeeklyHoroscopeMgmtSectionState
           .timeout(const Duration(seconds: 90));
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body) as Map<String, dynamic>;
-        if (ctx.mounted) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
+        if (messenger.mounted) {
+          messenger.showSnackBar(
             SnackBar(
-              content: Text('Bildirim: ${result['sent']} gönderildi, ${result['failed']} başarısız'),
+              content: Text(
+                'Bildirim: ${result['sent']} gönderildi, ${result['failed']} başarısız',
+              ),
               backgroundColor: const Color(0xFF3B1F8C),
             ),
           );
         }
       } else {
-        if (ctx.mounted) {
-          ScaffoldMessenger.of(ctx).showSnackBar(
-            SnackBar(content: Text('Bildirim hatası: ${response.statusCode}'), backgroundColor: Colors.red),
+        if (messenger.mounted) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text('Bildirim hatası: ${response.statusCode}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
     } catch (e) {
-      if (ctx.mounted) {
-        ScaffoldMessenger.of(ctx).showSnackBar(
-          SnackBar(content: Text('Bildirim hatası: $e'), backgroundColor: Colors.red),
+      if (messenger.mounted) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Bildirim hatası: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
