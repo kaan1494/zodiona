@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 import '../../../models/astro_story.dart';
 import '../../../services/advisor_chat_service.dart';
@@ -2505,6 +2506,8 @@ class _WeeklyHoroscopeMgmtSectionState
             'body': body,
             'updatedAt': FieldValue.serverTimestamp(),
           });
+      // Push bildirimi arka planda gönder (hata olsa kayıt etkilenmesin)
+      unawaited(_sendHoroscopeNotification(_selectedSign, title, body));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2521,6 +2524,39 @@ class _WeeklyHoroscopeMgmtSectionState
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _sendHoroscopeNotification(
+    String sign,
+    String title,
+    String body,
+  ) async {
+    const baseUrl = String.fromEnvironment(
+      'ASTRO_API_BASE_URL',
+      defaultValue: 'https://zodiona-astro-api.onrender.com',
+    );
+    const apiKey = String.fromEnvironment('NOTIFY_API_KEY', defaultValue: '');
+    if (apiKey.isEmpty) return;
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/notify-horoscope'),
+            headers: {'Content-Type': 'application/json', 'X-API-Key': apiKey},
+            body: jsonEncode({'sign': sign, 'title': title, 'body': body}),
+          )
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body) as Map<String, dynamic>;
+        debugPrint(
+          'FCM: ${result['sent']} gönderildi, ${result['failed']} başarısız',
+        );
+      } else {
+        debugPrint('Bildirim servisi yanıtı: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Bildirim gönderme hatası: $e');
     }
   }
 

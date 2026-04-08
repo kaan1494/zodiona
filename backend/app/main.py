@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import json
 import math
 import os
 from datetime import datetime
+from typing import Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, HTTPException, Query
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore as admin_firestore
+from firebase_admin import messaging as admin_messaging
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from skyfield.api import load
@@ -29,9 +35,34 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=False,
-    allow_methods=["GET", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# ── Firebase Admin ────────────────────────────────────────────────────────────
+
+_firebase_app: Optional[firebase_admin.App] = None
+
+
+def _get_firebase_app() -> firebase_admin.App:
+    global _firebase_app
+    if _firebase_app is not None:
+        return _firebase_app
+    sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
+    if not sa_json:
+        raise HTTPException(
+            status_code=503,
+            detail="Firebase yapılandırması eksik (FIREBASE_SERVICE_ACCOUNT env var)",
+        )
+    try:
+        sa_dict = json.loads(sa_json)
+        cred = credentials.Certificate(sa_dict)
+        _firebase_app = firebase_admin.initialize_app(cred)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail=f"Firebase init hatası: {exc}"
+        ) from exc
+    return _firebase_app
 
 _tf = TimezoneFinder()
 _ts = load.timescale()
@@ -215,4 +246,68 @@ def astro(
 
 
 # ── Burç bildirimi ────────────────────────────────────────────────────────────
+
+
+class NotifyRequest(BaseModel):
+    sign: str
+    title: str
+    body: str
+
+
+@app.post("/notify-horoscope")
+def notify_horoscope(
+    req: NotifyRequest,
+    x_api_key: str = Header(..., alias="X-API-Key"),
+) -> dict:
+    """Belirtilen burca sahip kullanıcılara FCM push bildirimi gönderir."""
+    expected_key = os.getenv("NOTIFY_API_KEY", "")
+    if not expected_key or x_api_key != expected_key:
+        raise HTTPException(status_code=403, detail="Yetkisiz erişim")
+
+    _get_firebase_app()
+    db = admin_firestore.client()
+
+    docs = list(
+        db.collection("users").where("zodiacSign", "==", req.sign).stream()
+    )
+
+    tokens: list[str] = []
+    for doc in docs:
+        token = doc.to_dict().get("fcmToken")
+        if token and isinstance(token, str):
+            tokens.append(token)
+
+    if not tokens:
+        return {"sent": 0, "failed": 0, "message": f"{req.sign} için kayıtlı token bulunamadı"}
+
+    preview = req.body[:80] + "\u2026" if len(req.body) > 80 else req.body
+    total_sent = 0
+    total_failed = 0
+
+    for i in range(0, len(tokens), 500):
+        chunk = tokens[i : i + 500]
+        message = admin_messaging.MulticastMessage(
+            notification=admin_messaging.Notification(
+                title=f"\u2728 {req.title}",
+                body=preview,
+            ),
+            android=admin_messaging.AndroidConfig(
+                priority="high",
+                notification=admin_messaging.AndroidNotification(
+                    sound="default",
+                    channel_id="horoscope_weekly",
+                ),
+            ),
+            apns=admin_messaging.APNSConfig(
+                payload=admin_messaging.APNSPayload(
+                    aps=admin_messaging.Aps(sound="default"),
+                ),
+            ),
+            tokens=chunk,
+        )
+        response = admin_messaging.send_each_for_multicast(message)
+        total_sent += response.success_count
+        total_failed += response.failure_count
+
+    return {"sent": total_sent, "failed": total_failed}
 
