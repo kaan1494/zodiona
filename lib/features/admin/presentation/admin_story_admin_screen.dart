@@ -2507,7 +2507,7 @@ class _WeeklyHoroscopeMgmtSectionState
             'updatedAt': FieldValue.serverTimestamp(),
           });
       // Push bildirimi arka planda gönder (hata olsa kayıt etkilenmesin)
-      unawaited(_sendHoroscopeNotification(_selectedSign, title, body));
+      unawaited(_sendHoroscopeNotification(_selectedSign, title, body, context));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -2531,13 +2531,21 @@ class _WeeklyHoroscopeMgmtSectionState
     String sign,
     String title,
     String body,
+    BuildContext ctx,
   ) async {
     const baseUrl = String.fromEnvironment(
       'ASTRO_API_BASE_URL',
       defaultValue: 'https://zodiona-astro-api.onrender.com',
     );
     const apiKey = String.fromEnvironment('NOTIFY_API_KEY', defaultValue: '');
-    if (apiKey.isEmpty) return;
+    if (apiKey.isEmpty) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          const SnackBar(content: Text('NOTIFY_API_KEY tanımlı değil'), backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
 
     try {
       // Firestore'dan bu burca sahip kullanıcıların FCM tokenlarını topla
@@ -2553,7 +2561,11 @@ class _WeeklyHoroscopeMgmtSectionState
           .toList();
 
       if (tokens.isEmpty) {
-        debugPrint('FCM: $sign için token bulunamadı');
+        if (ctx.mounted) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(content: Text('$sign için FCM token bulunamadı'), backgroundColor: Colors.orange),
+          );
+        }
         return;
       }
 
@@ -2563,17 +2575,30 @@ class _WeeklyHoroscopeMgmtSectionState
             headers: {'Content-Type': 'application/json', 'X-API-Key': apiKey},
             body: jsonEncode({'title': title, 'body': body, 'tokens': tokens}),
           )
-          .timeout(const Duration(seconds: 30));
+          .timeout(const Duration(seconds: 90));
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body) as Map<String, dynamic>;
-        debugPrint(
-          'FCM: ${result['sent']} gönderildi, ${result['failed']} başarısız',
-        );
+        if (ctx.mounted) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text('Bildirim: ${result['sent']} gönderildi, ${result['failed']} başarısız'),
+              backgroundColor: const Color(0xFF3B1F8C),
+            ),
+          );
+        }
       } else {
-        debugPrint('Bildirim servisi yanıtı: ${response.statusCode} ${response.body}');
+        if (ctx.mounted) {
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(content: Text('Bildirim hatası: ${response.statusCode}'), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
-      debugPrint('Bildirim gönderme hatası: $e');
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(content: Text('Bildirim hatası: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

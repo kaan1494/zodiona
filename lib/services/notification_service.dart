@@ -10,6 +10,9 @@ class NotificationService {
   static Future<void> initialize() async {
     if (kIsWeb) return;
 
+    // Android 8+ için bildirim kanalını oluştur
+    await _createNotificationChannel();
+
     // İzin iste
     final settings = await _messaging.requestPermission(
       alert: true,
@@ -30,6 +33,15 @@ class NotificationService {
       // Gerekirse buraya snackbar/dialog eklenebilir
       debugPrint('FCM ön plan: ${message.notification?.title}');
     });
+  }
+
+  static Future<void> _createNotificationChannel() async {
+    // Android 8+ için varsayılan FCM kanalını ayarla
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 
   static Future<void> _saveFcmToken() async {
