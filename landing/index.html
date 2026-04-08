@@ -499,12 +499,95 @@
       margin: 24px auto 0;
     }
 
+    /* ---- HAMBURGER MENU ---- */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+      background: none;
+      border: none;
+    }
+    .nav-hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: var(--gold);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .nav-mobile-menu {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(11,16,38,0.97);
+      z-index: 99;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .nav-mobile-menu.open { display: flex; }
+    .nav-mobile-menu a {
+      color: var(--text);
+      text-decoration: none;
+      font-family: 'Cinzel', serif;
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      transition: color 0.2s;
+    }
+    .nav-mobile-menu a:hover { color: var(--gold); }
+
     /* ---- RESPONSIVE ---- */
-    @media (max-width: 768px) {
-      nav { padding: 16px 20px; }
-      .nav-links { display: none; }
+    @media (max-width: 900px) {
       .highlight-section { grid-template-columns: 1fr; gap: 40px; }
-      .cta-box { padding: 48px 24px; }
+    }
+
+    @media (max-width: 768px) {
+      nav { padding: 12px 20px; }
+      .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
+
+      .nav-logo img { height: 48px; }
+      .nav-logo span { font-size: 18px; }
+
+      section { padding: 64px 16px; }
+      .cta-section { padding: 64px 16px; }
+
+      .hero { padding: 100px 16px 60px; }
+      .hero-desc { font-size: 15px; }
+      .hero-buttons { flex-direction: column; align-items: center; }
+      .hero-buttons a { width: 100%; max-width: 320px; justify-content: center; }
+
+      .features-grid { grid-template-columns: 1fr; gap: 16px; margin-top: 40px; }
+      .feature-card { padding: 24px; }
+
+      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+      .stat-num { font-size: 32px; }
+
+      .cta-box { padding: 40px 20px; border-radius: 20px; }
+      .store-buttons { flex-direction: column; align-items: center; }
+      .store-btn { width: 100%; max-width: 280px; justify-content: center; }
+
+      .zodiac-ring { gap: 8px; }
+      .zodiac-chip { font-size: 13px; padding: 8px 14px; }
+
+      .chat-bubble { font-size: 13px; padding: 12px 16px; }
+
+      .section-desc { font-size: 15px; }
+
+      footer { padding: 32px 16px; }
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .nav-logo span { font-size: 15px; }
     }
   </style>
 </head>
@@ -525,7 +608,18 @@
     <li><a href="#burclar">Burçlar</a></li>
     <li><a href="#indir">İndir</a></li>
   </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menü">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBİL MENÜ -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="#ozellikler" class="mobile-link">Özellikler</a>
+  <a href="#kozmik" class="mobile-link">Kozmik Rehber</a>
+  <a href="#burclar" class="mobile-link">Burçlar</a>
+  <a href="#indir" class="mobile-link">İndir</a>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -758,6 +852,22 @@
     `;
     container.appendChild(s);
   }
+
+  // Hamburger menü
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    mobileMenu.classList.toggle('open');
+    document.body.style.overflow = mobileMenu.classList.contains('open') ? 'hidden' : '';
+  });
+  document.querySelectorAll('.mobile-link').forEach(link => {
+    link.addEventListener('click', () => {
+      hamburger.classList.remove('open');
+      mobileMenu.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
 </script>
 </body>
 </html>
