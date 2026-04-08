@@ -5,7 +5,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:web/web.dart' as web;
 
 import 'features/admin/presentation/admin_access_gate_screen.dart';
 import 'features/auth/presentation/auth_screen.dart';
@@ -46,7 +45,7 @@ class ZodionaApp extends StatelessWidget {
     // Web'de hostname'e göre giriş sayfasını belirle
     final String resolvedEntry;
     if (kIsWeb && entry == 'auto') {
-      final hostname = web.window.location.hostname;
+      final hostname = Uri.base.host;
       resolvedEntry = hostname.startsWith('admin') ? 'admin' : 'auth';
     } else {
       resolvedEntry = entry;
