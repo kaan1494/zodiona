@@ -10,8 +10,6 @@ from zoneinfo import ZoneInfo
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import messaging as admin_messaging
-from google.cloud import firestore as gc_firestore
-from google.oauth2 import service_account as gcp_sa
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -43,11 +41,10 @@ app.add_middleware(
 # ── Firebase Admin ────────────────────────────────────────────────────────────
 
 _firebase_app: Optional[firebase_admin.App] = None
-_sa_dict: Optional[dict] = None
 
 
 def _init_firebase() -> None:
-    global _firebase_app, _sa_dict
+    global _firebase_app
     if _firebase_app is not None:
         return
     sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
@@ -57,26 +54,13 @@ def _init_firebase() -> None:
             detail="Firebase yapılandırması eksik (FIREBASE_SERVICE_ACCOUNT env var)",
         )
     try:
-        _sa_dict = json.loads(sa_json)
-        cred = credentials.Certificate(_sa_dict)
+        sa_dict = json.loads(sa_json)
+        cred = credentials.Certificate(sa_dict)
         _firebase_app = firebase_admin.initialize_app(cred)
     except Exception as exc:
         raise HTTPException(
             status_code=503, detail=f"Firebase init hatası: {exc}"
         ) from exc
-
-
-def _get_firestore_client() -> gc_firestore.Client:
-    _init_firebase()
-    assert _sa_dict is not None
-    gcp_creds = gcp_sa.Credentials.from_service_account_info(
-        _sa_dict,
-        scopes=[
-            "https://www.googleapis.com/auth/cloud-platform",
-            "https://www.googleapis.com/auth/datastore",
-        ],
-    )
-    return gc_firestore.Client(project=_sa_dict["project_id"], credentials=gcp_creds)
 
 _tf = TimezoneFinder()
 _ts = load.timescale()
@@ -263,9 +247,9 @@ def astro(
 
 
 class NotifyRequest(BaseModel):
-    sign: str
     title: str
     body: str
+    tokens: list[str]
 
 
 @app.post("/notify-horoscope")
@@ -273,26 +257,14 @@ def notify_horoscope(
     req: NotifyRequest,
     x_api_key: str = Header(..., alias="X-API-Key"),
 ) -> dict:
-    """Belirtilen burca sahip kullanıcılara FCM push bildirimi gönderir."""
+    """Verilen FCM tokenlarına push bildirimi gönderir."""
     expected_key = os.getenv("NOTIFY_API_KEY", "")
     if not expected_key or x_api_key != expected_key:
         raise HTTPException(status_code=403, detail="Yetkisiz erişim")
 
-    _init_firebase()
-    db = _get_firestore_client()
-
-    docs = list(
-        db.collection("users").where("zodiacSign", "==", req.sign).stream()
-    )
-
-    tokens: list[str] = []
-    for doc in docs:
-        token = doc.to_dict().get("fcmToken")
-        if token and isinstance(token, str):
-            tokens.append(token)
-
+    tokens = [t for t in req.tokens if t and isinstance(t, str)]
     if not tokens:
-        return {"sent": 0, "failed": 0, "message": f"{req.sign} için kayıtlı token bulunamadı"}
+        return {"sent": 0, "failed": 0, "message": "Token listesi boş"}
 
     preview = req.body[:80] + "\u2026" if len(req.body) > 80 else req.body
     total_sent = 0

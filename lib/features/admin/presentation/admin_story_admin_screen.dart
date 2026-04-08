@@ -2540,20 +2540,37 @@ class _WeeklyHoroscopeMgmtSectionState
     if (apiKey.isEmpty) return;
 
     try {
+      // Firestore'dan bu burca sahip kullanıcıların FCM tokenlarını topla
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('zodiacSign', isEqualTo: sign)
+          .get();
+
+      final tokens = snapshot.docs
+          .map((d) => d.data()['fcmToken'] as String?)
+          .where((t) => t != null && t.isNotEmpty)
+          .cast<String>()
+          .toList();
+
+      if (tokens.isEmpty) {
+        debugPrint('FCM: $sign için token bulunamadı');
+        return;
+      }
+
       final response = await http
           .post(
             Uri.parse('$baseUrl/notify-horoscope'),
             headers: {'Content-Type': 'application/json', 'X-API-Key': apiKey},
-            body: jsonEncode({'sign': sign, 'title': title, 'body': body}),
+            body: jsonEncode({'title': title, 'body': body, 'tokens': tokens}),
           )
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body) as Map<String, dynamic>;
         debugPrint(
           'FCM: ${result['sent']} gönderildi, ${result['failed']} başarısız',
         );
       } else {
-        debugPrint('Bildirim servisi yanıtı: ${response.statusCode}');
+        debugPrint('Bildirim servisi yanıtı: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       debugPrint('Bildirim gönderme hatası: $e');
