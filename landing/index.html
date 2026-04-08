@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zodiona – Evrenin Rehberliğiyle Yaşa</title>
+  <meta name="description" content="Zodiona ile doğum haritanı keşfet, günlük burç yorumlarını oku, Kozmik Rehber ile sohbet et ve hayatının yıldız haritasını çıkar." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0B1026;
+      --bg2: #0f1630;
+      --gold: #F2C98A;
+      --gold2: #e0a855;
+      --purple: #6B4EFF;
+      --purple2: #9B7FFF;
+      --text: #E8E0F0;
+      --muted: #8A8AA8;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(242,201,138,0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ---- YILDIZLAR ARKAPLAN ---- */
+    .stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+    }
+    @keyframes twinkle {
+      from { opacity: 0.1; transform: scale(1); }
+      to   { opacity: 0.8; transform: scale(1.3); }
+    }
+
+    /* ---- NAV ---- */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(11,16,38,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo img {
+      height: 36px;
+      width: auto;
+      object-fit: contain;
+    }
+    .nav-logo span {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px;
+    }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    /* ---- HERO ---- */
+    .hero {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(107,78,255,0.15);
+      border: 1px solid rgba(107,78,255,0.4);
+      border-radius: 100px;
+      padding: 6px 16px;
+      font-size: 13px;
+      color: var(--purple2);
+      font-weight: 500;
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+    }
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(38px, 7vw, 80px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--gold); }
+    .hero-sub {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(16px, 2.5vw, 24px);
+      color: var(--muted);
+      font-weight: 400;
+      margin-bottom: 24px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .hero-desc {
+      max-width: 580px;
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 48px;
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--gold2), var(--gold));
+      color: #0B1026;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 100px;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 32px rgba(242,201,138,0.25);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(242,201,138,0.4);
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: var(--gold);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: rgba(242,201,138,0.08);
+      border-color: var(--gold);
+    }
+
+    /* ---- ORTA PARLAMA ---- */
+    .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+    }
+    .glow-purple {
+      width: 600px; height: 600px;
+      background: rgba(107,78,255,0.12);
+      top: 10%; left: 50%;
+      transform: translateX(-50%);
+    }
+    .glow-gold {
+      width: 300px; height: 300px;
+      background: rgba(242,201,138,0.08);
+      top: 30%; left: 60%;
+    }
+
+    /* ---- SECTION ---- */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 100px 24px;
+    }
+    .section-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .section-title span { color: var(--gold); }
+    .section-desc {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 560px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ---- ÖZELLİKLER ---- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 64px;
+    }
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      transition: transform 0.3s, border-color 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-4px); border-color: rgba(242,201,138,0.35); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      font-size: 36px;
+      margin-bottom: 20px;
+      display: block;
+    }
+    .feature-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    .feature-card p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* ---- BÜYÜK SAYILAR ---- */
+    .stats {
+      background: linear-gradient(135deg, rgba(107,78,255,0.08), rgba(242,201,138,0.05));
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 40px;
+      text-align: center;
+      padding: 20px 0;
+    }
+    .stat-num {
+      font-family: 'Cinzel', serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ---- KOZMİK REHBEREMSEL ---- */
+    .highlight-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .highlight-visual {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .highlight-visual::after {
+      content: '';
+      position: absolute;
+      bottom: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(107,78,255,0.2), transparent 70%);
+      border-radius: 50%;
+    }
+    .chat-bubble {
+      background: rgba(107,78,255,0.15);
+      border: 1px solid rgba(107,78,255,0.3);
+      border-radius: 16px 16px 16px 4px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.6;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background: rgba(242,201,138,0.08);
+      border-color: rgba(242,201,138,0.2);
+      border-radius: 16px 16px 4px 16px;
+      margin-left: auto;
+      text-align: right;
+    }
+    .chat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ---- BURÇLAR ---- */
+    .zodiac-ring {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 48px;
+    }
+    .zodiac-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.2s;
+      cursor: default;
+    }
+    .zodiac-chip:hover {
+      background: rgba(242,201,138,0.08);
+      border-color: var(--gold);
+      color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    /* ---- CTA ---- */
+    .cta-section {
+      text-align: center;
+      padding: 120px 24px;
+    }
+    .cta-box {
+      background: linear-gradient(135deg, rgba(107,78,255,0.12), rgba(242,201,138,0.06));
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 80px 48px;
+      max-width: 780px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-box::before {
+      content: '✦';
+      position: absolute;
+      font-size: 300px;
+      color: rgba(242,201,138,0.03);
+      top: -80px; right: -40px;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .cta-box h2 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(24px, 4vw, 40px);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .cta-box h2 span { color: var(--gold); }
+    .cta-box p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .store-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .store-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 14px 24px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s;
+      min-width: 180px;
+    }
+    .store-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(242,201,138,0.3);
+      transform: translateY(-2px);
+    }
+    .store-btn svg { flex-shrink: 0; }
+    .store-btn-text small { display: block; font-size: 11px; color: var(--muted); }
+    .store-btn-text strong { font-size: 16px; font-weight: 600; }
+
+    /* ---- FOOTER ---- */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 48px 24px;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--gold); }
+    .footer-copy {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ---- SEPARATOR ---- */
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 24px auto 0;
+    }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .highlight-section { grid-template-columns: 1fr; gap: 40px; }
+      .cta-box { padding: 48px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Yıldız arkaplanı (JS ile oluşturuluyor) -->
+<div class="stars" id="stars"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <img src="images/home_page_logo.png" alt="Zodiona" />
+    <span>ZODIONA</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#ozellikler">Özellikler</a></li>
+    <li><a href="#kozmik">Kozmik Rehber</a></li>
+    <li><a href="#burclar">Burçlar</a></li>
+    <li><a href="#indir">İndir</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="glow glow-purple"></div>
+  <div class="glow glow-gold"></div>
+
+  <img src="images/home_page_logo.png" alt="Zodiona Logo" style="width:140px;height:auto;margin-bottom:32px;filter:drop-shadow(0 0 32px rgba(242,201,138,0.35));" />
+
+  <div class="hero-badge">✦ Astroloji &amp; Kozmik Rehberlik</div>
+
+  <h1>Evrenin <span>Yıldızlarıyla</span><br/>Bağlan</h1>
+  <p class="hero-sub">Doğum Haritandan Gelen Cevaplar</p>
+
+  <p class="hero-desc">
+    Doğum haritanı çıkar, günlük burç yorumlarını oku, Kozmik Rehber ile
+    sorularına cevap bul. Zodiona, astroloji ile modern yaşamı buluşturan
+    kişisel rehberin.
+  </p>
+
+  <div class="hero-buttons">
+    <a href="#indir" class="btn-primary">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C6.36 2 2 6.36 2 12s4.36 10 10 10 10-4.36 10-10S17.64 2 12 2z"/><path d="M8 12l4 4 4-4M12 8v8"/></svg>
+      Hemen İndir
+    </a>
+    <a href="#ozellikler" class="btn-secondary">
+      Özellikleri Keşfet →
+    </a>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-num">12</div>
+        <div class="stat-label">Burç Yorumu</div>
+      </div>
+      <div>
+        <div class="stat-num">78</div>
+        <div class="stat-label">Tarot Kartı</div>
+      </div>
+      <div>
+        <div class="stat-num">AI</div>
+        <div class="stat-label">Kozmik Rehber</div>
+      </div>
+      <div>
+        <div class="stat-num">∞</div>
+        <div class="stat-label">Günlük İçerik</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ÖZELLİKLER -->
+<section id="ozellikler">
+  <div class="container">
+    <div style="text-align:center; margin-bottom: 24px;">
+      <span class="section-tag">✦ Neler Sunuyoruz</span>
+      <h2 class="section-title">Astrolojinin Tüm <span>Derinliği</span><br/>Bir Uygulamada</h2>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">🌟</span>
+        <h3>Doğum Haritası</h3>
+        <p>Doğum tarihin, saatin ve yerine göre kişisel astroloji haritanı çıkar. Güneş, Ay ve Yükselen burcunla tanış.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">♈</span>
+        <h3>Günlük Burç Yorumları</h3>
+        <p>Her gün taze astroloji yorumlarıyla güne başla. Aşk, kariyer ve sağlık hakkında kozmik rehberlik al.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🃏</span>
+        <h3>Tarot Falı</h3>
+        <p>78 kartlık klasik tarot destesiyle sorularına cevap bul. Her çekimde derinlemesine yorum ve anlam.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💫</span>
+        <h3>Kozmik Rehber (AI)</h3>
+        <p>Yapay zeka destekli astroloji asistanınla her konuda sohbet et. Rüya yorumu, uyum analizi ve daha fazlası.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">❤️</span>
+        <h3>Uyum Analizi</h3>
+        <p>Sevdiklerinle burç uyumunu öğren. Aşk, arkadaşlık ve iş ilişkilerinde kozmik bağlantını keşfet.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📅</span>
+        <h3>Astroloji Takvimi</h3>
+        <p>Gezegen geçişlerini, dolunayları ve önemli astroloji olaylarını takip et. Doğru zamanda doğru hamleler yap.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">💬</span>
+        <h3>Danışman Sohbeti</h3>
+        <p>Uzman astrologlarla birebir sohbet et. Kişisel sorunlarına özel, derinlemesine astroloji danışmanlığı al.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">〰️</span>
+        <h3>Biyoritm Analizi</h3>
+        <p>Fiziksel, duygusal ve entelektüel döngülerini takip et. En verimli günlerini önceden planla.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">👥</span>
+        <h3>Arkadaş & Aile</h3>
+        <p>Sevdiklerinin burç bilgilerini ekle, uyum analizlerini karşılaştır ve kozmik bağlantıları birlikte keşfet.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KOZMİK REHBER VURGUSU -->
+<section id="kozmik" style="padding: 80px 24px;">
+  <div class="container">
+    <div class="highlight-section">
+      <div>
+        <span class="section-tag">✦ Yapay Zeka Destekli</span>
+        <h2 class="section-title">Kozmik <span>Rehberin</span><br/>Her An Yanında</h2>
+        <p class="section-desc">
+          Rüyanın ne anlama geldiğini mi merak ediyorsun? İlişkinde astrolojik
+          bir engel mi var? Kozmik Rehber, doğum haritanı bilerek sana özel
+          cevaplar üretir.
+        </p>
+        <div class="divider" style="margin: 32px 0 0; margin-left: 0;"></div>
+      </div>
+      <div class="highlight-visual">
+        <div class="chat-label">Kozmik Rehber</div>
+        <div class="chat-bubble">
+          Merhaba! Doğum haritana baktım — Merkür Balık burcunda olduğu için iletişimde duygusal zekanı ön planda tutuyorsun. Bu aslında büyük bir güç. ✨
+        </div>
+        <div style="height: 16px;"></div>
+        <div class="chat-label" style="text-align:right;">Sen</div>
+        <div class="chat-bubble user">
+          Peki bu hafta iş görüşmem var, nasıl gider?
+        </div>
+        <div style="height: 16px;"></div>
+        <div class="chat-label">Kozmik Rehber</div>
+        <div class="chat-bubble">
+          Jüpiter bu hafta Yay burcunda iyi açı yapıyor ve 10. evin (kariyer) üzerinde pozitif etki var. Özgüvenli olmaktan çekinme, yıldızlar seninle! 🌙
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BURÇLAR -->
+<section id="burclar" style="text-align: center;">
+  <div class="container">
+    <span class="section-tag">✦ Tüm Burçlar</span>
+    <h2 class="section-title">Hangi <span>Burçtasın?</span></h2>
+    <p class="section-desc" style="margin: 0 auto;">
+      12 burcun tamamı için günlük, haftalık ve aylık yorumlar Zodiona'da.
+    </p>
+    <div class="zodiac-ring">
+      <div class="zodiac-chip">♈ Koç</div>
+      <div class="zodiac-chip">♉ Boğa</div>
+      <div class="zodiac-chip">♊ İkizler</div>
+      <div class="zodiac-chip">♋ Yengeç</div>
+      <div class="zodiac-chip">♌ Aslan</div>
+      <div class="zodiac-chip">♍ Başak</div>
+      <div class="zodiac-chip">♎ Terazi</div>
+      <div class="zodiac-chip">♏ Akrep</div>
+      <div class="zodiac-chip">♐ Yay</div>
+      <div class="zodiac-chip">♑ Oğlak</div>
+      <div class="zodiac-chip">♒ Kova</div>
+      <div class="zodiac-chip">♓ Balık</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA / İNDİR -->
+<section class="cta-section" id="indir">
+  <div class="cta-box">
+    <span class="section-tag">✦ Ücretsiz İndir</span>
+    <h2>Yıldızların <span>Seni Beklediği</span><br/>Yere Gel</h2>
+    <p>
+      iOS ve Android'de ücretsiz. Doğum haritanı hemen çıkar,
+      Kozmik Rehberinle tanış.
+    </p>
+    <div class="store-buttons">
+      <a href="#" class="store-btn">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <div class="store-btn-text">
+          <small>App Store'dan İndir</small>
+          <strong>iPhone & iPad</strong>
+        </div>
+      </a>
+      <a href="#" class="store-btn">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M3.18 23.76c.3.17.64.22.99.14l12.47-7.05-2.57-2.57-10.89 9.48zM.61 1.22C.23 1.57 0 2.14 0 2.89v18.22c0 .75.23 1.32.61 1.67l.09.08 10.2-10.2v-.24L.7 1.14l-.09.08zM20.13 10.43l-2.9-1.64-2.87 2.87 2.87 2.87 2.93-1.66c.84-.47.84-1.24-.03-1.44zM3.18.24l12.47 7.04-2.57 2.57L3.18.37 3.18.24z"/>
+        </svg>
+        <div class="store-btn-text">
+          <small>Google Play'den İndir</small>
+          <strong>Android</strong>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">✦ ZODIONA</div>
+  <div class="footer-links">
+    <a href="mailto:kanovasoft@gmail.com">kanovasoft@gmail.com</a>
+    <a href="privacy.html">Gizlilik Politikası</a>
+    <a href="terms.html">Kullanım Koşulları</a>
+    <a href="https://admin.zodiona.com" style="display:none;">Admin</a>
+  </div>
+  <p class="footer-copy">© 2026 Zodiona. Tüm hakları saklıdır. Yıldızlar her zaman seninle. ✦</p>
+</footer>
+
+<script>
+  // Yıldız oluştur
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 0.5;
+    s.style.cssText = `
+      width: ${size}px;
+      height: ${size}px;
+      top: ${Math.random() * 100}%;
+      left: ${Math.random() * 100}%;
+      --d: ${(Math.random() * 3 + 2).toFixed(1)}s;
+      animation-delay: ${(Math.random() * 4).toFixed(1)}s;
+    `;
+    container.appendChild(s);
+  }
+</script>
+</body>
+</html>
