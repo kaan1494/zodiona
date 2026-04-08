@@ -262,6 +262,8 @@ def notify_horoscope(
     if not expected_key or x_api_key != expected_key:
         raise HTTPException(status_code=403, detail="Yetkisiz erişim")
 
+    _init_firebase()
+
     tokens = [t for t in req.tokens if t and isinstance(t, str)]
     if not tokens:
         return {"sent": 0, "failed": 0, "message": "Token listesi boş"}
