@@ -19,8 +19,14 @@ Future<void> main() async {
 }
 
 const FirebaseOptions _webFirebaseOptions = FirebaseOptions(
-  apiKey: String.fromEnvironment('FIREBASE_API_KEY', defaultValue: ''),
-  appId: String.fromEnvironment('FIREBASE_APP_ID', defaultValue: ''),
+  apiKey: String.fromEnvironment(
+    'FIREBASE_API_KEY',
+    defaultValue: 'AIzaSyB99kZTlsXFGgkWznaTHnzaQoEYlSXezlY',
+  ),
+  appId: String.fromEnvironment(
+    'FIREBASE_APP_ID',
+    defaultValue: '1:525715666823:web:1b44d64408c8bf56b50522',
+  ),
   messagingSenderId: String.fromEnvironment(
     'FIREBASE_MESSAGING_SENDER_ID',
     defaultValue: '525715666823',
@@ -103,16 +109,7 @@ class _AppBootstrapState extends State<_AppBootstrap> {
 
     String? error;
     try {
-      if (kIsWeb) {
-        final missingFirebaseWebConfig =
-            _webFirebaseOptions.apiKey.trim().isEmpty ||
-            _webFirebaseOptions.appId.trim().isEmpty;
-        if (missingFirebaseWebConfig) {
-          throw Exception(
-            'Eksik Firebase web ayari. FIREBASE_API_KEY ve FIREBASE_APP_ID dart-define olarak verilmeli.',
-          );
-        }
-      }
+      // Firebase web config artik hardcoded default degerlerle geliyor
 
       await Firebase.initializeApp(
         options: kIsWeb ? _webFirebaseOptions : null,
@@ -160,6 +157,11 @@ class _AppBootstrapState extends State<_AppBootstrap> {
           return _BootstrapErrorScreen(error: result!.error!);
         }
 
+        // Admin sayfasinda her zaman AdminAccessGateScreen'i goster
+        if (widget.entry == 'admin') {
+          return const AdminAccessGateScreen();
+        }
+
         if (result?.autoLoginUser != null) {
           final user = result!.autoLoginUser!;
           return user.onboardingCompleted
@@ -167,9 +169,7 @@ class _AppBootstrapState extends State<_AppBootstrap> {
               : OnboardingScreen(userId: user.uid);
         }
 
-        return widget.entry == 'admin'
-            ? const AdminAccessGateScreen()
-            : const AuthScreen();
+        return const AuthScreen();
       },
     );
   }
