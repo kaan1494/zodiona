@@ -5,6 +5,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:web/web.dart' as web;
 
 import 'features/admin/presentation/admin_access_gate_screen.dart';
 import 'features/auth/presentation/auth_screen.dart';
@@ -40,7 +41,16 @@ class ZodionaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const entry = String.fromEnvironment('START_PAGE', defaultValue: 'auth');
+    const entry = String.fromEnvironment('START_PAGE', defaultValue: 'auto');
+
+    // Web'de hostname'e göre giriş sayfasını belirle
+    final String resolvedEntry;
+    if (kIsWeb && entry == 'auto') {
+      final hostname = web.window.location.hostname;
+      resolvedEntry = hostname.startsWith('admin') ? 'admin' : 'auth';
+    } else {
+      resolvedEntry = entry;
+    }
 
     return MaterialApp(
       title: 'Zodiona',
@@ -64,7 +74,7 @@ class ZodionaApp extends StatelessWidget {
           style: TextButton.styleFrom(foregroundColor: const Color(0xFFF2C98A)),
         ),
       ),
-      home: _AppBootstrap(entry: entry),
+      home: _AppBootstrap(entry: resolvedEntry),
     );
   }
 }
