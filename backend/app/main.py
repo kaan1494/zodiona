@@ -9,8 +9,9 @@ from zoneinfo import ZoneInfo
 
 import firebase_admin
 from firebase_admin import credentials
-from firebase_admin import firestore as admin_firestore
 from firebase_admin import messaging as admin_messaging
+from google.cloud import firestore as gc_firestore
+from google.oauth2 import service_account as gcp_sa
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -42,12 +43,13 @@ app.add_middleware(
 # ── Firebase Admin ────────────────────────────────────────────────────────────
 
 _firebase_app: Optional[firebase_admin.App] = None
+_sa_dict: Optional[dict] = None
 
 
-def _get_firebase_app() -> firebase_admin.App:
-    global _firebase_app
+def _init_firebase() -> None:
+    global _firebase_app, _sa_dict
     if _firebase_app is not None:
-        return _firebase_app
+        return
     sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT")
     if not sa_json:
         raise HTTPException(
@@ -55,14 +57,26 @@ def _get_firebase_app() -> firebase_admin.App:
             detail="Firebase yapılandırması eksik (FIREBASE_SERVICE_ACCOUNT env var)",
         )
     try:
-        sa_dict = json.loads(sa_json)
-        cred = credentials.Certificate(sa_dict)
+        _sa_dict = json.loads(sa_json)
+        cred = credentials.Certificate(_sa_dict)
         _firebase_app = firebase_admin.initialize_app(cred)
     except Exception as exc:
         raise HTTPException(
             status_code=503, detail=f"Firebase init hatası: {exc}"
         ) from exc
-    return _firebase_app
+
+
+def _get_firestore_client() -> gc_firestore.Client:
+    _init_firebase()
+    assert _sa_dict is not None
+    gcp_creds = gcp_sa.Credentials.from_service_account_info(
+        _sa_dict,
+        scopes=[
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/datastore",
+        ],
+    )
+    return gc_firestore.Client(project=_sa_dict["project_id"], credentials=gcp_creds)
 
 _tf = TimezoneFinder()
 _ts = load.timescale()
@@ -264,8 +278,8 @@ def notify_horoscope(
     if not expected_key or x_api_key != expected_key:
         raise HTTPException(status_code=403, detail="Yetkisiz erişim")
 
-    _get_firebase_app()
-    db = admin_firestore.client()
+    _init_firebase()
+    db = _get_firestore_client()
 
     docs = list(
         db.collection("users").where("zodiacSign", "==", req.sign).stream()
