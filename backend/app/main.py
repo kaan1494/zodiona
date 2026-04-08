@@ -18,21 +18,9 @@ from timezonefinder import TimezoneFinder
 
 app = FastAPI(title="Zodiona Astro API", version="1.0.0")
 
-def _resolve_allowed_origins() -> list[str]:
-    raw = os.getenv("CORS_ALLOW_ORIGINS", "*").strip()
-    if not raw:
-        return ["*"]
-    if raw == "*":
-        return ["*"]
-
-    origins = [part.strip() for part in raw.split(",") if part.strip()]
-    return origins if origins else ["*"]
-
-
-_allowed_origins = _resolve_allowed_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allowed_origins,
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
