@@ -24,13 +24,14 @@
       --border: rgba(242,201,138,0.15);
     }
 
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; overflow-x: hidden; }
 
     body {
       background-color: var(--bg);
       color: var(--text);
       font-family: 'Inter', sans-serif;
       overflow-x: hidden;
+      width: 100%;
     }
 
     /* ---- YILDIZLAR ARKAPLAN ---- */
@@ -196,13 +197,13 @@
       pointer-events: none;
     }
     .glow-purple {
-      width: 600px; height: 600px;
+      width: min(600px, 100vw); height: min(600px, 100vw);
       background: rgba(107,78,255,0.12);
       top: 10%; left: 50%;
       transform: translateX(-50%);
     }
     .glow-gold {
-      width: 300px; height: 300px;
+      width: min(300px, 60vw); height: min(300px, 60vw);
       background: rgba(242,201,138,0.08);
       top: 30%; left: 60%;
     }
