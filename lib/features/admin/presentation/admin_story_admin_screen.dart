@@ -2559,7 +2559,7 @@ class _WeeklyHoroscopeMgmtSectionState
     try {
       // calculateZodiac ASCII değerler döndürüyor (Koc, Boga, Oglak vs.)
       // Firestore'da bu değerler kayıtlı, admin paneli Türkçe gösteriyor
-      const _signMap = {
+      const signMap = {
         'Koç': 'Koc',
         'Boğa': 'Boga',
         'İkizler': 'Ikizler',
@@ -2573,7 +2573,7 @@ class _WeeklyHoroscopeMgmtSectionState
         'Kova': 'Kova',
         'Balık': 'Balik',
       };
-      final firestoreSign = _signMap[sign] ?? sign;
+      final firestoreSign = signMap[sign] ?? sign;
 
       // Firestore'dan bu burca sahip kullanıcıların FCM tokenlarını topla
       final snapshot = await FirebaseFirestore.instance

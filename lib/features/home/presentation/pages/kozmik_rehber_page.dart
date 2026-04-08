@@ -73,15 +73,10 @@ class KozmikRehberPage extends StatelessWidget {
                   // Logo / ikon alanı
                   const SizedBox(height: 16),
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF5C2D91), Color(0xFF2E1568)],
-                      ),
                       border: Border.all(
                         color: const Color(0xFFF2D293),
                         width: 2,
@@ -96,10 +91,11 @@ class KozmikRehberPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: Color(0xFFF2D293),
-                      size: 38,
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/kozmik/kozmik.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

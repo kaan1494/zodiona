@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:web/web.dart' as web;
 
 import '../../../config/admin_access.dart';
 import '../../auth/presentation/auth_screen.dart';
@@ -27,10 +29,14 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
   }
 
   void _openMainApp() {
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const AuthScreen()),
-      (route) => false,
-    );
+    if (kIsWeb) {
+      web.window.open('https://www.zodiona.com', '_blank');
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+        (route) => false,
+      );
+    }
   }
 
   Future<void> _login() async {

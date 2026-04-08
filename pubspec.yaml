@@ -41,6 +41,8 @@ dependencies:
   cloud_firestore: ^6.1.2
   firebase_storage: ^13.0.6
   firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^18.0.1
+  web: ^1.1.0
   firebase_analytics: ^12.1.2
   firebase_crashlytics: ^5.0.7
   flutter_stripe: ^12.2.0
@@ -96,6 +98,7 @@ flutter:
     - assets/danısman/
     - assets/burclar/
     - assets/tarot/
+    - assets/kozmik/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
