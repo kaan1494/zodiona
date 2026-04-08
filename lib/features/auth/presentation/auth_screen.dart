@@ -388,7 +388,15 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 240),
+                      const SizedBox(height: 60),
+                      Center(
+                        child: Image.asset(
+                          'assets/images/zodiona_logo_menu.png',
+                          width: 130,
+                          height: 130,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                       _buildCard(theme),
                       const SizedBox(height: 24),
                       _buildBottomPrompt(theme),
