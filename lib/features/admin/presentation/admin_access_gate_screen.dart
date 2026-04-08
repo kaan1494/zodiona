@@ -1,11 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:web/web.dart' as web;
 
 import '../../../config/admin_access.dart';
-import '../../auth/presentation/auth_screen.dart';
 import 'admin_story_admin_screen.dart';
 
 class AdminAccessGateScreen extends StatefulWidget {
@@ -26,17 +23,6 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
     _idController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _openMainApp() {
-    if (kIsWeb) {
-      web.window.open('https://www.zodiona.com', '_blank');
-    } else {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AuthScreen()),
-        (route) => false,
-      );
-    }
   }
 
   Future<void> _login() async {
@@ -173,12 +159,6 @@ class _AdminAccessGateScreenState extends State<AdminAccessGateScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Text('Panele Giriş Yap'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _openMainApp,
-                icon: const Icon(Icons.phone_android),
-                label: const Text('Uygulamaya Git'),
               ),
             ],
           ),

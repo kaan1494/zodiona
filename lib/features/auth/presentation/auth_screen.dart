@@ -5,7 +5,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../models/app_user.dart';
 import '../../../services/auth_service.dart';
-import '../../admin/presentation/admin_access_gate_screen.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../home/presentation/home_screen.dart';
 
@@ -656,19 +655,6 @@ class _AuthScreenState extends State<AuthScreen> {
             onPressed: _showSupportDialog,
             child: const Text('Giriste sorun mu yasiyorsun?'),
           ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AdminAccessGateScreen()),
-            ),
-            child: Text(
-              'Admin Girişi',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.35),
-                fontSize: 11,
-              ),
-            ),
-          ),
         ],
       );
     }
@@ -686,19 +672,6 @@ class _AuthScreenState extends State<AuthScreen> {
         TextButton(
           onPressed: _showSupportDialog,
           child: const Text('Giriste sorun mu yasiyorsun?'),
-        ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const AdminAccessGateScreen()),
-          ),
-          child: Text(
-            'Admin Girişi',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.35),
-              fontSize: 11,
-            ),
-          ),
         ),
       ],
     );
