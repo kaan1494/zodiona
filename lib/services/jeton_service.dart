@@ -123,6 +123,7 @@ class JetonService {
 
   /// Reklamı ön bellekler.
   static Future<void> preloadAd() async {
+    if (kIsWeb) return; // Web'de AdMob desteklenmiyor
     if (_rewardedAd != null) return;
     if (_isAdLoading) return; // zaten yükleniyor
     _isAdLoading = true;
@@ -158,6 +159,10 @@ class JetonService {
     required void Function() onToken,
     required void Function(String error) onError,
   }) async {
+    if (kIsWeb) {
+      onError('Reklam özelliği yalnızca mobil uygulamada kullanılabilir.');
+      return;
+    }
     if (_rewardedAd == null) {
       if (!_isAdLoading) await preloadAd();
       // Yükleme callback'ini bekle (en fazla 12 saniye)

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../services/jeton_service.dart';
@@ -29,7 +30,7 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
     super.initState();
     _loadAdCount();
     _listenBalance();
-    JetonService.preloadAd();
+    if (!kIsWeb) JetonService.preloadAd();
     _ensureBalance();
   }
 
@@ -387,14 +388,16 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: _AdButton(
-                              adCount: _adCount,
-                              loading: _adLoading,
-                              onTap: _watchAd,
+                          if (!kIsWeb) ...[  
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: _AdButton(
+                                adCount: _adCount,
+                                loading: _adLoading,
+                                onTap: _watchAd,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
