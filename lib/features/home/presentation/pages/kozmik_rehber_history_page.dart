@@ -139,6 +139,7 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                   'burcYorumu' => 'Burç Yorumu',
                                   'tarotYorumu' => 'Tarot Yorumu',
                                   'uyumAnalizi' => 'Uyum Analizi',
+                                  'ruyaTabiri' => 'Rüya Tabiri',
                                   _ => type,
                                 };
 
@@ -147,6 +148,7 @@ class KozmikRehberHistoryPage extends StatelessWidget {
                                   'burcYorumu' => Icons.stars_rounded,
                                   'tarotYorumu' => Icons.style_rounded,
                                   'uyumAnalizi' => Icons.favorite_rounded,
+                                  'ruyaTabiri' => Icons.bedtime_rounded,
                                   _ => Icons.auto_awesome,
                                 };
 

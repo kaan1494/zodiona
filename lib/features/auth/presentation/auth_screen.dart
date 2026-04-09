@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../models/app_user.dart';
 import '../../../services/auth_service.dart';
@@ -306,8 +305,6 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isSubmitting = false;
   bool _isGoogleLoading = false;
 
-  static const _storage = FlutterSecureStorage();
-
   @override
   void initState() {
     super.initState();
@@ -316,20 +313,6 @@ class _AuthScreenState extends State<AuthScreen> {
       ..onTap = _showUserAgreementDialog;
     _privacyAgreementRecognizer = TapGestureRecognizer()
       ..onTap = _showPrivacyAgreementDialog;
-    _loadSavedCredentials();
-  }
-
-  Future<void> _loadSavedCredentials() async {
-    final rememberMe = await _storage.read(key: 'remember_me');
-    if (rememberMe != 'true') return;
-    final email = await _storage.read(key: 'saved_email') ?? '';
-    final password = await _storage.read(key: 'saved_password') ?? '';
-    if (!mounted) return;
-    setState(() {
-      _rememberMe = true;
-      _emailController.text = email;
-      _passwordController.text = password;
-    });
   }
 
   @override
@@ -424,7 +407,7 @@ class _AuthScreenState extends State<AuthScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _mode == _AuthMode.signIn ? 'Giriş Yap' : 'Kaydol',
+              _mode == _AuthMode.signIn ? 'Giris Yap' : 'Kaydol',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -450,7 +433,7 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 16),
             _buildPasswordField(
               controller: _passwordController,
-              label: 'Şifre',
+              label: 'Sifre',
               obscure: _obscurePassword,
               onToggle: () {
                 setState(() => _obscurePassword = !_obscurePassword);
@@ -461,7 +444,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 16),
               _buildPasswordField(
                 controller: _confirmPasswordController,
-                label: 'Şifreyi Onayla',
+                label: 'Sifreyi Onayla',
                 obscure: _obscureConfirmPassword,
                 onToggle: () {
                   setState(
@@ -520,7 +503,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _showResetPasswordDialog,
-                  child: const Text('Şifremi unuttum'),
+                  child: const Text('Sifremi unuttum'),
                 ),
               ),
             ],
@@ -562,7 +545,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_mode == _AuthMode.signIn ? 'Giriş Yap' : 'Kaydol'),
+                    : Text(_mode == _AuthMode.signIn ? 'Giris Yap' : 'Kaydol'),
               ),
             ),
             const SizedBox(height: 24),
@@ -667,7 +650,7 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         TextButton(
           onPressed: () => _switchMode(_AuthMode.signIn),
-          child: const Text('Giriş Yap'),
+          child: const Text('Giris Yap'),
         ),
         TextButton(
           onPressed: _showSupportDialog,
@@ -766,13 +749,6 @@ class _AuthScreenState extends State<AuthScreen> {
           email: email,
           password: password,
         );
-        if (_rememberMe) {
-          await _storage.write(key: 'remember_me', value: 'true');
-          await _storage.write(key: 'saved_email', value: email);
-          await _storage.write(key: 'saved_password', value: password);
-        } else {
-          await _storage.deleteAll();
-        }
         await _handlePostAuth(appUser);
       } else {
         final name = _nameController.text.trim();
@@ -840,7 +816,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _showResetPasswordDialog() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showSnack('Şifre sıfırlama için önce e-posta adresi gir.');
+      _showSnack('Sifre sifirlama icin once e-posta adresi gir.');
       return;
     }
 
@@ -848,7 +824,7 @@ class _AuthScreenState extends State<AuthScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Şifre sıfırlama'),
+          title: const Text('Sifre sifirlama'),
           content: Text(
             'Sifirlama baglantisi $email adresine gonderilecek. Onayliyor musun?',
           ),
@@ -930,11 +906,11 @@ class _AuthScreenState extends State<AuthScreen> {
         return 'Bu hesap devre disi birakilmis.';
       case 'user-not-found':
       case 'wrong-password':
-        return 'E-posta veya şifre hatalı.';
+        return 'E-posta veya sifre hatali.';
       case 'email-already-in-use':
         return 'Bu e-posta ile zaten bir hesap var.';
       case 'weak-password':
-        return 'Daha güçlü bir şifre seç.';
+        return 'Daha guclu bir sifre sec.';
       case 'operation-not-allowed':
         return 'Bu giris yontemi su anda devrede degil.';
       default:
@@ -1033,7 +1009,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   String? _validatePassword(String? value) {
     if (value == null || value.length < 6) {
-      return 'Şifre en az 6 karakter olmalı.';
+      return 'Sifre en az 6 karakter olmali.';
     }
     return null;
   }
@@ -1043,7 +1019,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return null;
     }
     if (value != _passwordController.text) {
-      return 'Şifreler eşleşmiyor.';
+      return 'Sifreler eslesmiyor.';
     }
     return null;
   }
@@ -1094,7 +1070,7 @@ class _SocialButton extends StatelessWidget {
                 children: [
                   Icon(icon, color: Colors.white),
                   const SizedBox(width: 8),
-                  Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
+                  Text(label),
                 ],
               ),
       ),

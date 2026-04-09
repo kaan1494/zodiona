@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../services/jeton_service.dart';
 import '../../../../services/kozmik_rehber_service.dart';
 import '../widgets/natal_chart_widget.dart';
 import 'birth_chart_detail_page.dart';
@@ -191,9 +192,43 @@ class _KozmikRehberChatPageState extends State<KozmikRehberChatPage> {
     );
   }
 
+  void _showNoTokenDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0848),
+        title: const Text(
+          '⚡ Jeton Yetersiz',
+          style: TextStyle(color: Color(0xFFF2D293)),
+        ),
+        content: const Text(
+          'Mesaj göndermek için jetonunuz kalmadı.\nKozmik Rehber sayfasından jeton satın alabilir veya reklam izleyerek kazanabilirsiniz.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Tamam',
+              style: TextStyle(color: Color(0xFFF2D293)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _isLoading || _profile == null) return;
+
+    // Jeton kontrolü
+    final spent = await JetonService.spend();
+    if (!spent) {
+      if (!mounted) return;
+      _showNoTokenDialog();
+      return;
+    }
 
     _controller.clear();
 

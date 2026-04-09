@@ -201,6 +201,7 @@ class AuthService {
         'role': UserRole.user.name,
         'onboardingCompleted': false,
         'createdAt': Timestamp.fromDate(now),
+        'jetonBakiye': 5,
       });
       final createdSnapshot = await docRef.get();
       return AppUser.fromDocument(createdSnapshot);

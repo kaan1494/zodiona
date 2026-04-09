@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'features/admin/presentation/admin_access_gate_screen.dart';
 import 'features/auth/presentation/auth_screen.dart';
@@ -15,6 +17,10 @@ import 'services/auth_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Google Mobile Ads SDK başlat
+  if (!kIsWeb) {
+    unawaited(MobileAds.instance.initialize());
+  }
   runApp(const ZodionaApp());
 }
 
