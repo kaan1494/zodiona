@@ -257,6 +257,7 @@ class _ProfileModel {
     required this.sunSign,
     required this.moonSign,
     required this.risingSign,
+    required this.venusSign,
     required this.risingRuler,
     required this.luckyDay,
     required this.luckyColor,
@@ -270,6 +271,7 @@ class _ProfileModel {
   final String sunSign;
   final String moonSign;
   final String risingSign;
+  final String venusSign;
   final String risingRuler;
   final String luckyDay;
   final String luckyColor;
@@ -326,6 +328,7 @@ class _ProfileModel {
     final sun = normalizeSign((data['zodiacSign'] as String?)?.trim());
     final moon = normalizeSign((data['moonSign'] as String?)?.trim());
     final rising = normalizeSign((data['risingSign'] as String?)?.trim());
+    final venus = normalizeSign((data['venusSign'] as String?)?.trim());
 
     final details = _signDetailsFor(sun);
     final ruler = _risingRulerFor(rising);
@@ -340,6 +343,7 @@ class _ProfileModel {
       sunSign: sun,
       moonSign: moon,
       risingSign: rising,
+      venusSign: venus,
       risingRuler: ruler,
       luckyDay: details.luckyDay,
       luckyColor: details.luckyColor,
@@ -577,6 +581,7 @@ class _AstroInfoCard extends StatelessWidget {
                 info('Güneş Burcu', model.sunSign),
                 info('Ay Burcu', model.moonSign),
                 info('Yükselen', model.risingSign),
+                info('Venüs Burcu', model.venusSign),
                 info('Yükselen Yöneticisi', model.risingRuler),
               ],
             ),

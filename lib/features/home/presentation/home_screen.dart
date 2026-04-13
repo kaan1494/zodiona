@@ -654,6 +654,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
         'zodiacSign': astro.sunSign,
         'moonSign': astro.moonSign,
         'risingSign': astro.ascendant,
+        'venusSign': astro.venusSign,
         'birthTimezone': astro.timezone,
         'updatedAt': FieldValue.serverTimestamp(),
       });

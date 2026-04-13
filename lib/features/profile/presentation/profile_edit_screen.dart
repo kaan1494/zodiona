@@ -65,6 +65,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   String? _existingMoonSign;
   String? _existingRisingSign;
+  String? _existingVenusSign;
   String? _existingBirthTimezone;
 
   DateTime? _initialBirthDate;
@@ -142,6 +143,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
       _existingMoonSign = (data['moonSign'] as String?)?.trim();
       _existingRisingSign = (data['risingSign'] as String?)?.trim();
+      _existingVenusSign = (data['venusSign'] as String?)?.trim();
       _existingBirthTimezone = (data['birthTimezone'] as String?)?.trim();
 
       _initialBirthDate = birthDate;
@@ -713,6 +715,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           : (_existingRisingSign?.isNotEmpty == true
                 ? _existingRisingSign
                 : 'Bilinmiyor'),
+      'venusSign': shouldResetAstro
+          ? 'Bilinmiyor'
+          : (_existingVenusSign?.isNotEmpty == true
+                ? _existingVenusSign
+                : 'Bilinmiyor'),
       'onboardingCompleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -738,6 +745,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       _existingBirthTimezone = timezone;
       _existingMoonSign = data['moonSign'] as String?;
       _existingRisingSign = data['risingSign'] as String?;
+      _existingVenusSign = data['venusSign'] as String?;
 
       if (!mounted) {
         return;

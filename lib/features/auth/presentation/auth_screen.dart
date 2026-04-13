@@ -407,7 +407,7 @@ class _AuthScreenState extends State<AuthScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              _mode == _AuthMode.signIn ? 'Giris Yap' : 'Kaydol',
+              _mode == _AuthMode.signIn ? 'Giriş Yap' : 'Kaydol',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -426,14 +426,14 @@ class _AuthScreenState extends State<AuthScreen> {
             ],
             _buildTextField(
               controller: _emailController,
-              label: 'E-mail',
+              label: 'E-posta',
               keyboardType: TextInputType.emailAddress,
               validator: _validateEmail,
             ),
             const SizedBox(height: 16),
             _buildPasswordField(
               controller: _passwordController,
-              label: 'Sifre',
+              label: 'Şifre',
               obscure: _obscurePassword,
               onToggle: () {
                 setState(() => _obscurePassword = !_obscurePassword);
@@ -444,7 +444,7 @@ class _AuthScreenState extends State<AuthScreen> {
               const SizedBox(height: 16),
               _buildPasswordField(
                 controller: _confirmPasswordController,
-                label: 'Sifreyi Onayla',
+                label: 'Şifreyi Onayla',
                 obscure: _obscureConfirmPassword,
                 onToggle: () {
                   setState(
@@ -503,7 +503,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _showResetPasswordDialog,
-                  child: const Text('Sifremi unuttum'),
+                  child: const Text('Şifremi unuttum'),
                 ),
               ),
             ],
@@ -519,7 +519,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     activeColor: const Color(0xFFF2C98A),
                   ),
                   Text(
-                    'Beni hatirla',
+                    'Beni hatırla',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
@@ -545,7 +545,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(_mode == _AuthMode.signIn ? 'Giris Yap' : 'Kaydol'),
+                    : Text(_mode == _AuthMode.signIn ? 'Giriş Yap' : 'Kaydol'),
               ),
             ),
             const SizedBox(height: 24),
@@ -627,7 +627,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return Column(
         children: [
           Text(
-            'Yeni bir hesap olusturmak icin',
+            'Yeni bir hesap oluşturmak için',
             style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
           ),
           TextButton(
@@ -636,7 +636,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           TextButton(
             onPressed: _showSupportDialog,
-            child: const Text('Giriste sorun mu yasiyorsun?'),
+            child: const Text('Girişte sorun mu yaşıyorsun?'),
           ),
         ],
       );
@@ -645,16 +645,16 @@ class _AuthScreenState extends State<AuthScreen> {
     return Column(
       children: [
         Text(
-          'Hesabin varsa',
+          'Hesabın varsa',
           style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
         ),
         TextButton(
           onPressed: () => _switchMode(_AuthMode.signIn),
-          child: const Text('Giris Yap'),
+          child: const Text('Giriş Yap'),
         ),
         TextButton(
           onPressed: _showSupportDialog,
-          child: const Text('Giriste sorun mu yasiyorsun?'),
+          child: const Text('Girişte sorun mu yaşıyorsun?'),
         ),
       ],
     );
@@ -733,7 +733,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (_mode == _AuthMode.signUp) {
       if (!_acceptTerms) {
-        _showSnack('Kayit icin sartlari kabul etmelisin.');
+        _showSnack('Kayıt için şartları kabul etmelisin.');
         return;
       }
     }
@@ -767,7 +767,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } on AuthException catch (error) {
       _showSnack(error.message);
     } catch (error) {
-      _showSnack('Beklenmeyen bir hata olustu.');
+      _showSnack('Beklenmeyen bir hata oluştu. Lütfen tekrar dene.');
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -789,11 +789,12 @@ class _AuthScreenState extends State<AuthScreen> {
       _showSnack(_mapFirebaseError(error));
     } on AuthException catch (error) {
       if (error.code == 'google-cancelled') {
+        // Kullanıcı iptal etti, sessizce dön
         return;
       }
       _showSnack(error.message);
     } catch (error) {
-      _showSnack('Google girisi sirasinda hata olustu.');
+      _showSnack('Google girişi sırasında hata oluştu: ${error.toString()}');
     } finally {
       if (mounted) {
         setState(() => _isGoogleLoading = false);
@@ -816,7 +817,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _showResetPasswordDialog() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showSnack('Sifre sifirlama icin once e-posta adresi gir.');
+      _showSnack('Şifre sıfırlama için önce e-posta adresini gir.');
       return;
     }
 
@@ -824,18 +825,18 @@ class _AuthScreenState extends State<AuthScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Sifre sifirlama'),
+          title: const Text('Şifre sıfırlama'),
           content: Text(
-            'Sifirlama baglantisi $email adresine gonderilecek. Onayliyor musun?',
+            'Sıfırlama bağlantısı $email adresine gönderilecek. Onaylıyor musun?',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Vazgec'),
+              child: const Text('Vazgeç'),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Gonder'),
+              child: const Text('Gönder'),
             ),
           ],
         );
@@ -848,11 +849,13 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       await _authService.sendPasswordReset(email: email);
-      _showSnack('Sifirlama baglantisi e-posta adresine gonderildi.');
+      _showSnack(
+        'Sıfırlama bağlantısı e-posta adresine gönderildi. Spam klasörünü de kontrol et.',
+      );
     } on FirebaseAuthException catch (error) {
       _showSnack(_mapFirebaseError(error));
     } catch (error) {
-      _showSnack('Sifirlama istegi olusturulurken hata olustu.');
+      _showSnack('Sıfırlama isteği oluşturulurken hata oluştu.');
     }
   }
 
@@ -893,6 +896,7 @@ class _AuthScreenState extends State<AuthScreen> {
       SnackBar(
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 5),
         content: Text(message),
       ),
     );
@@ -901,20 +905,27 @@ class _AuthScreenState extends State<AuthScreen> {
   String _mapFirebaseError(FirebaseAuthException error) {
     switch (error.code) {
       case 'invalid-email':
-        return 'Gecerli bir e-posta gir.';
+        return 'Geçerli bir e-posta adresi gir.';
       case 'user-disabled':
-        return 'Bu hesap devre disi birakilmis.';
+        return 'Bu hesap devre dışı bırakılmış.';
       case 'user-not-found':
       case 'wrong-password':
-        return 'E-posta veya sifre hatali.';
+      case 'invalid-credential':
+        return 'E-posta veya şifre hatalı.';
       case 'email-already-in-use':
         return 'Bu e-posta ile zaten bir hesap var.';
       case 'weak-password':
-        return 'Daha guclu bir sifre sec.';
+        return 'Daha güçlü bir şifre seç (en az 6 karakter).';
       case 'operation-not-allowed':
-        return 'Bu giris yontemi su anda devrede degil.';
+        return 'Bu giriş yöntemi şu anda aktif değil.';
+      case 'too-many-requests':
+        return 'Çok fazla deneme yapıldı. Lütfen biraz bekle.';
+      case 'network-request-failed':
+        return 'İnternet bağlantısı yok. Lütfen tekrar dene.';
+      case 'account-exists-with-different-credential':
+        return 'Bu e-posta başka bir giriş yöntemiyle kayıtlı.';
       default:
-        return 'Islem tamamlanamadi. Lutfen tekrar dene.';
+        return 'İşlem tamamlanamadı. Lütfen tekrar dene. (${error.code})';
     }
   }
 
@@ -991,25 +1002,25 @@ class _AuthScreenState extends State<AuthScreen> {
       return null;
     }
     if (value == null || value.trim().length < 2) {
-      return 'Ad soyad zorunlu.';
+      return 'Ad soyad zorunludur.';
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'E-posta zorunlu.';
+      return 'E-posta zorunludur.';
     }
     final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
     if (!emailRegex.hasMatch(value.trim())) {
-      return 'Gecerli bir e-posta gir.';
+      return 'Geçerli bir e-posta adresi gir.';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.length < 6) {
-      return 'Sifre en az 6 karakter olmali.';
+      return 'Şifre en az 6 karakter olmalıdır.';
     }
     return null;
   }
@@ -1019,7 +1030,7 @@ class _AuthScreenState extends State<AuthScreen> {
       return null;
     }
     if (value != _passwordController.text) {
-      return 'Sifreler eslesmiyor.';
+      return 'Şifreler eşleşmiyor.';
     }
     return null;
   }

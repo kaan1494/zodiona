@@ -48,7 +48,7 @@ class AuthService {
     );
     final user = credential.user;
     if (user == null) {
-      throw const AuthException('sign-in-failed', 'Kullanici bulunamadi.');
+      throw const AuthException('sign-in-failed', 'Kullanıcı bulunamadı.');
     }
     final appUser = await _ensureUserDocument(user: user);
     return appUser;
@@ -86,12 +86,12 @@ class AuthService {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         throw const AuthException(
           'google-cancelled',
-          'Google girisi iptal edildi.',
+          'Google girişi iptal edildi.',
         );
       }
       throw AuthException(
         error.code.name,
-        error.description ?? 'Google girisi basarisiz.',
+        error.description ?? 'Google girişi başarısız. (${error.code.name})',
       );
     } on PlatformException catch (error) {
       final resolvedMessage = _mapPlatformErrorMessage(error);
@@ -102,7 +102,7 @@ class AuthService {
     if (googleAuth.idToken == null) {
       throw const AuthException(
         'google-missing-token',
-        'Google kimlik belirteci alinmadi.',
+        'Google kimlik belirteci alınamadı. Lütfen tekrar deneyin.',
       );
     }
     final credential = GoogleAuthProvider.credential(
@@ -112,14 +112,15 @@ class AuthService {
     final userCredential = await _auth.signInWithCredential(credential);
     final user = userCredential.user;
     if (user == null) {
-      throw const AuthException('google-failed', 'Google girisi basarisiz.');
+      throw const AuthException('google-failed', 'Google girişi başarısız.');
     }
 
     final appUser = await _ensureUserDocument(user: user);
     return appUser;
   }
 
-  Future<void> sendPasswordReset({required String email}) {
+  Future<void> sendPasswordReset({required String email}) async {
+    await _auth.setLanguageCode('tr');
     return _auth.sendPasswordResetEmail(email: email);
   }
 
@@ -149,7 +150,7 @@ class AuthService {
         if (GoogleOAuthClientIds.androidServerClientId == null) {
           throw const AuthException(
             'google-server-client-id-missing',
-            'Google girisi icin gerekli sunucu client ID degeri tanimlanmadi.',
+            'Google girişi için gerekli sunucu istemci kimliği tanımlanmamış.',
           );
         }
         break;
@@ -157,7 +158,7 @@ class AuthService {
         if (GoogleOAuthClientIds.iosClientId == null) {
           throw const AuthException(
             'google-ios-client-id-missing',
-            'Google girisi icin gerekli iOS client ID degeri tanimlanmadi.',
+            'Google girişi için gerekli iOS istemci kimliği tanımlanmamış.',
           );
         }
         break;
@@ -169,12 +170,12 @@ class AuthService {
   String _mapPlatformErrorMessage(PlatformException error) {
     final description = error.message ?? '';
     if (description.contains('serverClientId must be provided')) {
-      return 'Google girisi icin sunucu client ID eksik. Firebase konsolundan Web istemci kimligini ekleyin ve uygulamaya tanimlayin.';
+      return 'Google girişi için sunucu istemci kimliği eksik. Firebase konsolundan Web istemci kimliğini ekleyin.';
     }
     if (description.isNotEmpty) {
       return description;
     }
-    return 'Google girisi tamamlanamadi. (${error.code})';
+    return 'Google girişi tamamlanamadı. (${error.code})';
   }
 
   Future<AppUser> _ensureUserDocument({

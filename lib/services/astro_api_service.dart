@@ -8,6 +8,7 @@ class AstroCalculationResult {
     required this.sunSign,
     required this.moonSign,
     required this.ascendant,
+    required this.venusSign,
     required this.timezone,
     required this.utcDateTime,
   });
@@ -15,6 +16,7 @@ class AstroCalculationResult {
   final String sunSign;
   final String moonSign;
   final String ascendant;
+  final String venusSign;
   final String timezone;
   final String utcDateTime;
 
@@ -23,6 +25,7 @@ class AstroCalculationResult {
       sunSign: (json['sunSign'] as String?)?.trim() ?? 'Bilinmiyor',
       moonSign: (json['moonSign'] as String?)?.trim() ?? 'Bilinmiyor',
       ascendant: (json['ascendant'] as String?)?.trim() ?? 'Bilinmiyor',
+      venusSign: (json['venusSign'] as String?)?.trim() ?? 'Bilinmiyor',
       timezone: (json['timezone'] as String?)?.trim() ?? '',
       utcDateTime: (json['utcDateTime'] as String?)?.trim() ?? '',
     );
@@ -69,8 +72,8 @@ class AstroApiService {
     }
 
     final response = await http
-      .get(uri, headers: headers)
-      .timeout(requestTimeout);
+        .get(uri, headers: headers)
+        .timeout(requestTimeout);
 
     if (response.statusCode != 200) {
       throw Exception('Astro API error: ${response.statusCode}');
@@ -86,6 +89,7 @@ class AstroApiService {
     final d = value.day.toString().padLeft(2, '0');
     final h = value.hour.toString().padLeft(2, '0');
     final min = value.minute.toString().padLeft(2, '0');
-    return '$y-$m-$d' 'T$h:$min';
+    return '$y-$m-$d'
+        'T$h:$min';
   }
 }

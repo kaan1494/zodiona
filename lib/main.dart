@@ -14,6 +14,7 @@ import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'models/app_user.dart';
 import 'services/auth_service.dart';
+import 'services/iap_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -120,6 +121,8 @@ class _AppBootstrapState extends State<_AppBootstrap> {
       await Firebase.initializeApp(
         options: kIsWeb ? _webFirebaseOptions : null,
       );
+      // IAP'ı Firebase'den hemen sonra başlat (tüm sayfalarda hazır olsun)
+      unawaited(IapService.instance.init());
     } catch (e) {
       error = e.toString();
     }

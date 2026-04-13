@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../services/iap_service.dart';
 import '../../../../services/jeton_service.dart';
 import 'kozmik_rehber_chat_page.dart';
 import 'kozmik_rehber_history_page.dart';
@@ -23,6 +24,7 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
   int _adCount = 0;
   bool _adLoading = false;
   StreamSubscription<int>? _balanceSub;
+  StreamSubscription<IapResult>? _iapSub;
   int _balance = 0;
 
   @override
@@ -32,12 +34,37 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
     _listenBalance();
     if (!kIsWeb) JetonService.preloadAd();
     _ensureBalance();
+    _initIap();
   }
 
   @override
   void dispose() {
     _balanceSub?.cancel();
+    _iapSub?.cancel();
     super.dispose();
+  }
+
+  Future<void> _initIap() async {
+    if (kIsWeb) return;
+    // init() artık main.dart'ta çağrılıyor; burada sadece stream'i dinle.
+    _iapSub = IapService.instance.resultStream.listen((result) {
+      if (!mounted) return;
+      if (result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎉 ${result.addedTokens} jeton hesabına eklendi!'),
+            backgroundColor: const Color(0xFF1E7A3D),
+          ),
+        );
+      } else if (result.isError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Satın alma başarısız.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    });
   }
 
   // Mevcut kullanıcıda jetonBakiye yoksa 5 ile başlat
@@ -116,45 +143,41 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
   }
 
   Future<void> _onPaketSatinAl(JetonPaketi paket) async {
-    // Gerçek ödeme entegrasyonu (Stripe / IAP) buraya eklenecek.
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0848),
-        title: Text(
-          '${paket.jeton} Jeton Satın Al',
-          style: const TextStyle(color: Color(0xFFF2D293)),
-        ),
-        content: Text(
-          '${paket.fiyatTL} ₺ ödeme yapılacak.\n\nÖdeme sistemi yakında aktif olacak.',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('İptal', style: TextStyle(color: Colors.white38)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Tamam',
-              style: TextStyle(color: Color(0xFFF2D293)),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (!mounted) return;
-    if (ok == true) {
-      await JetonService.addTokens(paket.jeton);
+    if (kIsWeb) {
+      _showUnavailableSnack();
+      return;
+    }
+
+    final iap = IapService.instance;
+    final product = iap.productForJeton(paket.jeton);
+
+    if (product == null || !iap.isAvailable) {
+      // Play Store ürünleri henüz tanımlı değil veya erişilemiyor
+      _showUnavailableSnack();
+      return;
+    }
+
+    try {
+      await iap.buy(product);
+      // Sonuç _iapSub üzerinden asenkron gelir
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${paket.jeton} jeton eklendi!'),
-          backgroundColor: const Color(0xFF3D1E7A),
+          content: Text('Satın alma başlatılamadı: $e'),
+          backgroundColor: Colors.red.shade700,
         ),
       );
     }
+  }
+
+  void _showUnavailableSnack() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Satın alma şu an kullanılamıyor. Yakında aktif olacak!'),
+        backgroundColor: Color(0xFF3D1E7A),
+      ),
+    );
   }
 
   // â”€â”€ Reklam izle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -388,7 +411,7 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
                               ),
                             ),
                           ),
-                          if (!kIsWeb) ...[  
+                          if (!kIsWeb) ...[
                             const SizedBox(width: 14),
                             Expanded(
                               child: _AdButton(

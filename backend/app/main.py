@@ -56,6 +56,7 @@ _planets = load("de440s.bsp")
 _earth = _planets["earth"]
 _sun = _planets["sun"]
 _moon = _planets["moon"]
+_venus = _planets["venus"]
 
 SIGNS_TR = [
     "Koç",
@@ -79,6 +80,7 @@ class AstroResponse(BaseModel):
     sunSign: str
     moonSign: str
     ascendant: str
+    venusSign: str
 
 
 def sign_from_longitude(deg: float) -> str:
@@ -219,6 +221,7 @@ def astro(
 
     _, sun_lon, _ = e.observe(_sun).apparent().ecliptic_latlon()
     _, moon_lon, _ = e.observe(_moon).apparent().ecliptic_latlon()
+    _, venus_lon, _ = e.observe(_venus).apparent().ecliptic_latlon()
 
     asc_lon = ascendant_longitude(utc_dt, latitude=lat, longitude=lon)
 
@@ -228,6 +231,7 @@ def astro(
         sunSign=sign_from_longitude(sun_lon.degrees),
         moonSign=sign_from_longitude(moon_lon.degrees),
         ascendant=sign_from_longitude(asc_lon),
+        venusSign=sign_from_longitude(venus_lon.degrees),
     )
 
 

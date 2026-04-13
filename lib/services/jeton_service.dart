@@ -23,9 +23,12 @@ class JetonService {
   static const String _testIosRewardedAdUnitId =
       'ca-app-pub-3940256099942544/1712485313';
 
+  // Alpha test aşamasında test reklamları kullanılır.
+  // Production'a geçince bu değeri false yap.
+  static const bool _useTestAds = true;
+
   static String get _rewardedAdUnitId {
-    // Debug modda test ID kullan, release'de gerçek ID
-    if (kDebugMode) {
+    if (kDebugMode || _useTestAds) {
       return defaultTargetPlatform == TargetPlatform.iOS
           ? _testIosRewardedAdUnitId
           : _testAndroidRewardedAdUnitId;

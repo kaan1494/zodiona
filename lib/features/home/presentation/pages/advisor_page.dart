@@ -1,8 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../services/advisor_chat_service.dart';
+import '../../../../services/iap_service.dart';
 import 'advisor_chat_page.dart';
 
 class AdvisorPage extends StatefulWidget {
@@ -136,6 +138,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
   static const List<_ConsultationCardData> _consultationCards = [
     _ConsultationCardData(
       title: 'Yıllık Öngörü',
+      productId: 'zodiona_danisman_yillik',
       description:
           'Önündeki 12 ayın ana temalarını, fırsat pencerelerini ve dikkat gerektiren eşikleri birlikte yorumlarız. Böylece yılını daha planlı ve bilinçli yönetebilirsin.',
       avatars: [
@@ -149,6 +152,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
     ),
     _ConsultationCardData(
       title: 'İlişki Uyumu',
+      productId: 'zodiona_danisman_iliski',
       description:
           'Seninle seçtiğin kişinin harita dinamiklerini karşılaştırarak güçlü bağları, zorlanma noktalarını ve ilişkiyi büyütecek iletişim anahtarlarını görünür kılar.',
       avatars: [
@@ -161,6 +165,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
     ),
     _ConsultationCardData(
       title: 'Danışmana Sor - Horary',
+      productId: 'zodiona_danisman_horary',
       description:
           'Zamanı kritik bir soruya odaklanıp sorunun sorulduğu ana ait harita ile kısa vadede en net yönü bulmaya yardımcı olan özel bir analiz sunar.',
       avatars: [
@@ -174,6 +179,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
     ),
     _ConsultationCardData(
       title: 'Doğum Haritası Analizi',
+      productId: 'zodiona_danisman_dogum',
       description:
           'Potansiyelini, güçlü taraflarını ve gelişim alanlarını kişisel harita yerleşimlerin üzerinden okuyarak daha net bir öz farkındalık sağlar.',
       avatars: [
@@ -187,6 +193,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
     ),
     _ConsultationCardData(
       title: 'Eleksiyon Astrolojisi',
+      productId: 'zodiona_danisman_elektion',
       description:
           'Yeni adımlar için en uygun zaman aralıklarını seçmene yardımcı olur; taşınma, iş değişimi ya da resmi başlangıçlarda doğru ritmi yakalamanı destekler.',
       avatars: [
@@ -199,6 +206,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
     ),
     _ConsultationCardData(
       title: 'Astrokartografi',
+      productId: 'zodiona_danisman_astrokart',
       description:
           'Haritandaki gezegen etkilerini coğrafi hatlarla eşleştirerek yaşam, kariyer ve ilişki temalarında hangi bölgelerin seni daha fazla desteklediğini gösterir.',
       avatars: [
@@ -220,6 +228,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
       MaterialPageRoute(
         builder: (_) => _ConsultationDetailPage(
           title: card.title,
+          productId: card.productId,
           description: card.detailDescription!,
           advisors: card.detailAdvisors ?? _defaultAdvisors,
         ),
@@ -706,11 +715,13 @@ class _AvatarRow extends StatelessWidget {
 class _ConsultationDetailPage extends StatefulWidget {
   const _ConsultationDetailPage({
     required this.title,
+    required this.productId,
     required this.description,
     required this.advisors,
   });
 
   final String title;
+  final String productId;
   final String description;
   final List<_AdvisorData> advisors;
 
@@ -721,57 +732,83 @@ class _ConsultationDetailPage extends StatefulWidget {
 
 class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
   bool _isLoadingChat = false;
+  StreamSubscription<IapResult>? _iapSub;
+  String? _pendingAdvisorImagePath;
 
-  Future<void> _onSelectAdvisor(_AdvisorData advisor) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
+  @override
+  void initState() {
+    super.initState();
+    _iapSub = IapService.instance.resultStream.listen(_onIapResult);
+  }
 
-    setState(() => _isLoadingChat = true);
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-      final data = userDoc.data() ?? {};
-      final isPremium = data['isPremium'] as bool? ?? false;
+  @override
+  void dispose() {
+    _iapSub?.cancel();
+    super.dispose();
+  }
 
-      if (!mounted) return;
+  void _onIapResult(IapResult result) {
+    if (!mounted) return;
+    setState(() => _isLoadingChat = false);
 
-      if (!isPremium) {
-        _showPremiumRequiredDialog();
-        return;
-      }
-
-      final service = AdvisorChatService();
-      final chatId = await service.getOrCreateChat(
-        advisorName: advisor.name,
-        consultationType: widget.title,
-        userProfile: data,
-      );
-
-      if (!mounted) return;
-      await Navigator.of(context).push(
+    if (result.isConsultationSuccess) {
+      Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => AdvisorChatPage(
-            chatId: chatId,
-            advisorName: advisor.name,
+            chatId: result.chatId!,
+            advisorName: IapService.instance.pendingAdvisorName ?? '',
             consultationType: widget.title,
-            advisorImagePath: advisor.imagePath,
+            advisorImagePath:
+                _pendingAdvisorImagePath ?? 'assets/danısman/ecebingör.jpg',
           ),
         ),
       );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Hata: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoadingChat = false);
+    } else if (result.isError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.errorMessage ?? 'Satın alma başarısız oldu.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 
-  void _showPremiumRequiredDialog() {
+  Future<void> _onSelectAdvisor(_AdvisorData advisor) async {
+    if (!IapService.instance.isAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Google Play Billing bu cihazda kullanılamıyor.'),
+        ),
+      );
+      return;
+    }
+
+    final product = IapService.instance.productForConsultation(
+      widget.productId,
+    );
+    if (product == null) {
+      _showProductNotFoundDialog();
+      return;
+    }
+
+    setState(() => _isLoadingChat = true);
+    _pendingAdvisorImagePath = advisor.imagePath;
+
+    final started = await IapService.instance.buyConsultation(
+      product: product,
+      advisorName: advisor.name,
+    );
+
+    if (!started && mounted) {
+      setState(() => _isLoadingChat = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Satın alma başlatılamadı.')),
+      );
+    }
+    // Başarılı/hatalı sonuç _onIapResult üzerinden gelir.
+  }
+
+  void _showProductNotFoundDialog() {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -780,26 +817,16 @@ class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
           borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: Color(0x55F2D9A6)),
         ),
-        title: const Row(
-          children: [
-            Icon(Icons.workspace_premium, color: Color(0xFFF2D9A6)),
-            SizedBox(width: 8),
-            Text(
-              'Premium Üyelik Gerekli',
-              style: TextStyle(
-                color: Color(0xFFF2D9A6),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Danışmana soru sorabilmek için premium üyeliğe sahip olman gerekiyor.\n\nProfil > Promosyon Kodu Kullan bölümünden bir kod girerek premium erişim kazanabilirsin.',
+        title: const Text(
+          'Ürün Bulunamadı',
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.85),
-            height: 1.5,
+            color: Color(0xFFF2D9A6),
+            fontWeight: FontWeight.w700,
           ),
+        ),
+        content: const Text(
+          'Bu danışmanlık hizmeti şu an satın alınamıyor. Lütfen daha sonra tekrar dene.',
+          style: TextStyle(color: Colors.white70, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -1048,6 +1075,7 @@ class _AdvisorAvatar extends StatelessWidget {
 class _ConsultationCardData {
   const _ConsultationCardData({
     required this.title,
+    required this.productId,
     required this.description,
     required this.avatars,
     this.extraCount,
@@ -1056,6 +1084,7 @@ class _ConsultationCardData {
   });
 
   final String title;
+  final String productId;
   final String description;
   final List<String> avatars;
   final int? extraCount;

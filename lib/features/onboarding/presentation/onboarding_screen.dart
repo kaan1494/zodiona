@@ -744,6 +744,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     String sunSign = _birthDate != null ? calculateZodiac(_birthDate!) : '';
     String moonSign = 'Bilinmiyor';
     String risingSign = 'Bilinmiyor';
+    String venusSign = 'Bilinmiyor';
     String? timezone = 'pending';
 
     final canCalculateFromApi =
@@ -780,6 +781,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'zodiacSign': sunSign,
       'moonSign': moonSign,
       'risingSign': risingSign,
+      'venusSign': venusSign,
       'onboardingCompleted': true,
       'updatedAt': FieldValue.serverTimestamp(),
     };

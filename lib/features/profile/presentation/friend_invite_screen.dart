@@ -1,27 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 class FriendInviteScreen extends StatelessWidget {
   const FriendInviteScreen({super.key});
 
-  // Fill this value when the final download URL is ready.
-  static const String inviteDownloadLink = '';
+  static const String _inviteLink = 'https://www.zodiona.com/index.html#indir';
 
   void _onShareLinkTap(BuildContext context) {
-    if (inviteDownloadLink.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'İndirme linkini daha sonra ekleyebilirsin. inviteDownloadLink değerini güncellemen yeterli.',
-          ),
-        ),
-      );
-      return;
-    }
-
-    Clipboard.setData(const ClipboardData(text: inviteDownloadLink));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Davet bağlantısı panoya kopyalandı.')),
+    Share.share(
+      'Zodiona ile doğum haritanı keşfet! 🌟\n$_inviteLink',
+      subject: 'Zodiona — Astroloji & Doğum Haritası',
     );
   }
 
@@ -146,7 +134,7 @@ class FriendInviteScreen extends StatelessWidget {
                               width: double.infinity,
                               child: ElevatedButton.icon(
                                 onPressed: () => _onShareLinkTap(context),
-                                icon: const Icon(Icons.link_rounded),
+                                icon: const Icon(Icons.share_rounded),
                                 label: const Text('Bağlantıyı Paylaş'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF0DDAE),
