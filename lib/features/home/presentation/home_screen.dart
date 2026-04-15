@@ -196,7 +196,7 @@ class _HomeBottomNav extends StatelessWidget {
                             Expanded(
                               child: _NavItem(
                                 icon: Icons.explore_outlined,
-                                label: 'Kesfet',
+                                label: 'Keşfet',
                                 textStyle: currentIndex == 1
                                     ? activeStyle
                                     : inactiveStyle,
@@ -229,7 +229,7 @@ class _HomeBottomNav extends StatelessWidget {
                             Expanded(
                               child: _NavItem(
                                 icon: Icons.support_agent_outlined,
-                                label: 'Danisman',
+                                label: 'Danışman',
                                 textStyle: currentIndex == 4
                                     ? activeStyle
                                     : inactiveStyle,
@@ -489,9 +489,9 @@ class _MainHomePage extends StatelessWidget {
               const SizedBox(height: 24),
               const ZodionaDailyCommentCard(),
               const SizedBox(height: 18),
-              const DailyAffirmationCard(),
-              const SizedBox(height: 18),
               const KozmikRehberCard(),
+              const SizedBox(height: 18),
+              const DailyAffirmationCard(),
               const SizedBox(height: 18),
               BirthChartPreviewCard(onTap: () => _openBirthChart(context)),
               const SizedBox(height: 18),
@@ -708,6 +708,9 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
         final hasRisingSign = _isKnownAstroValue(risingSignRaw);
         final risingSign = hasRisingSign ? risingSignRaw! : 'Bilinmiyor';
 
+        final venusSignRaw = (data['venusSign'] as String?)?.trim();
+        final hasVenusSign = _isKnownAstroValue(venusSignRaw);
+
         final birthTime = (data['birthTime'] as String?)?.trim();
         final lat = _asDouble(data['birthPlaceLat']);
         final lon = _asDouble(data['birthPlaceLon']);
@@ -722,7 +725,8 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
             lat != null &&
             lon != null;
         final needsAstroRefresh =
-            canRefreshAstro && (!hasMoonSign || !hasRisingSign);
+            canRefreshAstro &&
+            (!hasMoonSign || !hasRisingSign || !hasVenusSign);
         final requestKey = canRefreshAstro
             ? '${localBirthDateTime.toIso8601String()}|$lat|$lon'
             : null;
@@ -758,9 +762,10 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
                     'Merhaba, $resolvedName',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -846,12 +851,27 @@ class _SignChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      '$icon $text',
-      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        color: Colors.white70,
-        fontWeight: FontWeight.w600,
-      ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          icon,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: const Color(0xFFF2D28E),
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(width: 3),
+        Text(
+          text,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Colors.white.withValues(alpha: 0.85),
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -889,7 +909,6 @@ class _CosmicBackground extends StatelessWidget {
             'assets/onboarding/home_page.png',
             fit: BoxFit.cover,
             alignment: Alignment.topCenter,
-            repeat: ImageRepeat.repeatY,
           ),
         ),
         const Positioned.fill(
@@ -897,13 +916,13 @@ class _CosmicBackground extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0x020B1026),
-                  Color(0x080B1026),
-                  Color(0x101B1F3B),
+                  Color(0x550B1026),
+                  Color(0xAA1B1F3B),
+                  Color(0xFF0B0D1E),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                stops: [0.0, 0.6, 1.0],
+                stops: [0.0, 0.55, 1.0],
               ),
             ),
           ),

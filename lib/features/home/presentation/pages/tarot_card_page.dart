@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../services/tarot_selection_service.dart';
+import 'kozmik_rehber_tarot_chat_page.dart';
 import 'previous_insights_page.dart';
 
 class _TarotCardData {
@@ -693,6 +694,18 @@ class _TarotCardPageState extends State<TarotCardPage> {
                                             ),
                                           );
                                         }(),
+                                      // Swipe uyarısı – kart tepelerinin hemen üstünde
+                                      if (!_onCooldown)
+                                        Positioned(
+                                          bottom: cardBottomOffset + cardH + 8,
+                                          left: 0,
+                                          right: 0,
+                                          child: Center(
+                                            child: _SwipeHintBadge(
+                                              cardCount: _shuffledCards.length,
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -705,6 +718,49 @@ class _TarotCardPageState extends State<TarotCardPage> {
                             color: Color(0xFFF2D9A6),
                           ),
                         ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const KozmikRehberTarotChatPage(),
+                      ),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                        ),
+                        border: Border.all(
+                          color: const Color(0xFFF2D293).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFFF2D293),
+                            size: 15,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Kozmik Rehber\'de Yorumla',
+                            style: TextStyle(
+                              color: Color(0xFFF2D293),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -867,6 +923,100 @@ class _CardFace extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Swipe hint badge (pulses to draw attention)
+// ──────────────────────────────────────────────────────────────
+
+class _SwipeHintBadge extends StatefulWidget {
+  const _SwipeHintBadge({required this.cardCount});
+
+  final int cardCount;
+
+  @override
+  State<_SwipeHintBadge> createState() => _SwipeHintBadgeState();
+}
+
+class _SwipeHintBadgeState extends State<_SwipeHintBadge>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(
+      begin: 0.38,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.50),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFF2D9A6).withValues(alpha: 0.40),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.arrow_back_ios_rounded,
+                  color: Color(0xFFF2D9A6),
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  'Sağa veya sola kaydırarak',
+                  style: TextStyle(
+                    color: Color(0xFFF2D9A6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Color(0xFFF2D9A6),
+                  size: 20,
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${widget.cardCount} kart arasından seç',
+              style: const TextStyle(
+                color: Color(0xFFF2D9A6),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
 // Cooldown banner
 // ──────────────────────────────────────────────────────────────
 
@@ -1000,84 +1150,122 @@ class _CardDetailDialogState extends State<_CardDetailDialog>
           child: Center(
             child: GestureDetector(
               onTap: () {},
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF1A1050).withValues(alpha: 0.93),
-                      const Color(0xFF0D0830).withValues(alpha: 0.93),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: const Color(0xFFF2D9A6).withValues(alpha: 0.35),
-                    width: 1.5,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedBuilder(
-                      animation: _glowAnim,
-                      builder: (_, _) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(
-                                  0xFFF2D9A6,
-                                ).withValues(alpha: _glowAnim.value * 0.55),
-                                blurRadius: 32,
-                                spreadRadius: 4,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF1A1050).withValues(alpha: 0.93),
+                          const Color(0xFF0D0830).withValues(alpha: 0.93),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFFF2D9A6).withValues(alpha: 0.35),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedBuilder(
+                          animation: _glowAnim,
+                          builder: (_, _) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFF2D9A6,
+                                    ).withValues(alpha: _glowAnim.value * 0.55),
+                                    blurRadius: 32,
+                                    spreadRadius: 4,
+                                  ),
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF9B59F5,
+                                    ).withValues(alpha: _glowAnim.value * 0.35),
+                                    blurRadius: 20,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
                               ),
-                              BoxShadow(
-                                color: const Color(
-                                  0xFF9B59F5,
-                                ).withValues(alpha: _glowAnim.value * 0.35),
-                                blurRadius: 20,
-                                spreadRadius: 2,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.asset(
+                                  widget.cardData.asset,
+                                  height: 300,
+                                  fit: BoxFit.cover,
+                                ),
                               ),
-                            ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          widget.cardData.name,
+                          style: const TextStyle(
+                            color: Color(0xFFF2D9A6),
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: Image.asset(
-                              widget.cardData.asset,
-                              height: 300,
-                              fit: BoxFit.cover,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          widget.cardData.description,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 14,
+                            height: 1.55,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+                  // Sağ üst ✕ butonu
+                  Positioned(
+                    top: -12,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1050),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(
+                              0xFFF2D9A6,
+                            ).withValues(alpha: 0.5),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 6,
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    Text(
-                      widget.cardData.name,
-                      style: const TextStyle(
-                        color: Color(0xFFF2D9A6),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.close_rounded,
+                          color: Color(0xFFF2D9A6),
+                          size: 17,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      widget.cardData.description,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 14,
-                        height: 1.55,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

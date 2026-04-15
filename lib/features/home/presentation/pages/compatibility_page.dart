@@ -130,6 +130,7 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
             'zodiacSign': astro.sunSign,
             'moonSign': astro.moonSign,
             'risingSign': astro.ascendant,
+            'venusSign': astro.venusSign,
             'birthTimezone': astro.timezone,
             'updatedAt': FieldValue.serverTimestamp(),
           },
@@ -177,7 +178,10 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
       final hasRising = _isKnownAstroValue(
         (friend['risingSign'] as String?)?.trim(),
       );
-      if (hasMoon && hasRising) {
+      final hasVenus = _isKnownAstroValue(
+        (friend['venusSign'] as String?)?.trim(),
+      );
+      if (hasMoon && hasRising && hasVenus) {
         continue;
       }
 
@@ -809,6 +813,9 @@ class _CompatibilityFriendList extends StatelessWidget {
     final currentRising = _displaySign(
       (currentUserData['risingSign'] as String?) ?? 'Bilinmiyor',
     );
+    final currentVenus = _displaySign(
+      (currentUserData['venusSign'] as String?) ?? 'Bilinmiyor',
+    );
     final rawCurrentAvatarId = (currentUserData['avatarId'] as String?)?.trim();
     final currentAvatarId = _isValidAvatarId(rawCurrentAvatarId)
         ? rawCurrentAvatarId!
@@ -842,226 +849,250 @@ class _CompatibilityFriendList extends StatelessWidget {
         );
         final friendAvatarId = _defaultAvatarIdForSign(friendSignKey);
 
-        return InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => CompatibilityFriendDetailPage(
-                  currentUserName: currentUserName,
-                  currentUserAvatarId: currentAvatarId,
-                  friendAvatarId: friendAvatarId,
-                  currentUserSigns: {
-                    'sun': currentSun,
-                    'moon': currentMoon,
-                    'rising': currentRising,
-                  },
-                  friendData: map,
-                ),
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Spacer(),
-                    IconButton(
-                      onPressed: (uid == null || friendId == null)
-                          ? null
-                          : () => onDeleteFriend(friendId, name),
-                      visualDensity: VisualDensity.compact,
-                      splashRadius: 18,
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white70,
-                        size: 20,
-                      ),
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Spacer(),
+                  IconButton(
+                    onPressed: (uid == null || friendId == null)
+                        ? null
+                        : () => onDeleteFriend(friendId, name),
+                    visualDensity: VisualDensity.compact,
+                    splashRadius: 18,
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.white70,
+                      size: 20,
                     ),
-                    const Icon(Icons.chevron_right, color: Colors.white70),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.center,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 104,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 64,
-                                  child: Text(
-                                    currentUserName,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                _ProfileAvatarBadge(
-                                  avatarId: _defaultAvatarIdForSign(currentSun),
-                                  size: 52,
-                                  borderColor: const Color(0xD2F2D9A3),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Column(
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.white70),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 104,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              SizedBox(height: 22),
                               SizedBox(
-                                width: 32,
-                                height: 56,
-                                child: CustomPaint(
-                                  painter: _CompatibilityBondPainter(),
+                                width: 64,
+                                child: Text(
+                                  currentUserName,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                 ),
+                              ),
+                              const SizedBox(height: 4),
+                              _ProfileAvatarBadge(
+                                avatarId: _defaultAvatarIdForSign(currentSun),
+                                size: 52,
+                                borderColor: const Color(0xD2F2D9A3),
                               ),
                             ],
                           ),
-                          const SizedBox(width: 4),
-                          SizedBox(
-                            width: 104,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 72,
-                                  child: Text(
-                                    name,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                _ProfileAvatarBadge(
-                                  avatarId: friendAvatarId,
-                                  size: 52,
-                                  borderColor: const Color(0xD2F2D9A3),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 128,
-                            child: Text(
-                              '☉$currentSun☾$currentMoon↑$currentRising',
-                              maxLines: 1,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11,
-                                  ),
-                            ),
-                          ),
-                          const SizedBox(width: 18),
-                          SizedBox(
-                            width: 128,
-                            child: Text(
-                              '☉$friendSun☾$friendMoon↑$friendRising',
-                              maxLines: 1,
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Colors.white70,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => KozmikRehberUyumChatPage(
-                          friendId: friendId,
-                          friendData: map,
                         ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
-                      ),
-                      border: Border.all(
-                        color: const Color(0xFFF2D293).withValues(alpha: 0.4),
-                      ),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: Color(0xFFF2D293),
-                          size: 15,
+                        const SizedBox(width: 4),
+                        const Column(
+                          children: [
+                            SizedBox(height: 22),
+                            SizedBox(
+                              width: 32,
+                              height: 56,
+                              child: CustomPaint(
+                                painter: _CompatibilityBondPainter(),
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Kozmik Rehber\'de Yorumla',
-                          style: TextStyle(
-                            color: Color(0xFFF2D293),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                        const SizedBox(width: 4),
+                        SizedBox(
+                          width: 104,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 72,
+                                child: Text(
+                                  name,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              _ProfileAvatarBadge(
+                                avatarId: friendAvatarId,
+                                size: 52,
+                                borderColor: const Color(0xD2F2D9A3),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 128,
+                          child: Text(
+                            '☉$currentSun☾$currentMoon↑$currentRising',
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 18),
+                        SizedBox(
+                          width: 128,
+                          child: Text(
+                            '☉$friendSun☾$friendMoon↑$friendRising',
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CompatibilityFriendDetailPage(
+                        currentUserName: currentUserName,
+                        currentUserAvatarId: currentAvatarId,
+                        friendAvatarId: friendAvatarId,
+                        currentUserSigns: {
+                          'sun': currentSun,
+                          'moon': currentMoon,
+                          'rising': currentRising,
+                          'venus': currentVenus,
+                        },
+                        friendData: map,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.white.withValues(alpha: 0.08),
+                    border: Border.all(color: Colors.white30),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.favorite_border_rounded,
+                        color: Colors.white70,
+                        size: 15,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'İkiniz Arasında',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => KozmikRehberUyumChatPage(
+                        friendId: friendId,
+                        friendData: map,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFFF2D293).withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome,
+                        color: Color(0xFFF2D293),
+                        size: 15,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Kozmik Rehber\'de Yorumla',
+                        style: TextStyle(
+                          color: Color(0xFFF2D293),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -1182,6 +1213,7 @@ class _CompatibilityUserHeaderState extends State<_CompatibilityUserHeader> {
         'zodiacSign': astro.sunSign,
         'moonSign': astro.moonSign,
         'risingSign': astro.ascendant,
+        'venusSign': astro.venusSign,
         'birthTimezone': astro.timezone,
         'updatedAt': FieldValue.serverTimestamp(),
       });
@@ -1246,7 +1278,10 @@ class _CompatibilityUserHeaderState extends State<_CompatibilityUserHeader> {
             lat != null &&
             lon != null;
         final needsAstroRefresh =
-            canRefreshAstro && (!hasMoonSign || !hasRisingSign);
+            canRefreshAstro &&
+            (!hasMoonSign ||
+                !hasRisingSign ||
+                !_isKnownAstroValue((data['venusSign'] as String?)?.trim()));
         final requestKey = canRefreshAstro
             ? '${localBirthDateTime.toIso8601String()}|$lat|$lon'
             : null;

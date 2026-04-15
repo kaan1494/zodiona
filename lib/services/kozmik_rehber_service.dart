@@ -9,6 +9,7 @@ class KozmikRehberUserProfile {
     required this.sunSign,
     required this.moonSign,
     required this.risingSign,
+    required this.venusSign,
     required this.birthDate,
     required this.birthTime,
     required this.birthPlace,
@@ -18,6 +19,7 @@ class KozmikRehberUserProfile {
   final String sunSign;
   final String moonSign;
   final String risingSign;
+  final String venusSign;
   final String birthDate; // "14 Nisan 1994" gibi okunabilir format
   final String birthTime; // "04:50" veya "Bilinmiyor"
   final String birthPlace; // "İstanbul, Türkiye" gibi
@@ -28,6 +30,7 @@ class KozmikRehberUserProfile {
     final sun = _sanitize(data['zodiacSign'], 'Bilinmiyor');
     final moon = _sanitize(data['moonSign'], 'Bilinmiyor');
     final rising = _sanitize(data['risingSign'], 'Bilinmiyor');
+    final venus = _sanitize(data['venusSign'], 'Bilinmiyor');
 
     String birthDateStr = 'Bilinmiyor';
     final raw = data['birthDate'];
@@ -48,6 +51,7 @@ class KozmikRehberUserProfile {
       sunSign: _displaySign(sun),
       moonSign: _displaySign(moon),
       risingSign: _displaySign(rising),
+      venusSign: _displaySign(venus),
       birthDate: birthDateStr,
       birthTime: birthTime,
       birthPlace: place.isEmpty ? 'Bilinmiyor' : place,
@@ -62,6 +66,7 @@ class KozmikRehberFriendProfile {
     required this.sunSign,
     required this.moonSign,
     required this.risingSign,
+    required this.venusSign,
     required this.birthDate,
     required this.birthTime,
     required this.birthPlace,
@@ -75,6 +80,7 @@ class KozmikRehberFriendProfile {
   final String sunSign;
   final String moonSign;
   final String risingSign;
+  final String venusSign;
   final String birthDate;
   final String birthTime;
   final String birthPlace;
@@ -103,6 +109,7 @@ class KozmikRehberFriendProfile {
       sunSign: _displaySign(_sanitize(data['zodiacSign'], 'Bilinmiyor')),
       moonSign: _displaySign(_sanitize(data['moonSign'], 'Bilinmiyor')),
       risingSign: _displaySign(_sanitize(data['risingSign'], 'Bilinmiyor')),
+      venusSign: _displaySign(_sanitize(data['venusSign'], 'Bilinmiyor')),
       birthDate: birthDateStr,
       birthTime: _sanitize(data['birthTime'], 'Bilinmiyor'),
       birthPlace: place.isEmpty ? 'Bilinmiyor' : place,
@@ -155,8 +162,7 @@ Doğum yeri: ${profile.birthPlace}
 Natal harita:
 - Güneş burcu: ${profile.sunSign}  → kimlik, benlik, enerji kaynağı
 - Ay burcu: ${profile.moonSign}     → duygular, sezgi, iç dünya
-- Yükselen burcu: ${profile.risingSign} → dışa yansıma, sosyal kişilik
-
+- Yükselen burcu: ${profile.risingSign} → dışa yansıma, sosyal kişilik- Venüs burcu: ${profile.venusSign} → aşk, çekim, ilişki stili
 Görevlerin:
 1. Kullanıcının sorduğu astrolojik soruları bu haritayı referans alarak yanıtla.
 2. Cevapların Türkçe, sıcak, samimi ve pratik olsun.
@@ -177,12 +183,12 @@ Kullanıcı iki kişi arasındaki uyumu ve ilişkiyi sormak istiyor.
 — KULLANICI —
 Ad: ${user.name}
 Doğum: ${user.birthDate} | Saat: ${user.birthTime} | Yer: ${user.birthPlace}
-Güneş: ${user.sunSign} | Ay: ${user.moonSign} | Yükselen: ${user.risingSign}
+Güneş: ${user.sunSign} | Ay: ${user.moonSign} | Yükselen: ${user.risingSign} | Venüs: ${user.venusSign}
 
 — ${friend.name.toUpperCase()} (Arkadaş / Partner) —
 Ad: ${friend.name}
 Doğum: ${friend.birthDate} | Saat: ${friend.birthTime} | Yer: ${friend.birthPlace}
-Güneş: ${friend.sunSign} | Ay: ${friend.moonSign} | Yükselen: ${friend.risingSign}
+Güneş: ${friend.sunSign} | Ay: ${friend.moonSign} | Yükselen: ${friend.risingSign} | Venüs: ${friend.venusSign}
 Cinsiyet: ${friend.gender} | Meslek: ${friend.job}
 İlişki türü: ${friend.relationshipType}${friend.age != null ? ' | Yaş: ${friend.age}' : ''}
 

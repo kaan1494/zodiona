@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../admin/presentation/admin_access_gate_screen.dart';
 import '../../auth/presentation/auth_screen.dart';
@@ -229,12 +230,6 @@ class ProfileScreen extends StatelessWidget {
                         title: 'Yorum Yap',
                         icon: Icons.bubble_chart,
                         onTap: () => _onCreamActionTap(context, 'Yorum Yap'),
-                      ),
-                      const SizedBox(height: 10),
-                      _CreamActionCard(
-                        title: 'Widget',
-                        icon: Icons.dashboard,
-                        onTap: () => _onCreamActionTap(context, 'Widget'),
                       ),
                       const SizedBox(height: 14),
                       _ContactCard(onContactTap: () => _onContactTap(context)),
@@ -496,17 +491,25 @@ class _TopHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                height: 36,
-                width: 36,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white54),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.ios_share_outlined,
-                  color: Colors.white70,
-                  size: 18,
+              GestureDetector(
+                onTap: () {
+                  Share.share(
+                    'Zodiona ile doğum haritanı keşfet! 🌟\nhttps://www.zodiona.com/index.html#indir',
+                    subject: 'Zodiona — Astroloji & Doğum Haritası',
+                  );
+                },
+                child: Container(
+                  height: 36,
+                  width: 36,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white54),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.ios_share_outlined,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
                 ),
               ),
             ],

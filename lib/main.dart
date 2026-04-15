@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'features/admin/presentation/admin_access_gate_screen.dart';
@@ -80,7 +81,9 @@ class ZodionaApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
         scaffoldBackgroundColor: const Color(0xFF0B1026),
-        fontFamily: 'Arial',
+        textTheme: GoogleFonts.nunitoTextTheme(
+          ThemeData(brightness: Brightness.dark).textTheme,
+        ).apply(bodyColor: Colors.white, displayColor: Colors.white),
         useMaterial3: true,
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(foregroundColor: const Color(0xFFF2C98A)),

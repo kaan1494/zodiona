@@ -120,8 +120,8 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
                                   const SizedBox(height: 12),
                                   Center(
                                     child: SizedBox(
-                                      width: 330,
-                                      height: 330,
+                                      width: 260,
+                                      height: 260,
                                       child: CustomPaint(
                                         painter: _NatalChartPainter(
                                           chart: chart,
@@ -1045,12 +1045,7 @@ class _NatalChartBuilder {
         detail: 'Element dağılımı günlük karar ritmini etkiler',
         glyph: '◌',
         color: const Color(0xFF86D7F4),
-        content:
-            'Haritandaki gezegenler ateş, toprak, hava ve su elementleri arasında dağılır. '
-            'Bu dağılım günlük enerji ritmini, karar verme biçimini ve stres altındaki tepkilerini etkiler.\n\n'
-            'Ağırlıklı element, baskın motivasyon kaynağını gösterir: Ateş = eylem ve tutku, '
-            'Toprak = pratiklik ve güvenlik, Hava = fikir ve iletişim, Su = his ve sezgi.\n\n'
-            'Dengeli bir harita çok yönlülük sunar; baskın bir element güçlü odak ama potansiyel kör nokta yaratır.',
+        content: _elementBalanceContent(placementsWithMeta),
       ),
       _InfoCardData(
         title: 'Öne Çıkan Evler',
@@ -1058,11 +1053,7 @@ class _NatalChartBuilder {
         detail: 'Bu evler hayat akışında daha görünür çalışır',
         glyph: '⌂',
         color: const Color(0xFFBDA9FF),
-        content:
-            'Bazı evler haritanda birden fazla gezegen barındırır ve hayatın o alanında daha yoğun bir enerji alanı oluşturur.\n\n'
-            'Öne çıkan evler, tekrar eden temaların ve en büyük büyüme fırsatlarının olduğu alanlardır. '
-            'Bu evlere yönelik bilinçli çalışmak haritanın potansiyelini açar.\n\n'
-            'Her ev kendi doğal ritmiyle çalışır — zorlu da olsa bu odalara kapı aralamak hayatı zenginleştirir.',
+        content: _topHousesContent(placementsWithMeta),
       ),
     ];
 
@@ -1605,6 +1596,392 @@ String _topHousesText(List<_PlanetPlacement> placements) {
 
   final top = sorted.take(3).map((entry) => '${entry.key}. Ev').toList();
   return top.join(' • ');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ELEMENT DENGESİ — KOMPOZISYON SİSTEMİ
+// Para1 (12) × Para2 (8) × Para3 (4) = 384 benzersiz metin
+// ═══════════════════════════════════════════════════════════════
+
+String _elementBalanceContent(List<_PlanetPlacement> placements) {
+  int fire = 0, earth = 0, air = 0, water = 0;
+  String sunEl = 'Ateş';
+  for (final p in placements) {
+    if (p.key == 'Sun') sunEl = _elementOfSign(p.sign);
+  }
+  for (final p in placements.take(10)) {
+    switch (_elementOfSign(p.sign)) {
+      case 'Ateş':
+        fire++;
+      case 'Toprak':
+        earth++;
+      case 'Hava':
+        air++;
+      case 'Su':
+        water++;
+    }
+  }
+  final sortedEl = [
+    MapEntry('Ateş', fire),
+    MapEntry('Toprak', earth),
+    MapEntry('Hava', air),
+    MapEntry('Su', water),
+  ]..sort((a, b) => b.value.compareTo(a.value));
+  final dominant = sortedEl[0].key;
+  final secondary = sortedEl[1].key;
+  final weakest = sortedEl[3].key;
+  final hasZero = sortedEl[3].value == 0;
+  final p1 = _elDuoOpeningPara(dominant, secondary, fire, earth, air, water);
+  final p2 = _elWeaknessPara(weakest, hasZero);
+  final p3 = _elSunPara(sunEl);
+  return '$p1\n\n$p2\n\n$p3';
+}
+
+String _elDuoOpeningPara(
+  String dom,
+  String sec,
+  int fire,
+  int earth,
+  int air,
+  int water,
+) {
+  final s = 'Ateş $fire, Toprak $earth, Hava $air, Su $water';
+  switch ('${dom}_$sec') {
+    case 'Ateş_Toprak':
+      return 'Haritandaki on gezegen içinde Ateş öne çıkıyor, Toprak ise güçlü bir ikinci katman olarak destekliyor ($s). '
+          'Bu birleşim, tutkulu hayaller ile onları hayata geçirecek pratik zemini aynı yerde buluşturur. '
+          'Ateş seni sürekli yeni ufuklara ve cesaret gerektiren adımlara taşırken, Toprak bu dürtüyü somut ve kalıcı sonuçlarla taçlandırır. '
+          'Başladığın işleri bitirebilen, tutku ile zamanlamanın dengesini kurabilen az sayıda insandan birisin.';
+    case 'Ateş_Hava':
+      return 'Haritandaki on gezegen Ateş ve Hava\'nın canlı birlikteliğini yansıtıyor ($s). '
+          'Ateş eylem enerjisini ve tutku odağını beslerken, Hava bu ateşe kelimeler, fikirler ve bağlantılar ekler. '
+          'İlham anında gelir, fikirler hızla şekillenir ve iletişim gücün bu enerjiyi çevreye taşır. '
+          'Hem yüksek bir enerjiyle yön yaratırsın hem de o yönü bağlantı ve özgün ifadeyle zenginleştirirsin.';
+    case 'Ateş_Su':
+      return 'Haritandaki on gezegen Ateş ve Su\'nun güçlü birleşimini taşıyor ($s). '
+          'Zıt kutuplar gibi görünen bu iki element aslında birbirini tamamlar: Ateş seni eyleme ve hıza yöneltirken, Su derin empati ve sezgi akışı yaratır. '
+          'Hem kararlı hem de çok katmanlı bir iç dünyaya sahipsin; tutku ve his arasındaki salınım seni hem harekete geçiriyor hem de derinleştiriyor. '
+          'Bu kombinasyon liderleri, sanatçıları ve şifacıları besleyen nadir bir karışımdır.';
+    case 'Toprak_Ateş':
+      return 'Haritandaki on gezegen Toprak ağırlıklı, Ateş ise onu güçlü biçimde tamamlıyor ($s). '
+          'Toprak sende köklenme, pratik zemin kurma ve uzun vadeli güvenlik inşa etme kapasitesini öne çıkarır; '
+          'Ateş ise bu sağlam zeminin üzerinden eylem patlamaları ve güçlü irade anları yaratır. '
+          'Sabırlı ve kararlısın; gerçekten motive olduğunda ise durdurulamaz bir ivme üretirsin. '
+          'Bu yapı hem dayanıklı hem de gerektiğinde etkili biçimde değişen insanları tanımlar.';
+    case 'Toprak_Hava':
+      return 'Haritandaki on gezegen Toprak ve Hava\'nın dengeleyici birlikteliğini gösteriyor ($s). '
+          'Toprak sende pratik analiz, gerçekçi planlama ve uzun soluklu düşünme kapasitesini beslerken; '
+          'Hava bu zeminine soyut kavrayış, iletişim gücü ve zihinsel çeviklik katar. '
+          'Fikirler sende zemine iner; teoriler pratiğe dönüşür. '
+          'Bu kombinasyon hem analist hem mimar ruhunu aynı bedende barındırır.';
+    case 'Toprak_Su':
+      return 'Haritandaki on gezegen Toprak ve Su\'nun derin, besleyici birleşimini gösteriyor ($s). '
+          'Toprak sende güvenilirlik, uzun vadeli inşa gücü ve pratiklik kapasitesi yaratırken; '
+          'Su bu yapıya empati, sezgi ve duygusal anlayış derinliği katar. '
+          'Hem güvenilir hem de naziksin; hem çözüm üretirsin hem de karşındakini gerçekten görürsün. '
+          'Bakım verme ve kalıcı bir şeyler inşa etme arasında bu ikili güçlü köprüler kurar.';
+    case 'Hava_Ateş':
+      return 'Haritandaki on gezegen Hava ve Ateş\'in enerjik birleşimini taşıyor ($s). '
+          'Hava sende fikirlerin sürekli aktığı, bağlantı kurma kapasitesinin güçlü olduğu bir zihinsel iklim yaratır; '
+          'Ateş ise bu iklime ivme, eylem dürtüsü ve kararlı adım atma gücü ekler. '
+          'Fikir üretmek kadar harekete de geçebilmek seni öne çıkaran bir özellik olur; '
+          'vizyon ve uygulama arasındaki köprüyü kurmak sende doğal bir yetenektir.';
+    case 'Hava_Toprak':
+      return 'Haritandaki on gezegen Hava ve Toprak\'ın netlik birlikteliğini gösteriyor ($s). '
+          'Hava sende analitik düşünme, geniş perspektif ve kavramsal netlik sağlarken; '
+          'Toprak bu düşünce gücünü gerçek dünyaya çıkarma ve kalıcı kılma becerisini ekler. '
+          'Hem teorisyen hem uygulayıcısın; hem büyük çerçeveyi görebilir hem de o çerçeveye somut inşa edebilirsin. '
+          'Sistemler tasarlayan ve o sistemleri hayata geçiren bir zekayı bu kombinasyon besler.';
+    case 'Hava_Su':
+      return 'Haritandaki on gezegen Hava ve Su\'nun nadir, derin birleşimini taşıyor ($s). '
+          'Hava sende düşüncenin akıcılığını ve fikir üretme enerjisini beslerken; '
+          'Su bu zekaya sezgi, empati derinliği ve görünmeyeni hissetme kapasitesini katar. '
+          'İçgüdüsel anlayışın soyut düşünce biçimiyle el ele gittiği bu kombinasyon, '
+          'insanları gerçekten anlayan ve bu anlayışı kelimelerle paylaşabilen nadir bir yetenek zemini oluşturur.';
+    case 'Su_Ateş':
+      return 'Haritandaki on gezegen Su baskın, Ateş ise onu tamamlayan güçlü bir enerji olarak öne çıkıyor ($s). '
+          'Su sende derin his, sezgi ve empati kapasitesini besler; '
+          'Ateş ise bu iç dünyaya eylem gücü, irade ve harekete geçme enerjisi katar. '
+          'Hem derinlemesine yaşarsın hem de bu derinliği somut adımlara dönüştürebilirsin. '
+          'Duygusal zeka ile kararlı irade arasındaki bu nadir köprü, sende doğal bir güç olarak bulunur.';
+    case 'Su_Toprak':
+      return 'Haritandaki on gezegen Su ve Toprak\'ın besleyici, köklü birleşimini gösteriyor ($s). '
+          'Su sende empati, sezgi ve duygu dünyasını zengin kılarken; '
+          'Toprak bu hislerin pratik hayata, güvenli yapılara ve kalıcı ilişkilere dönüşmesini sağlar. '
+          'Ne hissettiğini bilirsin ve o hissi hayatının dokunuşuna çevirebilirsin. '
+          'Bu kombinasyon hem derinden bağlanabilen hem de bu bağı sabırla besleyen bir iç güç inşa eder.';
+    case 'Su_Hava':
+      return 'Haritandaki on gezegen Su ve Hava\'nın sezgisel, zihinsel birlikteliğini yansıtıyor ($s). '
+          'Su sende derin empati, duygusal anlayış ve sezginin akışını beslerken; '
+          'Hava bu sezgisel dünyayı kelimeler, kavramlar ve paylaşılabilir içgörülere dönüştürme kapasitesi sağlar. '
+          'Sadece hissetmekle kalmaz; hissettiğini anlamlandırır ve paylaşırsın. '
+          'Bu iki elementin birleşimi, psikolog, sanatçı ve şifacı arketipini besleyen güçlü bir zemindir.';
+    default:
+      return 'Haritandaki on gezegen ($s) birbirini tamamlayan iki baskın elementi öne çıkarıyor. '
+          'Bu birleşim, farklı hayat alanlarında güçlü ve doğal bir akış sağlar. '
+          'Her elementin sesine kulak vermek bu yapının en derin armağanıdır.';
+  }
+}
+
+String _elWeaknessPara(String weakest, bool hasZero) {
+  switch (weakest) {
+    case 'Ateş':
+      if (hasZero) {
+        return 'Haritada Ateş elementinden hiç gezegen bulunmuyor — bu spontanlık, eylem coşkusu ve hız enerjisinin sana dışarıdan gelmesi gerektiği anlamına gelir. '
+            'Ateş enerjili insanlarla temas, fiziksel hareket ya da yaratıcı riskler bu boşluğu dolduran kanallar olabilir. '
+            'Kendi içinden bu ateşi yakmanın yolu bilinç ve pratik gerektirir; ama tam da bu yüzden, ateş anlarında çok özel bir güç taşırsın.';
+      }
+      return 'Haritada Ateş en zayıf kalan element — spontanlık, hız ve ani harekete geçme konularında zaman zaman ek çaba hissedebilirsin. '
+          'Motivasyonu bulmak ya da korumak bazen daha fazla hazırlık gerektirebilir; ancak bu bir kör nokta değil, bilinçli beslenme gerektiren bir alan. '
+          'Küçük eylem pratikleri ve fiziksel enerji kanalları bu elementin sesini yavaş yavaş güçlendirir.';
+    case 'Toprak':
+      if (hasZero) {
+        return 'Haritada Toprak elementinden hiç gezegen bulunmuyor — pratiklik, fiziksel gerçeklikler ve uzun vadeli inşa enerjisi sana dışarıdan gelir ya da bilinçli geliştirme gerektirir. '
+            'Rutin ve alışkanlıklar aracılığıyla bu enerjiyi beslemeye değer; Toprak yokluğu aynı zamanda güçlü bir sezgi ve esneklik kapasitesine zemin hazırlar. '
+            'Pratiği küçük tutmak ama sürekliliğini korumak bu alanı zamanla dönüştürür.';
+      }
+      return 'Haritada Toprak en zayıf kalan element — pratiklik, sabır ve uzun vadeli inşa etme konularında zaman zaman daha fazla özen gerekebilir. '
+          'Hayallerini kalıcı sonuçlara taşımak için somut adımlar ve küçük rutinler önemli bir köprü işlevi görür. '
+          'Toprak enerjisini bilinçli beslemek, güçlü fikirlerini ve hislerini gerçeğe dönüştüren sağlam bir zemin inşa eder.';
+    case 'Hava':
+      if (hasZero) {
+        return 'Haritada Hava elementinden hiç gezegen bulunmuyor — zihinsel mesafe, nesnel analiz ve akıcı iletişim enerjisi sana dışarıdan gelir ya da pratik gelişim gerektirir. '
+            'Hava enerjili insanlarla diyalog, okuma alışkanlıkları ya da yazma pratikleri bu boşluğu besleyen kanallar olabilir. '
+            'Hava\'nın yokluğu aynı zamanda güçlü bir sezgisel ve pratik zemin oluşturur — analiz yerine his ve eylem ön plana geçer.';
+      }
+      return 'Haritada Hava en zayıf kalan element — soyut düşünce, nesnel analiz ve diyalog gerektiren durumlarda zaman zaman ek emek hissedebilirsin. '
+          'Zihinsel netlik için yavaş düşünme pratiği ya da fikirleri yazıya dökmek alternatif bir kanal açar. '
+          'Bu durum zayıflık değil; Hava\'nın sunduğu iletişim kapasitesine farklı yollardan erişme davetiyesidir.';
+    case 'Su':
+      if (hasZero) {
+        return 'Haritada Su elementinden hiç gezegen bulunmuyor — empati derinliği, sezgi akışı ve duygusal dünyanın katmanları sana dışarıdan gelebilir ya da bilinçli beslenme gerektirir. '
+            'Sanat, müzik ve anlamlı bağlar Su enerjisini hayatına katan kanallar olabilir. '
+            'Bu eksiklik güçlü bir netlik ve pragmatizm kaynağıdır; his yerine düşünce ve eylem ön plana geçer ve sende sağlam bir kararlılık zemini oluşturur.';
+      }
+      return 'Haritada Su en zayıf kalan element — derin empati, sezgi ve duygusal dünyaya doğrudan iniş konularında zaman zaman mesafe hissedebilirsin. '
+          'Başkasının hissine gerçekten dokunmak ya da kendi iç sesini fark etmek için bilinçli pratik gerekebilir. '
+          'Bu alanı beslemek sadece ilişkileri değil tüm haritanı derinleştirir; his kapasitesi arttıkça diğer güçlerin rengi de değişir.';
+    default:
+      return 'Haritanda her element anlamlı bir varlık taşıyor; hiçbiri tam anlamıyla yok değil. '
+          'Bu denge çok yönlülüğü korur ama her alanı eşit beslemek bilinç ve pratik gerektirir.';
+  }
+}
+
+String _elSunPara(String sunElement) {
+  switch (sunElement) {
+    case 'Ateş':
+      return 'Güneş\'in ateş burcunda konumlanması, bu haritanın temel kimlik enerjisine güçlü bir tutuşma noktası katar. '
+          'Benliğin en canlı hissettiği alan genellikle cesaret, eylem ve öz ifadeyle belirir; kim olduğun ne yaptığınla şekillenir. '
+          'Bu lens haritanın tüm element yapısını eylem odaklı bir kimlik çerçevesinden okumanı sağlar.';
+    case 'Toprak':
+      return 'Güneş\'in toprak burcunda konumlanması, kimlik ifadesine somutluk, güvenilirlik ve kalıcılık arayışı katar. '
+          'Benliğin en gerçek hissettiği alan "inşa etmek, dayanmak ve gerçek olmak" üzerinden şekillenir. '
+          'Bu temel lens haritanın baskın elementlerini pratiklik ve gerçekçilik süzgecinden geçirir.';
+    case 'Hava':
+      return 'Güneş\'in hava burcunda konumlanması, kimlik enerjisine zihinsel merak, paylaşım ve bağlantı kurma ihtiyacı katar. '
+          'Benliğin en canlı hissettiği alan fikir alışverişi, insanlarla temas ve kavramsal keşiflerde bulunur. '
+          'Bu lens haritanın diğer elementlerini iletişim ve anlam üretme çerçevesinden görmeyi kolaylaştırır.';
+    case 'Su':
+      return 'Güneş\'in su burcunda konumlanması, kimlik enerjisine derin his, sezgi ve yoğun empati kapasitesi katar. '
+          'Benliğin en gerçek hissettiği alan görünmeyeni hissetmekte, derinden bağlanmakta ve dönüşüm süreçlerinde anlam bulmakta bulunur. '
+          'Bu lens haritanın tüm enerji yapısını duygusal ve sezgisel bir anlam çerçevesinden okumayı besler.';
+    default:
+      return 'Güneş\'in konumlandığı burç bu haritanın merkezine belirgin bir kimlik rengi katar. '
+          'Benliğin nasıl ifade edildiği ve hayatın hangi sorularının öne çıktığı bu Güneş enerjisiyle derin bir diyalog içinde şekillenir.';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Aşağıdaki: ESKİ YYAPI — İÇİNDEKİLER GELİYOR SONA
+// isBalanced / switch(dominantEl) KALDIRILDI — artık kullanılmıyor
+// ═══════════════════════════════════════════════════════════════
+// KODUN DEVAMINDA _topHousesContent YENİDEN TANIMLANACAK
+// Geçici boş yer tutucu:
+// ═══════════════════════════════════════════════════════════════
+// ÖNE ÇIKAN EVLER — KOMPOZISYON SİSTEMİ
+// Para1 (12) × Para2 (12) × Para3 (3) = 432 benzersiz metin
+// ═══════════════════════════════════════════════════════════════
+
+String _topHousesContent(List<_PlanetPlacement> placements) {
+  final counts = <int, int>{};
+  for (final p in placements.take(11)) {
+    counts[p.house] = (counts[p.house] ?? 0) + 1;
+  }
+  final sorted = counts.entries.toList(growable: false)
+    ..sort((a, b) => b.value.compareTo(a.value));
+  if (sorted.isEmpty || sorted.first.value < 2) {
+    final sunHouse = placements
+        .firstWhere((p) => p.key == 'Sun', orElse: () => placements.first)
+        .house;
+    final p1 = _topHousePrimaryPara(sunHouse);
+    return '$p1\n\n'
+        'Gezegenlerin evler arasında dengeli dağılması, hayatın farklı alanlarının hemen hepsinin senin için anlamlı temalar taşıdığı anlamına gelir. '
+        'Bu çok yönlülük güçlü bir armağandır ama aynı zamanda odak gerektiren bir davettir; harita tek bir yön vermemiş, seçimi sana bırakmıştır.\n\n'
+        'Güneş\'in bulunduğu $sunHouse. Ev, kimlik ve yaşam gücünün doğal olarak aktığı alanı gösterir. '
+        'Bu dönemde aklın ve kalbin tekrar tekrar hangi yaşam alanına döndüğüne bak; '
+        'harita sana özel bir odak biçmemiş olsa da, sen kendi odağını biçebilirsin.';
+  }
+  final primary = sorted[0].key;
+  final hasSecondary = sorted.length >= 2 && sorted[1].value >= 2;
+  final secondary = hasSecondary ? sorted[1].key : null;
+  final p1 = _topHousePrimaryPara(primary);
+  final String p2;
+  if (secondary != null) {
+    p2 = _topHouseSecondaryPara(secondary);
+  } else {
+    p2 =
+        'Haritanın geri kalanında belirgin bir ikinci yoğunluk evi bulunmuyor — '
+        'bu, $primary. Ev\'deki temaya adeta özel bir odak verildiğini gösterir. '
+        'Tek bir evin bu denli öne çıkması, o alandaki ders ve büyüme fırsatlarının sende en yoğun biçimde işlediği anlamına gelir.';
+  }
+  final p3 = _topHouseClosingPara(_houseQuadrant(primary));
+  return '$p1\n\n$p2\n\n$p3';
+}
+
+String _topHousePrimaryPara(int house) {
+  switch (house) {
+    case 1:
+      return 'Haritandaki en yoğun gezegen kümesi 1. Ev\'de toplanıyor — kimlik, beden ve dışarıya verdiğin ilk izlenim alanı hayatının merkezine yerleşiyor. '
+          'Birden fazla gezegen bu evde bulunduğunda benliğini keşfetme ve ifade etme süreci sürekli aktif bir alan haline gelir; '
+          '"kim olduğum" sorusu tekrar tekrar farklı biçimlerde karşına çıkar. '
+          'Bu yoğunluk, seni hem kişisel dönüşümün hem de dışarıya güçlü bir iz bırakmanın kapısında tutar.';
+    case 2:
+      return 'Haritandaki en yoğun gezegen kümesi 2. Ev\'de toplanıyor — değerler, maddi kaynaklar ve güvenlik duygusu hayatının tekrar eden temasıdır. '
+          'Bu yoğunluk, maddi ve içsel güvencenin senin için sıradan bir pratik mesele değil, derin bir kimlik alanı olduğunu gösterir. '
+          'Ne kazandığın, neye değer verdiğin ve neyi gerçekten değerli bulduğun soruları seni sürekli şekillendirir. '
+          'Güvenlik ve değer duygusu inşa etme süreci hayatınla uzun süreli ve canlı bir diyalog taşır.';
+    case 3:
+      return 'Haritandaki en yoğun gezegen kümesi 3. Ev\'de toplanıyor — iletişim, yakın çevre, öğrenme ve ifade biçimi sende en belirgin enerji alanlarından birini oluşturuyor. '
+          'Kelimeler, fikirler ve yüz yüze bağlantılar sende sürekli aktif bir güç olarak çalışır. '
+          'Zihinsel merak ve yeni bilgilere olan açıklık seni besleyen güçlü bir kanal olur; '
+          'öğrenmek ve öğrendiklerini paylaşmak sende ayrışmış iki eylem değil birbirini tamamlayan tek bir akıştır.';
+    case 4:
+      return 'Haritandaki en yoğun gezegen kümesi 4. Ev\'de toplanıyor — aile, kökenler, duygusal yurt ve ait olma hissi hayatında sürekli merkezi bir yer tutuyor. '
+          'Bu yoğunluk, "nereden geliyorum, nereye aidim" sorularının sende yüzeysel değil derin ve tekrarlayan temalar olduğunu gösterir. '
+          'Geçmiş ile şimdi arasındaki bağ seni oluşturan önemli bir eksendir; '
+          'kök atmak ya da kök aramak her ikisi de sende güçlü bir motivasyon kaynağı olarak çalışır.';
+    case 5:
+      return 'Haritandaki en yoğun gezegen kümesi 5. Ev\'de toplanıyor — yaratıcılık, aşk, keyif ve özgün ifade sende en aktif enerji alanlarından birini oluşturuyor. '
+          'Birden fazla gezegen bu evde bulunduğunda oyun ve üretim arasındaki alan yaşamının en canlı sahnesi haline gelir. '
+          'Sevmek ve yaratmak sende ayrı değil, birbirine derin biçimde bağlı iki güç olarak çalışır. '
+          'Özgün ifade bulmak ve bu ifadeyi paylaşmak hem en doğal hem de en büyüleyici yaşam alanındır.';
+    case 6:
+      return 'Haritandaki en yoğun gezegen kümesi 6. Ev\'de toplanıyor — günlük rutin, çalışma disiplini, sağlık ve hizmet alanı hayatında tekrarlayan güçlü bir tema taşıyor. '
+          'Bu yoğunluk, "iyi yaşam" anlayışının senin için büyük hayaller kadar küçük günlük alışkanlıklarda da yattığını gösterir. '
+          'Beden sağlığı, verimlilik ve nitelikli çalışma seni derinden şekillendiren bir eksendir. '
+          'Günlük ritmin kalitesi tüm hayatının kalitesini belirlemede özel bir ağırlık taşır.';
+    case 7:
+      return 'Haritandaki en yoğun gezegen kümesi 7. Ev\'de toplanıyor — bire bir ilişkiler, ortaklıklar ve karşılıklı bağlar hayatının en tekrarlayan ve öğretici sahnelerini barındırıyor. '
+          'Bu yoğunluk, başka bir kişiyle derin temas kurduğunda kim olduğunun en net şekilde belirdiğini gösterir. '
+          'İlişkiler sende ayna, ekol ve dönüşüm zemini işlevi görür; '
+          'karşındaki insanlar hayatının bir parçası olmanın ötesinde seni şekillendiren bir güç olarak çalışır.';
+    case 8:
+      return 'Haritandaki en yoğun gezegen kümesi 8. Ev\'de toplanıyor — derin dönüşüm, kriz anları, paylaşılan kaynaklar ve bilinçdışı güçler hayatında yoğun bir enerji alanı oluşturuyor. '
+          'Bu yoğunluk, hayatının büyük kırılma anlarının seni hem zorladığını hem de en derinden güçlendirdiğini gösterir. '
+          'Kayıp, yenilenme ve köklü değişim temaları sende sıradan birer olay değil; '
+          'kimliğini şekillendiren dönüşüm kapılarıdır.';
+    case 9:
+      return 'Haritandaki en yoğun gezegen kümesi 9. Ev\'de toplanıyor — büyük anlam, inanç sistemleri ve ufuk açma hayatında sürekli aktif bir çekim alanı oluşturuyor. '
+          '"Neden" ve "ne için" sorularını sade merak düzeyinde değil, gerçek bir varoluş ağırlığıyla taşıyorsun. '
+          'Yolculuk — ister fiziksel ister zihinsel olsun — seni en derin biçimde büyüten deneyimdir. '
+          'İnanç, felsefe ve keşif hayatında sürekli beslenmesi gereken güçlü bir yakıttır.';
+    case 10:
+      return 'Haritandaki en yoğun gezegen kümesi 10. Ev\'de toplanıyor — kariyer, toplumsal statü ve miras hayatında en belirgin yaşam alanlarından birini oluşturuyor. '
+          'Bu yoğunluk, dışarıya sunduğun şeyin senin için salt bir iş meselesi olmadığını gösterir. '
+          'Kim olduğun, ne ile tanındığın üzerinden şekillenir; nasıl anılacağın sorusu seni derin biçimde harekete geçirir. '
+          'Toplumsal görünürlük ve bırakacağın iz, hayatının en güçlü motivasyon eksenlerinden biridir.';
+    case 11:
+      return 'Haritandaki en yoğun gezegen kümesi 11. Ev\'de toplanıyor — topluluk, arkadaşlık, kolektif idealler ve vizyon sende tekrarlayan güçlü temalar taşıyor. '
+          'Bu yoğunluk, yalnız başarının seni tam tatmin etmediğini gösterir; '
+          'değer verdiğin insanlarla ortak bir hedef için çalışmak, senin için kişisel kazanımlar kadar anlam taşır. '
+          'Ağlar kurmak, topluluk oluşturmak ve kolektif bir vizyona katkıda bulunmak sende güçlü bir anlam kaynağıdır.';
+    case 12:
+      return 'Haritandaki en yoğun gezegen kümesi 12. Ev\'de toplanıyor — bilinçdışı süreçler, spiritüel derinlik ve görünmez dünya sende en belirgin enerji alanlarından birini oluşturuyor. '
+          'Bu yoğunluk, hayatın yüzeydeki hareketler kadar belki daha fazla iç dünyada şekillendiğini gösterir. '
+          'Sessizlik, sezgi ve sembolik anlayış sende özgün bir güç olarak çalışır; '
+          'içe çekilme dönemleri güçsüzlük değil, derinlemesine yenilenmenin zeminidir.';
+    default:
+      return 'Haritanda belirgin bir ev yoğunluğu öne çıkıyor — bu alandaki gezegenler sende tekrar eden temalar ve büyüme fırsatları yaratır.';
+  }
+}
+
+String _topHouseSecondaryPara(int house) {
+  switch (house) {
+    case 1:
+      return '1. Ev\'in de bu tabloya dahil olması, kimlik ve kişisel duruşun haritanın ikinci önemli teması haline geldiğini gösteriyor. '
+          'Kim olduğunu keşfetme ve dış dünyaya sunma süreci, birincil evdeki temayla iç içe geçer. '
+          'Bu iki alanın aynı anda aktif olması, hem içten hem dışarıdan bakabilen nadir bir perspektif sunar.';
+    case 2:
+      return '2. Ev\'in de yoğunluk taşıması, maddi güvenlik ve değerlerin haritanın ikinci önemli temasını oluşturduğunu gösteriyor. '
+          'Ne istediğin ve onu güvence altına alma biçimin, birincil evdeki temayla derin bir diyalog içindedir. '
+          'Güvende hissetmek sende sadece maddi değil, varoluşsal bir önem taşır.';
+    case 3:
+      return '3. Ev\'in de bu tabloya dahil olması, iletişim ve zihinsel merakın haritanın ikinci güçlü katmanını oluşturduğunu gösteriyor. '
+          'Birincil evdeki temayı keşfetmek ve ifade etmek için kelimeler, diyaloglar ve yeni bilgiler önemli bir araç olur. '
+          'Öğrenmek ve paylaşmak, hayatının ikinci büyük eksenini besleyen sürekli aktif bir kanal olarak çalışır.';
+    case 4:
+      return '4. Ev\'in de yoğunluk taşıması, kökler ve duygusal yurdun haritanın ikinci önemli temasını şekillendirdiğini gösteriyor. '
+          'Nereden geldiğin ve ait olma hissi, birincil evdeki yaşam sahasıyla sürekli bir diyalog içindedir. '
+          'Duygusal güvenlik zemini kurma süreci hayatının ekseninden hiç düşmez.';
+    case 5:
+      return '5. Ev\'in de bu tabloya dahil olması, yaratıcılık ve keyif alanının haritanın ikinci güçlü eksenini oluşturduğunu gösteriyor. '
+          'Üretmek, sevmek ve ifade etmek, birincil evdeki temayla iç içe geçerek haritanın en canlı köşelerinden birini yaratır. '
+          'Özgün kendin olmak ve bu özgünlüğü paylaşmak, sende sürekli beslenmesi gereken bir yaşam yakıtıdır.';
+    case 6:
+      return '6. Ev\'in de yoğunluk taşıması, günlük ritim ve sağlığın haritanın ikinci önemli katmanını oluşturduğunu gösteriyor. '
+          'Birincil evdeki enerji, rutin ve pratik alışkanlıklarla sürekli bir diyalog içinde çalışır. '
+          'Düzenli ve nitelikli bir akış bulduğunda tüm hayatın yükselir; günlük yapının kalitesi sende özel bir anlam taşır.';
+    case 7:
+      return '7. Ev\'in de bu tabloya dahil olması, ilişkiler ve ortaklıkların haritanın ikinci önemli temasını oluşturduğunu gösteriyor. '
+          'Birincil evdeki yolculuğunun önemli bir bölümünü başka bir insanla temas kurarak tamamlarsın. '
+          'Karşılıklı ilişki içinde büyüme ve o ilişkilerin dönüştürücü gücü, sende öğretici bir yaşam eksenine dönüşür.';
+    case 8:
+      return '8. Ev\'in de yoğunluk taşıması, derin dönüşümün haritanın ikinci güçlü eksenini oluşturduğunu gösteriyor. '
+          'Kriz anları ve köklü değişim süreçleri, birincil evdeki temayla derin bir diyalog içindedir. '
+          'Hayatın büyük sarsılmalarında en önemli büyümen içinde gizlidir; zorluk seni kırmaz, yeniden şekillendirir.';
+    case 9:
+      return '9. Ev\'in de bu tabloya dahil olması, büyük anlam ve ufuk açma enerjisinin haritanın ikinci önemli katmanı olduğunu gösteriyor. '
+          'İnanç, yolculuk ve felsefi sorular, birincil evdeki yaşam sahasına derinlik ve perspektif katar. '
+          '"Neden" sorusu sende hiç susmaz; anlam arayışı hayatının arka perdesinde sürekli aktiftir.';
+    case 10:
+      return '10. Ev\'in de yoğunluk taşıması, kariyer ve toplumsal görünürlüğün haritanın ikinci güçlü eksenini oluşturduğunu gösteriyor. '
+          'Dışarıya ne bıraktığın ve nasıl anıldığın soruları, birincil evdeki enerjiyle sürekli diyalog içindedir. '
+          'Miras ve başarı temaları arka perdede güçlü çalışır; seni en derin biçimde harekete geçiren sorulardan biridir.';
+    case 11:
+      return '11. Ev\'in de bu tabloya dahil olması, topluluk ve kolektif vizyonun haritanın ikinci önemli katmanını oluşturduğunu gösteriyor. '
+          'Ortak hedefler, arkadaşlık bağları ve paylaşılan idealler, birincil evdeki enerjiyle sürekli diyalog içindedir. '
+          'Tek başına çalışmak yerine bir ağın parçası olmak seni özel biçimde besler ve güçlendirir.';
+    case 12:
+      return '12. Ev\'in de yoğunluk taşıması, iç dünya ve bilinçdışının haritanın ikinci önemli katmanı olduğunu gösteriyor. '
+          'Yüzeyin altında işleyen süreçler, rüyalar ve görünmez dinamikler, birincil evdeki enerjiyle sessiz bir diyalog içindedir. '
+          'İçe çekilme dönemleri sende güçlü bir yenilenme işlevi görür; sessizlik bir zayıflık değil kaynak alanıdır.';
+    default:
+      return 'İkinci öne çıkan evin birincisiyle iç içe geçmesi, bu iki yaşam sahasının sende ayrışmaz bir öğrenme zinciri oluşturduğunu gösterir.';
+  }
+}
+
+String _topHouseClosingPara(String quadrant) {
+  switch (quadrant) {
+    case 'köşe':
+      return 'Bu köşe evinin enerjisi haritanın en doğrudan ve dışa dönük gücünü taşır. '
+          'Köşe evlerindeki gezegenler harekete geçiricidir; hayatı pasif beklemek yerine aktif biçimde şekillendirme eğilimi taşırsın. '
+          'En güçlü büyüme anların bir eylem, bir ilişki ya da bir karar anından doğar — bu enerjiyle çalışmak haritanın en erişilebilir kapısından geçmektir.';
+    case 'sabit':
+      return 'Bu sabit evin enerjisi haritanın en sürdürülebilir ve derinliği olan gücünü taşır. '
+          'Sabit evlerdeki gezegenler kalıcı değerler, uzun vadeli bağlar ve köklü kaynaklar üzerinden çalışır; '
+          'anlık sonuçlardan ziyade zaman içinde inşa edilen şeyler seni en çok tatmin eder. '
+          'En güçlü büyüme anların, bir alanda derinlemesine kalmayı göze aldığın dönemlerde açılır.';
+    default:
+      return 'Bu geçişli evin enerjisi haritanın en öğrenmeye ve uyum sağlamaya açık gücünü taşır. '
+          'Geçişli evlerdeki gezegenler fikirleri, pratikleri ve inançları sürekli yeniler; esneklik ve merak seni besler. '
+          'En güçlü büyüme anların genellikle yeni bir bakış açısı, bir öğrenme ya da bir geçiş sürecinin içinde gizlidir.';
+  }
+}
+
+String _houseQuadrant(int house) {
+  if (house == 1 || house == 4 || house == 7 || house == 10) return 'köşe';
+  if (house == 2 || house == 5 || house == 8 || house == 11) return 'sabit';
+  return 'geçişli';
 }
 
 String _elementOfSign(String sign) {

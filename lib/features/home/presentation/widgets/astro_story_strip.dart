@@ -57,14 +57,14 @@ class AstroStoryStrip extends StatelessWidget {
         final rising =
             ((data['risingSign'] as String?)?.trim().isNotEmpty ?? false)
             ? (data['risingSign'] as String).trim()
-            : 'Yukselen';
+            : 'Yükselen';
 
         final special = AstroStory.special(
           id: 'special_${uid ?? 'guest'}',
-          title: 'Sana Ozel',
-          subtitle: 'Gunun mesaji',
+          title: 'Sana Özel',
+          subtitle: 'Günün mesajı',
           text:
-              '$sun etkisiyle odagini koru. $moon ruh halini dengelerken $rising seni yeni adimlara tasiyor.',
+              '$sun etkisiyle odağını koru. $moon ruh halini dengelerken $rising seni yeni adımlara taşıyor.',
         );
 
         return StreamBuilder<List<AstroStory>>(

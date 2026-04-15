@@ -28,31 +28,31 @@ class _AddCompatibilityFriendPageState
   static const _savingMinDuration = Duration(seconds: 3);
 
   static const _jobOptions = <String>[
-    'Teknik ve Muhendislik',
-    'Saglik Hizmetleri',
-    'Egitim',
-    'Sanat, Tasarim ve Medya',
-    'Sivil Toplum ve Kamu Sektoru',
+    'Teknik ve Mühendislik',
+    'Sağlık Hizmetleri',
+    'Eğitim',
+    'Sanat, Tasarım ve Medya',
+    'Sivil Toplum ve Kamu Sektörü',
     'Spor ve Fitness',
-    'Serbest ve Bagimsiz Calisma',
-    'Ogrenci',
+    'Serbest ve Bağımsız Çalışma',
+    'Öğrenci',
     'Emekli',
-    'Diger',
+    'Diğer',
   ];
 
   static const _relationshipOptions = <String>[
     'Anne',
     'Baba',
-    'Kardes',
-    'Es',
+    'Kardeş',
+    'Eş',
     'Sevgili',
-    'Flort',
+    'Flört',
     'Platonik',
-    'Arkadas',
-    'Eski Es',
+    'Arkadaş',
+    'Eski Eş',
     'Eski Sevgili',
-    'Is Arkadasi',
-    'Cocuk',
+    'İş Arkadaşı',
+    'Çocuk',
   ];
 
   final _nameController = TextEditingController();
@@ -160,7 +160,7 @@ class _AddCompatibilityFriendPageState
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'Arkadas Ekle',
+                  'Arkadaş Ekle',
                   style: theme.textTheme.titleLarge?.copyWith(
                     color: const Color(0xFFF2C98A),
                     fontWeight: FontWeight.w700,
@@ -244,7 +244,7 @@ class _AddCompatibilityFriendPageState
       children: [
         const SizedBox(height: 56),
         Text(
-          'Iliskinizi analiz etmek icin onu daha yakindan taniyalim.',
+          'İlişkinizi analiz etmek için onu daha yakından tanıyalım.',
           style: theme.textTheme.bodyLarge?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w500,
@@ -255,7 +255,7 @@ class _AddCompatibilityFriendPageState
         TextField(
           controller: _nameController,
           style: const TextStyle(color: Colors.white),
-          decoration: _inputDecoration('Isim'),
+          decoration: _inputDecoration('İsim'),
         ),
       ],
     );
@@ -263,7 +263,7 @@ class _AddCompatibilityFriendPageState
 
   Widget _buildBirthDateStep(ThemeData theme) {
     final displayName = _nameController.text.trim().isEmpty
-        ? 'Arkadasin'
+        ? 'Arkadaşın'
         : _nameController.text.trim();
 
     return Column(
@@ -281,7 +281,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 10),
         Text(
-          'Ekledigin kisinin dogum tarihi, gunes burcu ve astrolojik kimliginin temelidir.',
+          'Eklediğin kişinin doğum tarihi, güneş burcu ve astrolojik kimliğinin temelidir.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
@@ -313,7 +313,7 @@ class _AddCompatibilityFriendPageState
       children: [
         const SizedBox(height: 44),
         Text(
-          'Dogum Saati',
+          'Doğum Saati',
           textAlign: TextAlign.center,
           style: theme.textTheme.titleLarge?.copyWith(
             color: const Color(0xFFF2C98A),
@@ -322,7 +322,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 12),
         Text(
-          'Dogum saati, gezegenlerin tam konumlarini daha dogru hesaplamamizi saglar.',
+          'Doğum saati, gezegenlerin tam konumlarını daha doğru hesaplamamızı sağlar.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
         ),
@@ -373,7 +373,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 8),
         Text(
-          'Dogum saati bilinmiyorsa 12:00 olarak kabul edilir.',
+          'Doğum saati bilinmiyorsa 12:00 olarak kabul edilir.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(color: Colors.white54),
         ),
@@ -392,7 +392,7 @@ class _AddCompatibilityFriendPageState
       children: [
         const SizedBox(height: 36),
         Text(
-          'Dogum Yeri',
+          'Doğum Yeri',
           style: theme.textTheme.titleLarge?.copyWith(
             color: const Color(0xFFF2C98A),
             fontWeight: FontWeight.w700,
@@ -401,7 +401,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 12),
         Text(
-          'Dogum yerini secerek daha dogru yildiz haritasi cikarmamizi saglayabilirsin.',
+          'Doğum yerini seçerek daha doğru yıldız haritası çıkarmamızı sağlayabilirsin.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
         ),
@@ -410,7 +410,7 @@ class _AddCompatibilityFriendPageState
           controller: _placeController,
           onChanged: _onPlaceChanged,
           style: const TextStyle(color: Colors.white),
-          decoration: _inputDecoration('Sehir veya ulke ara'),
+          decoration: _inputDecoration('Şehir veya ülke ara'),
         ),
         const SizedBox(height: 10),
         if (_isSearchingPlaces)
@@ -450,7 +450,7 @@ class _AddCompatibilityFriendPageState
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Sonuc bulunamadi. Farkli yazimla tekrar dene.',
+              'Sonuç bulunamadı. Farklı yazımla tekrar dene.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
             ),
@@ -475,7 +475,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 12),
         Text(
-          'Bu bilgi, iliski yorumlarini daha kisisel hale getirmemize yardimci olur.',
+          'Bu bilgi, ilişki yorumlarını daha kişisel hale getirmemize yardımcı olur.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
         ),
@@ -491,10 +491,10 @@ class _AddCompatibilityFriendPageState
             ),
             const SizedBox(width: 10),
             _GenderCard(
-              label: 'Kadin',
+              label: 'Kadın',
               icon: Icons.female,
-              isSelected: _gender == 'Kadin',
-              onTap: () => setState(() => _gender = 'Kadin'),
+              isSelected: _gender == 'Kadın',
+              onTap: () => setState(() => _gender = 'Kadın'),
             ),
             const SizedBox(width: 10),
             _GenderCard(
@@ -516,7 +516,7 @@ class _AddCompatibilityFriendPageState
       children: [
         const SizedBox(height: 56),
         Text(
-          'Isi',
+          'İşi',
           style: theme.textTheme.titleLarge?.copyWith(
             color: const Color(0xFFF2C98A),
             fontWeight: FontWeight.w700,
@@ -525,7 +525,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 12),
         Text(
-          'Ekledigin kisinin meslegi daha detayli iliski analizi yapmamizi saglar.',
+          'Eklediğin kişinin mesleği daha detaylı ilişki analizi yapmamızı sağlar.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
         ),
@@ -544,7 +544,7 @@ class _AddCompatibilityFriendPageState
                 ),
               )
               .toList(),
-          decoration: _inputDecoration('Meslek sec'),
+          decoration: _inputDecoration('Meslek seç'),
           onChanged: (value) => setState(() => _job = value),
         ),
       ],
@@ -558,7 +558,7 @@ class _AddCompatibilityFriendPageState
       children: [
         const SizedBox(height: 56),
         Text(
-          'Iliskiniz',
+          'İlişkiniz',
           style: theme.textTheme.titleLarge?.copyWith(
             color: const Color(0xFFF2C98A),
             fontWeight: FontWeight.w700,
@@ -567,7 +567,7 @@ class _AddCompatibilityFriendPageState
         ),
         const SizedBox(height: 12),
         Text(
-          'Bu kisiyle olan iliski tipini sec.',
+          'Bu kişiyle olan ilişki tipini seç.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
         ),
@@ -586,7 +586,7 @@ class _AddCompatibilityFriendPageState
                 ),
               )
               .toList(),
-          decoration: _inputDecoration('Iliski sec'),
+          decoration: _inputDecoration('İlişki seç'),
           onChanged: (value) => setState(() => _relationship = value),
         ),
       ],
@@ -595,7 +595,7 @@ class _AddCompatibilityFriendPageState
 
   void _onNext() {
     if (!_validateCurrentStep()) {
-      _showSnack('Lutfen bu adimi tamamla.');
+      _showSnack('Lütfen bu adımı tamamla.');
       return;
     }
 
@@ -720,20 +720,8 @@ class _AddCompatibilityFriendPageState
 
       await showDialog<void>(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Iliskiniz'),
-            content: const Text(
-              'Profil bilgileri basariyla eklendi, yildizlarda yazili uyumunuzu gormeye hazir ol!',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Tamam'),
-              ),
-            ],
-          );
-        },
+        barrierColor: Colors.black.withValues(alpha: 0.65),
+        builder: (context) => const _FriendAddedSuccessDialog(),
       );
 
       if (!mounted) {
@@ -746,7 +734,7 @@ class _AddCompatibilityFriendPageState
       }
     } catch (_) {
       if (mounted) {
-        _showSnack('Kayit sirasinda bir hata olustu.');
+        _showSnack('Kayıt sırasında bir hata oluştu.');
       }
     } finally {
       if (mounted) {
@@ -964,6 +952,9 @@ class _CompatibilityFriendDetailPageState
     final friendRising = _displaySign(
       (widget.friendData['risingSign'] as String?) ?? 'Bilinmiyor',
     );
+    final friendVenus = _displaySign(
+      (widget.friendData['venusSign'] as String?) ?? 'Bilinmiyor',
+    );
     final currentUserAvatarId = _isValidAvatarId(widget.currentUserAvatarId)
         ? widget.currentUserAvatarId
         : _defaultAvatarIdForSign(widget.currentUserSigns['sun'] ?? '');
@@ -1040,6 +1031,7 @@ class _CompatibilityFriendDetailPageState
                         friendSun: friendSun,
                         friendMoon: friendMoon,
                         friendRising: friendRising,
+                        friendVenus: friendVenus,
                       ),
                     ],
                   ),
@@ -1098,6 +1090,7 @@ class _CompatibilityFriendDetailPageState
     final rising = _displaySign(
       (data['risingSign'] as String?) ?? 'Bilinmiyor',
     );
+    final venus = _displaySign((data['venusSign'] as String?) ?? 'Bilinmiyor');
 
     showModalBottomSheet<void>(
       context: context,
@@ -1181,6 +1174,7 @@ class _CompatibilityFriendDetailPageState
                 _SignChip(label: '☉ $sun'),
                 _SignChip(label: '☾ $moon'),
                 _SignChip(label: '↑ $rising'),
+                _SignChip(label: '♀ $venus'),
               ],
             ),
           ],
@@ -1365,6 +1359,7 @@ class _CompatibilityFriendDetailPageState
     required String friendSun,
     required String friendMoon,
     required String friendRising,
+    required String friendVenus,
   }) {
     final filters = ['Bugün', 'Bu Hafta', 'Transitler', 'Doğum Haritası'];
 
@@ -1442,7 +1437,7 @@ class _CompatibilityFriendDetailPageState
         ),
         const SizedBox(height: 6),
         Text(
-          '☉ $friendSun   ☾ $friendMoon   ↑ $friendRising',
+          '☉ $friendSun   ☾ $friendMoon   ↑ $friendRising   ♀ $friendVenus',
           style: const TextStyle(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -1587,7 +1582,7 @@ class _SavingFriendOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    'Yildizlar hizalaniyor',
+                    'Yıldızlar hizalanıyor',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -1596,7 +1591,7 @@ class _SavingFriendOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Uyum profili hazirlaniyor, lutfen bekle...',
+                    'Uyum profili hazırlanıyor, lütfen bekle...',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.white70,
                       fontWeight: FontWeight.w500,
@@ -1801,3 +1796,272 @@ const Map<String, String> _avatarAssetById = <String, String>{
   'boga': 'assets/burclar/boga.png',
   'basak': 'assets/burclar/basak.png',
 };
+
+class _FriendAddedSuccessDialog extends StatelessWidget {
+  const _FriendAddedSuccessDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1D2446), Color(0xFF0D1230)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: const Color(0xFFF2C98A).withValues(alpha: 0.55),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFF2C98A).withValues(alpha: 0.18),
+              blurRadius: 36,
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: const Color(0xFF7B5FF5).withValues(alpha: 0.25),
+              blurRadius: 48,
+              spreadRadius: -4,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            children: [
+              // Dağılmış yıldız süslemeleri
+              Positioned(top: 14, right: 22, child: _Star(size: 9)),
+              Positioned(top: 32, left: 18, child: _Star(size: 5)),
+              Positioned(top: 58, right: 48, child: _Star(size: 4)),
+              Positioned(bottom: 72, right: 26, child: _Star(size: 6)),
+              Positioned(bottom: 50, left: 14, child: _Star(size: 5)),
+              Positioned(top: 18, left: 52, child: _Star(size: 4)),
+              // İçerik
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 36, 28, 28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Gezegen + parlama ikonu
+                    Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Dış halkalar (gezegen halkası efekti)
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(
+                                0xFFF2C98A,
+                              ).withValues(alpha: 0.18),
+                              width: 14,
+                            ),
+                          ),
+                        ),
+                        // Orta parlayan gezegen
+                        Container(
+                          width: 78,
+                          height: 78,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const RadialGradient(
+                              colors: [Color(0xFF7B5FF5), Color(0xFF3A2680)],
+                              center: Alignment(-0.3, -0.3),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFA475F5,
+                                ).withValues(alpha: 0.5),
+                                blurRadius: 24,
+                                spreadRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFFF2C98A),
+                            size: 36,
+                          ),
+                        ),
+                        // Sağ üst küçük yıldız rozeti
+                        Positioned(
+                          top: -2,
+                          right: 2,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF1D2446),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFFF2C98A,
+                                ).withValues(alpha: 0.7),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.star,
+                              color: Color(0xFFF2C98A),
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                        // Sol alt küçük hilal rozeti
+                        Positioned(
+                          bottom: -2,
+                          left: 4,
+                          child: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF1D2446),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFFA475F5,
+                                ).withValues(alpha: 0.7),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.brightness_3,
+                              color: Color(0xFFA475F5),
+                              size: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // Başlık
+                    const Text(
+                      'Yıldızlar Hizalandı! ✨',
+                      style: TextStyle(
+                        color: Color(0xFFF2C98A),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    // Dekoratif ayırıcı
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 1,
+                          color: const Color(
+                            0xFFF2C98A,
+                          ).withValues(alpha: 0.45),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Icon(
+                            Icons.brightness_3,
+                            color: Color(0xFFF2C98A),
+                            size: 11,
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(
+                            Icons.star,
+                            color: Color(0xFFF2C98A),
+                            size: 9,
+                          ),
+                        ),
+                        Container(
+                          width: 36,
+                          height: 1,
+                          color: const Color(
+                            0xFFF2C98A,
+                          ).withValues(alpha: 0.45),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    // Açıklama metni
+                    Text(
+                      'Profil bilgileri başarıyla eklendi.\nYıldızlarda yazılı uyumunuzu görmeye hazır ol!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        fontSize: 14.5,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    // Buton
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(
+                            0xFFF2C98A,
+                          ).withValues(alpha: 0.12),
+                          foregroundColor: const Color(0xFFF2C98A),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                            side: const BorderSide(
+                              color: Color(0xFFF2C98A),
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.auto_awesome, size: 16),
+                            SizedBox(width: 8),
+                            Text(
+                              'Harika, Göreyim!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Star extends StatelessWidget {
+  const _Star({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.star,
+      size: size,
+      color: const Color(0xFFF2C98A).withValues(alpha: 0.30),
+    );
+  }
+}

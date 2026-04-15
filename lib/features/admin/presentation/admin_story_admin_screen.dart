@@ -1111,6 +1111,10 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       _stringOrDash(data['risingSign']),
                     ),
                     MapEntry<String, String>(
+                      'Venüs Burcu',
+                      _stringOrDash(data['venusSign']),
+                    ),
+                    MapEntry<String, String>(
                       'Saat Dilimi',
                       _stringOrDash(data['birthTimezone']),
                     ),
@@ -2188,6 +2192,8 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                     _profileRow('Ay Burcu', profile['moonSign'].toString()),
                   if (profile['risingSign'] != null)
                     _profileRow('Yükselen', profile['risingSign'].toString()),
+                  if (profile['venusSign'] != null)
+                    _profileRow('Venüs Burcu', profile['venusSign'].toString()),
                   if (profile['gender'] != null)
                     _profileRow('Cinsiyet', profile['gender'].toString()),
                   if (profile['job'] != null)
