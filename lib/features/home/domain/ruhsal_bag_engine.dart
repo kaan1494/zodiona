@@ -69,6 +69,7 @@ class RuhsalBagEngine {
     _Kategori(emoji: '🌫️', ad: 'Belirsiz Bağ', min: 0, max: 9),
   ];
 
+  /* YEDEK ALGORTMA - GPT entegrasyonu aktif. Bu bloğu açmak için /* ve */ işaretlerini kaldırın.
   // ── 10 Açıklama × 10 Kategori ────────────────────────────────────────────
 
   static const Map<String, List<String>> _aciklamalar = {
@@ -496,6 +497,8 @@ class RuhsalBagEngine {
       'Her iki tarafa da zaman ve alan tanıyın',
     ],
   };
+  */ // YEDEK ALGORTMA SONU
+
 
   // ── Element Tablosu ──────────────────────────────────────────────────────
 
@@ -784,35 +787,35 @@ class RuhsalBagEngine {
       orElse: () => _kategoriler.last,
     );
 
-    // ── Açıklama seçimi (deterministik, isim & tarih bazlı)
-    final tohum =
-        '${isim1.toLowerCase()}|${isim2.toLowerCase()}'
-        '|${dogumTarihi1.millisecondsSinceEpoch}'
-        '|${dogumTarihi2.millisecondsSinceEpoch}';
-    int hash = 0;
-    for (final c in tohum.runes) {
-      hash = (hash * 31 + c) % 1000000007;
-    }
-    final aciklamalar =
-        _aciklamalar[kat.ad] ?? ['Ruhsal bağınız analiz edildi.'];
-    final aciklama = aciklamalar[hash.abs() % aciklamalar.length];
+    // ── YEDEK: Açıklama seçimi (deterministik, isim & tarih bazlı) - GPT aktif olduğu için devre dışı
+    // final tohum =
+    //     '${isim1.toLowerCase()}|${isim2.toLowerCase()}'
+    //     '|${dogumTarihi1.millisecondsSinceEpoch}'
+    //     '|${dogumTarihi2.millisecondsSinceEpoch}';
+    // int hash = 0;
+    // for (final c in tohum.runes) {
+    //   hash = (hash * 31 + c) % 1000000007;
+    // }
+    // final aciklamalar = _aciklamalar[kat.ad] ?? ['Ruhsal bağınız analiz edildi.'];
+    // final aciklama = aciklamalar[hash.abs() % aciklamalar.length];
 
+    // GPT entegrasyonu aktif: metin alanları sayfada async GPT çağrısıyla doldurulacak.
     return RuhsalBagResult(
       score: skor,
       categoryEmoji: kat.emoji,
       categoryLabel: kat.ad,
-      description: aciklama,
+      description: '', // GPT tarafından doldurulacak
       nameNumber1: n1,
       nameNumber2: n2,
       lifePathNumber1: yy1,
       lifePathNumber2: yy2,
       signScore: burcSkor.round().clamp(0, 100),
-      gucluYonler: _gucluYonler[kat.ad] ?? [],
-      zayifYonler: _zayifYonler[kat.ad] ?? [],
-      tavsiyeler: _tavsiyeler[kat.ad] ?? [],
-      enerjiBarlari: _enerjiBarlari[kat.ad] ?? {},
-      uyumlular: _uyumlular[kat.ad] ?? [],
-      dikkatler: _dikkatler[kat.ad] ?? [],
+      gucluYonler: [], // GPT tarafından doldurulacak
+      zayifYonler: [], // GPT tarafından doldurulacak
+      tavsiyeler: [], // GPT tarafından doldurulacak
+      enerjiBarlari: {}, // GPT tarafından doldurulacak
+      uyumlular: [], // GPT tarafından doldurulacak
+      dikkatler: [], // GPT tarafından doldurulacak
     );
   }
 }

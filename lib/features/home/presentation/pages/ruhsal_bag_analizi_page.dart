@@ -1,9 +1,15 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/ruhsal_bag_engine.dart';
+import '../../../../services/jeton_service.dart';
+import '../../../../services/kozmik_rehber_service.dart';
 import '../../../../utils/zodiac.dart';
 
 // ─── Sayfa ────────────────────────────────────────────────────────────────────
@@ -36,15 +42,42 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
   RuhsalBagResult? _sonuc;
   bool _hesaplaniyor = false;
 
+  // ── Jeton & Reklam ────────────────────────────────────────────────────
+
+  int _balance = 0;
+  int _adCount = 0;
+  bool _adLoading = false;
+  StreamSubscription<int>? _balanceSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenBalance();
+    _loadAdCount();
+    if (!kIsWeb) JetonService.preloadAd();
+  }
+
+  void _listenBalance() {
+    _balanceSub = JetonService.balanceStream().listen((b) {
+      if (mounted) setState(() => _balance = b);
+    });
+  }
+
+  Future<void> _loadAdCount() async {
+    final count = await JetonService.getAdCount();
+    if (mounted) setState(() => _adCount = count);
+  }
+
   @override
   void dispose() {
+    _balanceSub?.cancel();
     _isimCtrl.dispose();
     super.dispose();
   }
 
-  // ── Hesapla ────────────────────────────────────────────────────────────
+  // ── Hesapla (jeton harca + GPT çağrısı) ────────────────────────────────
 
-  void _hesapla(Map<String, dynamic> kullaniciVerisi) {
+  Future<void> _hesapla(Map<String, dynamic> kullaniciVerisi) async {
     final kullaniciIsim = _kullaniciIsmiAl(kullaniciVerisi);
     final kullaniciTarih = _kullaniciTarihiAl(kullaniciVerisi);
     if (kullaniciTarih == null ||
@@ -53,42 +86,212 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
         _secilenIsim!.trim().isEmpty) {
       return;
     }
+
+    // ── Jeton kontrolü ────────────────────────────────────────────────────
+    final spent = await JetonService.spend();
+    if (!spent) {
+      if (!mounted) return;
+      _showJetonYetersizDialog();
+      return;
+    }
+
     setState(() => _hesaplaniyor = true);
 
-    final gunes1 =
-        _normalizeSign((kullaniciVerisi['zodiacSign'] as String?)?.trim()) ??
-        calculateZodiac(kullaniciTarih);
-    final ay1 = _normalizeSign(
-      (kullaniciVerisi['moonSign'] as String?)?.trim(),
-    );
-    final venus1 = _normalizeSign(
-      (kullaniciVerisi['venusSign'] as String?)?.trim(),
-    );
-    final yukselen1 = _normalizeSign(
-      (kullaniciVerisi['risingSign'] as String?)?.trim(),
-    );
+    try {
+      final gunes1 =
+          _normalizeSign((kullaniciVerisi['zodiacSign'] as String?)?.trim()) ??
+          calculateZodiac(kullaniciTarih);
+      final ay1 = _normalizeSign(
+        (kullaniciVerisi['moonSign'] as String?)?.trim(),
+      );
+      final venus1 = _normalizeSign(
+        (kullaniciVerisi['venusSign'] as String?)?.trim(),
+      );
+      final yukselen1 = _normalizeSign(
+        (kullaniciVerisi['risingSign'] as String?)?.trim(),
+      );
+      final gunes2 = _secilenGunes ?? calculateZodiac(_secilenTarih!);
 
-    final gunes2 = _secilenGunes ?? calculateZodiac(_secilenTarih!);
+      // Skor hesapla (deterministik algoritma)
+      final sonuc = RuhsalBagEngine.hesapla(
+        isim1: kullaniciIsim,
+        dogumTarihi1: kullaniciTarih,
+        gunes1: gunes1,
+        ay1: ay1,
+        venus1: venus1,
+        yukselen1: yukselen1,
+        isim2: _secilenIsim!.trim(),
+        dogumTarihi2: _secilenTarih!,
+        gunes2: gunes2,
+        ay2: _secilenAy,
+        venus2: _secilenVenus,
+        yukselen2: _secilenYukselen,
+      );
 
-    final sonuc = RuhsalBagEngine.hesapla(
-      isim1: kullaniciIsim,
-      dogumTarihi1: kullaniciTarih,
-      gunes1: gunes1,
-      ay1: ay1,
-      venus1: venus1,
-      yukselen1: yukselen1,
-      isim2: _secilenIsim!.trim(),
-      dogumTarihi2: _secilenTarih!,
-      gunes2: gunes2,
-      ay2: _secilenAy,
-      venus2: _secilenVenus,
-      yukselen2: _secilenYukselen,
+      // ── GPT ile metin alanlarını doldur ───────────────────────────────
+      final gptRaw = await KozmikRehberService.sendRuhsalBagYorum(
+        isim1: kullaniciIsim,
+        isim2: _secilenIsim!.trim(),
+        score: sonuc.score,
+        categoryLabel: sonuc.categoryLabel,
+        gunes1: gunes1,
+        gunes2: gunes2,
+        ay1: ay1,
+        ay2: _secilenAy,
+        venus1: venus1,
+        venus2: _secilenVenus,
+        nameNumber1: sonuc.nameNumber1,
+        nameNumber2: sonuc.nameNumber2,
+        lifePathNumber1: sonuc.lifePathNumber1,
+        lifePathNumber2: sonuc.lifePathNumber2,
+      );
+
+      // JSON'ı parse et
+      final gptJson = _parseGptJson(gptRaw);
+      final aciklama = gptJson['aciklama'] as String? ?? '';
+      final gucluYonler = _toStringList(gptJson['gucluYonler']);
+      final zayifYonler = _toStringList(gptJson['zayifYonler']);
+      final tavsiyeler = _toStringList(gptJson['tavsiyeler']);
+      final enerjiBarlari = _toIntMap(gptJson['enerjiBarlari']);
+
+      // Sonucu güncelle
+      final tamSonuc = RuhsalBagResult(
+        score: sonuc.score,
+        categoryEmoji: sonuc.categoryEmoji,
+        categoryLabel: sonuc.categoryLabel,
+        description: aciklama,
+        nameNumber1: sonuc.nameNumber1,
+        nameNumber2: sonuc.nameNumber2,
+        lifePathNumber1: sonuc.lifePathNumber1,
+        lifePathNumber2: sonuc.lifePathNumber2,
+        signScore: sonuc.signScore,
+        gucluYonler: gucluYonler,
+        zayifYonler: zayifYonler,
+        tavsiyeler: tavsiyeler,
+        enerjiBarlari: enerjiBarlari,
+        uyumlular: [],
+        dikkatler: [],
+      );
+
+      if (mounted) {
+        setState(() {
+          _sonuc = tamSonuc;
+          _hesaplaniyor = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _hesaplaniyor = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Analiz yapılırken hata oluştu: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── JSON yardımcıları ─────────────────────────────────────────────────
+
+  Map<String, dynamic> _parseGptJson(String raw) {
+    try {
+      // Bazen GPT ```json ... ``` bloku döner, temizle
+      var cleaned = raw.trim();
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replaceFirst(RegExp(r'^```[a-z]*\n?'), '');
+        cleaned = cleaned.replaceFirst(RegExp(r'```$'), '').trim();
+      }
+      return jsonDecode(cleaned) as Map<String, dynamic>;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  List<String> _toStringList(dynamic v) {
+    if (v is List) return v.map((e) => e.toString()).toList();
+    return [];
+  }
+
+  Map<String, int> _toIntMap(dynamic v) {
+    if (v is Map) {
+      return v.map((k, val) => MapEntry(k.toString(), (val as num).toInt()));
+    }
+    return {};
+  }
+
+  // ── Jeton yetersiz dialog ─────────────────────────────────────────────
+
+  void _showJetonYetersizDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF130A35),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          '⚡ Jeton Yetersiz',
+          style: TextStyle(color: Color(0xFFF2D293), fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Analiz yapmak için jetonunuz kalmadı.\nReklam izleyerek ücretsiz jeton kazanabilirsiniz.',
+          style: TextStyle(color: Colors.white70, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Tamam',
+              style: TextStyle(color: Color(0xFFF2D293)),
+            ),
+          ),
+        ],
+      ),
     );
+  }
 
-    setState(() {
-      _sonuc = sonuc;
-      _hesaplaniyor = false;
-    });
+  // ── Reklam izle ───────────────────────────────────────────────────────
+
+  Future<void> _watchAd() async {
+    if (_adLoading) return;
+    setState(() => _adLoading = true);
+
+    await JetonService.showAd(
+      onAdCount: (adCount) {
+        if (!mounted) return;
+        setState(() {
+          _adCount = adCount;
+          _adLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '1 reklam izlendi ($adCount/2). 1 reklam daha izle, jeton kazan!',
+            ),
+            backgroundColor: const Color(0xFF3D1E7A),
+          ),
+        );
+      },
+      onToken: () {
+        if (!mounted) return;
+        setState(() {
+          _adCount = 0;
+          _adLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎉 1 jeton kazandın! Bakiyene eklendi.'),
+            backgroundColor: Color(0xFF1E7A3D),
+          ),
+        );
+      },
+      onError: (err) {
+        if (!mounted) return;
+        setState(() => _adLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(err), backgroundColor: Colors.red.shade700),
+        );
+      },
+    );
   }
 
   // ── Arkadaş seç ────────────────────────────────────────────────────────
@@ -244,7 +447,9 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
                   children: [
                     _buildHeader(context),
                     Expanded(
-                      child: _sonuc != null
+                      child: _hesaplaniyor
+                          ? _buildLoading()
+                          : _sonuc != null
                           ? _buildSonuc(kullanici)
                           : SingleChildScrollView(
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -281,6 +486,41 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
     );
   }
 
+  // ── Loading ekranı ────────────────────────────────────────────────────
+
+  Widget _buildLoading() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 60,
+            height: 60,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Color(0xFFF2D293),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            '✨ Ruhsal bağınız analiz ediliyor...',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: const Color(0xFFF2D293),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Yapay zeka yıldızları yorumluyor',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white54,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Header ─────────────────────────────────────────────────────────────
 
   Widget _buildHeader(BuildContext context) {
@@ -301,6 +541,8 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
               ),
             ),
           ),
+          // Jeton bakiye
+          _RuhsalBagJetonBadge(balance: _balance),
         ],
       ),
     );
@@ -755,6 +997,17 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
 
           const SizedBox(height: 28),
 
+          // Reklam izle / jeton kazan
+          if (!kIsWeb)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _RuhsalBagAdButton(
+                adCount: _adCount,
+                loading: _adLoading,
+                onTap: _watchAd,
+              ),
+            ),
+
           // Yeniden Analiz Et
           SizedBox(
             width: double.infinity,
@@ -1041,6 +1294,124 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFF2C98A)),
+      ),
+    );
+  }
+}
+
+// ─── Jeton Rozeti ─────────────────────────────────────────────────────────────
+
+class _RuhsalBagJetonBadge extends StatelessWidget {
+  const _RuhsalBagJetonBadge({required this.balance});
+
+  final int balance;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF1A0848),
+        border: Border.all(
+          color: const Color(0xFFF2D293).withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.toll_rounded, color: Color(0xFFF2D293), size: 16),
+          const SizedBox(width: 5),
+          Text(
+            '$balance',
+            style: const TextStyle(
+              color: Color(0xFFF2D293),
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Reklam Butonu ────────────────────────────────────────────────────────────
+
+class _RuhsalBagAdButton extends StatelessWidget {
+  const _RuhsalBagAdButton({
+    required this.adCount,
+    required this.loading,
+    required this.onTap,
+  });
+
+  final int adCount;
+  final bool loading;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: loading ? null : onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xCC1E5A3D), Color(0xB31E4530)],
+          ),
+          border: Border.all(
+            color: const Color(0xFF4CAF50).withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            loading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFF81C784),
+                    ),
+                  )
+                : const Icon(
+                    Icons.play_circle_outline_rounded,
+                    color: Color(0xFF81C784),
+                    size: 22,
+                  ),
+            const SizedBox(width: 10),
+            const Text(
+              'Reklam İzle, Jeton Kazan',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
+              ),
+              child: Text(
+                '$adCount/2',
+                style: const TextStyle(
+                  color: Color(0xFF81C784),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

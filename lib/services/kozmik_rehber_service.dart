@@ -264,6 +264,7 @@ Görevlerin:
     required List<ChatMessage> messages,
     required String systemPrompt,
     List<ChatMessage> memoryMessages = const [],
+    int maxTokens = 512,
   }) async {
     if (_apiKey.isEmpty) {
       throw Exception(
@@ -288,7 +289,7 @@ Görevlerin:
         {'role': 'system', 'content': systemPrompt},
         ...contextMessages.map((m) => {'role': m.role, 'content': m.content}),
       ],
-      'max_tokens': 512,
+      'max_tokens': maxTokens,
       'temperature': 0.75,
     });
 
@@ -323,6 +324,117 @@ Görevlerin:
       systemPrompt: systemPrompt,
       memoryMessages: memoryMessages,
     );
+  }
+
+  // ─── Ruhsal Bağ Analizi ──────────────────────────────────────────────────────
+
+  /// İki kişi arasındaki ruhsal bağ yorumunu JSON olarak döner.
+  /// Dönen string geçerli bir JSON olmalıdır:
+  /// {
+  ///   "aciklama": "...",
+  ///   "gucluYonler": ["...", "...", "..."],
+  ///   "zayifYonler": ["...", "..."],
+  ///   "tavsiyeler": ["...", "...", "..."],
+  ///   "enerjiBarlari": {"Duygusal": 72, "Zihinsel": 65, "Karmik": 88, "Ruhsal": 80, "Fiziksel": 60}
+  /// }
+  static Future<String> sendRuhsalBagYorum({
+    required String isim1,
+    required String isim2,
+    required int score,
+    required String categoryLabel,
+    required String? gunes1,
+    required String? gunes2,
+    required String? ay1,
+    required String? ay2,
+    required String? venus1,
+    required String? venus2,
+    required int nameNumber1,
+    required int nameNumber2,
+    required int lifePathNumber1,
+    required int lifePathNumber2,
+  }) async {
+    final prompt = _buildRuhsalBagPrompt(
+      isim1: isim1,
+      isim2: isim2,
+      score: score,
+      categoryLabel: categoryLabel,
+      gunes1: gunes1,
+      gunes2: gunes2,
+      ay1: ay1,
+      ay2: ay2,
+      venus1: venus1,
+      venus2: venus2,
+      nameNumber1: nameNumber1,
+      nameNumber2: nameNumber2,
+      lifePathNumber1: lifePathNumber1,
+      lifePathNumber2: lifePathNumber2,
+    );
+    return _callGpt(
+      messages: [ChatMessage(role: 'user', content: prompt)],
+      systemPrompt: _ruhsalBagSystemPrompt,
+      maxTokens: 900,
+    );
+  }
+
+  static const String _ruhsalBagSystemPrompt = '''
+Sen Zodiona uygulamasının ruhsal bağ analiz asistanısın.
+Görevin: İki kişi arasındaki ruhsal bağı derinlemesine analiz edip YALNIZCA geçerli bir JSON objesi döndürmek.
+JSON formatının dışına çıkma. Başına veya sonuna hiçbir açıklama ekleme.
+Tüm metinler Türkçe olmalı. Mistik, derin ve kişiselleştirilmiş bir dil kullan.
+''';
+
+  static String _buildRuhsalBagPrompt({
+    required String isim1,
+    required String isim2,
+    required int score,
+    required String categoryLabel,
+    required String? gunes1,
+    required String? gunes2,
+    required String? ay1,
+    required String? ay2,
+    required String? venus1,
+    required String? venus2,
+    required int nameNumber1,
+    required int nameNumber2,
+    required int lifePathNumber1,
+    required int lifePathNumber2,
+  }) {
+    final burc1Info = [
+      if (gunes1 != null) 'Güneş: $gunes1',
+      if (ay1 != null) 'Ay: $ay1',
+      if (venus1 != null) 'Venüs: $venus1',
+    ].join(', ');
+    final burc2Info = [
+      if (gunes2 != null) 'Güneş: $gunes2',
+      if (ay2 != null) 'Ay: $ay2',
+      if (venus2 != null) 'Venüs: $venus2',
+    ].join(', ');
+
+    return '''
+Aşağıdaki iki kişi için Ruhsal Bağ Analizi yap ve SADECE JSON formatında yanıt ver.
+
+Kişi 1: $isim1
+${burc1Info.isNotEmpty ? 'Burç bilgileri: $burc1Info' : ''}
+İsim Sayısı: $nameNumber1, Yaşam Yolu Sayısı: $lifePathNumber1
+
+Kişi 2: $isim2
+${burc2Info.isNotEmpty ? 'Burç bilgileri: $burc2Info' : ''}
+İsim Sayısı: $nameNumber2, Yaşam Yolu Sayısı: $lifePathNumber2
+
+Hesaplanan ruhsal bağ skoru: %$score
+Bağ kategorisi: $categoryLabel
+
+Bu iki kişi için aşağıdaki JSON formatında yanıt üret:
+{
+  "aciklama": "Bu iki kişinin ruhsal bağını anlatan 4-5 cümlelik derin ve kişiselleştirilmiş yorum. İsimlerini, burç ve sayı bilgilerini, bağ kategorisini kullan.",
+  "gucluYonler": ["3 adet güçlü yön, her biri 2-5 kelime"],
+  "zayifYonler": ["2-3 adet dikkat edilmesi gereken yön, her biri 3-7 kelime"],
+  "tavsiyeler": ["3 adet tavsiye cümlesi, her biri 5-12 kelime, kişiselleştirilmiş"],
+  "enerjiBarlari": {"Duygusal": <0-100>, "Zihinsel": <0-100>, "Karmik": <0-100>, "Ruhsal": <0-100>, "Fiziksel": <0-100>}
+}
+
+ÖNEMLİ: Enerji barı değerleri bağ kategorisi ve skor ile tutarlı olsun. Sadece JSON döndür, başka hiçbir şey yazma.
+''';
   }
 
   /// Rüya tabiri chat
