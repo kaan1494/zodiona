@@ -20,6 +20,12 @@ class RuhsalBagResult {
     required this.lifePathNumber1,
     required this.lifePathNumber2,
     required this.signScore,
+    required this.gucluYonler,
+    required this.zayifYonler,
+    required this.tavsiyeler,
+    required this.enerjiBarlari,
+    required this.uyumlular,
+    required this.dikkatler,
   });
 
   /// Toplam skor (0–100).
@@ -34,6 +40,13 @@ class RuhsalBagResult {
 
   /// Burç uyum skoru (0–100), gösterim için.
   final int signScore;
+
+  final List<String> gucluYonler;
+  final List<String> zayifYonler;
+  final List<String> tavsiyeler;
+  final Map<String, int> enerjiBarlari;
+  final List<String> uyumlular;
+  final List<String> dikkatler;
 }
 
 // ─── Motor ────────────────────────────────────────────────────────────────────
@@ -180,6 +193,96 @@ class RuhsalBagEngine {
       'Bu bağın şu anki görünümü zayıf; ama hayatın sürprizleri her zaman beklenmedik bağları güçlendirebilir. Aranızdaki bu belirsiz enerji, henüz tam anlaşılmamış bir potansiyeli barındırıyor olabilir. Her iki taraf da zaman içinde büyüyecek ve bu büyüme, aralarındaki enerjinin de değişmesine yol açabilir. Bu bağı zorlamadan ve beklenti taşımadan gözlemlemek, en sağlıklı ve en güzel yaklaşım. Evrenin büyük planında bu bağın da yeri ve anlamı var; zamanla netleşecek.',
     ],
   };
+  // ── Güçlü Yönler ─────────────────────────────────────────────────────────
+
+  static const Map<String, List<String>> _gucluYonler = {
+    'İkiz Alev':    ['Derin duygusal rezonans', 'Sezgisel anlayış', 'Karşılıklı dönüşüm gücü'],
+    'Kutsal Bağ':   ['Güçlü ruhsal uyum', 'Karşılıklı ilham', 'Koşulsuz anlayış'],
+    'Ruh Eşi':      ['Derin güven ve huzur', 'Tamamlayıcı enerji', 'İçten anlayış'],
+    'İkiz Ruh':     ['Doğal uyum', 'Benzer değerler', 'Kolay iletişim'],
+    'Kader Bağı':   ['Güçlü ve derin çekim', 'Dönüştürücü enerji', 'Anlamlı birliktelik'],
+    'Karmik Bağ':   ['Derin öğrenme fırsatı', 'Ruhsal büyüme', 'Güçlü karşılıklı etki'],
+    'Ruhsal Bağ':   ['Büyüme potansiyeli', 'Açık iletişim zemini', 'Karşılıklı merak'],
+    'Hafif Bağ':    ['Rahat ve kolay etkileşim', 'Yargısız ortam', 'Hafif pozitif enerji'],
+    'Zayıf Bağ':    ['Öğretici farklılık', 'Yeni perspektif kazanımı', 'Kısa ama anlamlı temas'],
+    'Belirsiz Bağ': ['Keşif alanı', 'Serbest gelişim imkânı', 'Baskısız ortam'],
+  };
+
+  // ── Zayıf Yönler ─────────────────────────────────────────────────────────
+
+  static const Map<String, List<String>> _zayifYonler = {
+    'İkiz Alev':    ['Aşırı duygusal yoğunluk', 'Sınır belirlemede zorluk', 'Bağımlılık riski'],
+    'Kutsal Bağ':   ['İdealizasyon tuzağı', 'Pratik konularda uyumsuzluk'],
+    'Ruh Eşi':      ['Aşırı bağlılık riski', 'Bireyselliği korumakta zorluk'],
+    'İkiz Ruh':     ['Farklılıkları görmezden gelme', 'Monotonluk ve durağanlık riski'],
+    'Kader Bağı':   ['Kaçınılmazlık hissinin yükü', 'Zorlu ve sarsıcı dersler'],
+    'Karmik Bağ':   ['Tekrarlayan çatışma örüntüsü', 'Bırakamama duygusu', 'Duygusal tükenme'],
+    'Ruhsal Bağ':   ['Yüzeysel kalma riski', 'Yetersiz derinlik', 'Geçici enerji'],
+    'Hafif Bağ':    ['Güçlü bağ kurma zorluğu', 'Geçici ve sığ his'],
+    'Zayıf Bağ':    ['Belirgin uyum eksikliği', 'İletişim güçlüğü'],
+    'Belirsiz Bağ': ['Belirsizlik kaynaklı stres', 'Yön eksikliği ve kararsızlık'],
+  };
+
+  // ── Tavsiyeler ────────────────────────────────────────────────────────────
+
+  static const Map<String, List<String>> _tavsiyeler = {
+    'İkiz Alev':    ['Kişisel sınırlarınıza saygı gösterin', 'Yoğun duygular için meditasyon uygulayın', 'Büyüme sürecine sabırla yaklaşın'],
+    'Kutsal Bağ':   ['Birlikte spiritüel pratikler geliştirin', 'Gerçekçi beklentiler belirleyin', 'Güven ilişkisini özenle koruyun'],
+    'Ruh Eşi':      ['Derin konuşmalarla bağı düzenli besleyin', 'Bireysel alanlarınızı korumaya özen gösterin', 'Ortak uzun vadeli hedefler belirleyin'],
+    'İkiz Ruh':     ['Farklılıklarınızı zenginlik olarak değerlendirin', 'Birlikte yeni deneyimler keşfedin', 'Açık ve dürüst iletişimi sürdürün'],
+    'Kader Bağı':   ['Bu ilişkinin derslerine açık yürekle yaklaşın', 'Zorlukları büyüme fırsatı olarak görün', 'Sabır ve derin anlayışla ilerleyin'],
+    'Karmik Bağ':   ['Tekrar eden kalıpları bilinçli fark edin', 'Dönüşüme ve değişime açık olun', 'Affetmeyi bir özgürleşme yolu olarak görün'],
+    'Ruhsal Bağ':   ['Ortak ilgi alanları ve değerler keşfedin', 'Zaman ve ilgi yatırımı yapın', 'Açık, dürüst ve samimi olun'],
+    'Hafif Bağ':    ['Beklenti taşımadan doğal ilerleyin', 'Doğal gelişime sabırla izin verin', 'Şu anın küçük güzelliklerini görün'],
+    'Zayıf Bağ':    ['Farklılıkları olduğu gibi kabul edin', 'Kısa etkileşimin değerini fark edin', 'Zorlamadan ve akışa bırakarak devam edin'],
+    'Belirsiz Bağ': ['Belirsizliği merakla ve açıklıkla karşılayın', 'Doğal akışa ve zamana bırakın', 'Her iki tarafın ihtiyaçlarını dürüstçe dinleyin'],
+  };
+
+  // ── Ruhsal Enerji Barları ─────────────────────────────────────────────────
+
+  static const Map<String, Map<String, int>> _enerjiBarlari = {
+    'İkiz Alev':    {'Duygusal': 97, 'Zihinsel': 80, 'Karmik': 95, 'Ruhsal': 100, 'Fiziksel': 85},
+    'Kutsal Bağ':   {'Duygusal': 90, 'Zihinsel': 85, 'Karmik': 78, 'Ruhsal': 95,  'Fiziksel': 68},
+    'Ruh Eşi':      {'Duygusal': 88, 'Zihinsel': 82, 'Karmik': 70, 'Ruhsal': 85,  'Fiziksel': 72},
+    'İkiz Ruh':     {'Duygusal': 78, 'Zihinsel': 85, 'Karmik': 60, 'Ruhsal': 75,  'Fiziksel': 65},
+    'Kader Bağı':   {'Duygusal': 72, 'Zihinsel': 65, 'Karmik': 88, 'Ruhsal': 80,  'Fiziksel': 60},
+    'Karmik Bağ':   {'Duygusal': 65, 'Zihinsel': 58, 'Karmik': 92, 'Ruhsal': 70,  'Fiziksel': 55},
+    'Ruhsal Bağ':   {'Duygusal': 55, 'Zihinsel': 60, 'Karmik': 50, 'Ruhsal': 65,  'Fiziksel': 45},
+    'Hafif Bağ':    {'Duygusal': 40, 'Zihinsel': 50, 'Karmik': 35, 'Ruhsal': 45,  'Fiziksel': 38},
+    'Zayıf Bağ':    {'Duygusal': 28, 'Zihinsel': 35, 'Karmik': 25, 'Ruhsal': 30,  'Fiziksel': 28},
+    'Belirsiz Bağ': {'Duygusal': 15, 'Zihinsel': 20, 'Karmik': 15, 'Ruhsal': 18,  'Fiziksel': 15},
+  };
+
+  // ── Uyumlu Alanlar ───────────────────────────────────────────────────────
+
+  static const Map<String, List<String>> _uyumlular = {
+    'İkiz Alev':    ['Derin duygusal anlayış', 'Ruhsal büyüme', 'Anlık sezgisel bağlantı'],
+    'Kutsal Bağ':   ['Spiritüel uyum', 'Değer ortaklığı', 'Karşılıklı derin saygı'],
+    'Ruh Eşi':      ['Güven ve huzur ortamı', 'Duygusal destek', 'Ortak hayaller'],
+    'İkiz Ruh':     ['Kolay ve akıcı iletişim', 'Benzer bakış açısı', 'Doğal uyum'],
+    'Kader Bağı':   ['Güçlü ve derin çekim', 'Anlam ve amaç arayışı', 'Dönüşüm yolculuğu'],
+    'Karmik Bağ':   ['Derin öğrenme süreci', 'Karşılıklı ruhsal büyüme', 'Güçlü ruhsal ders'],
+    'Ruhsal Bağ':   ['Merak ve keşif enerjisi', 'Açık iletişim zemini', 'Gelişim potansiyeli'],
+    'Hafif Bağ':    ['Rahat ve kolay etkileşim', 'Yargısız özgür ortam', 'Açık ifade alanı'],
+    'Zayıf Bağ':    ['Yeni ve farklı perspektif', 'Öğretici deneyim', 'Kısa süreli anlam'],
+    'Belirsiz Bağ': ['Keşif özgürlüğü', 'Baskısız gelişim ortamı', 'Açık ve belirsiz gelecek'],
+  };
+
+  // ── Dikkat Edilmesi Gerekenler ───────────────────────────────────────────
+
+  static const Map<String, List<String>> _dikkatler = {
+    'İkiz Alev':    ['Kişisel sınırları özenle koruyun', 'Bağımlılık örüntülerini fark edin', 'Yoğunluğu dengelemeye çalışın'],
+    'Kutsal Bağ':   ['Karşınızdakini idealize etmekten kaçının', 'Pratik dengeyi gözetin', 'Beklentileri açıkça dile getirin'],
+    'Ruh Eşi':      ['Bireyselliğinizi ve kendinizi koruyun', 'Sağlıklı sınırlar belirleyin', 'Bağımlı olmamaya dikkat edin'],
+    'İkiz Ruh':     ['Farklılıkları görmezden gelmeyin', 'Sağlıklı çatışmadan kaçmayın', 'Değişime ve gelişime açık kalın'],
+    'Kader Bağı':   ['Zorlu süreçlere hazırlıklı olun', 'Kadercilik tuzağına düşmeyin', 'Kendi iradenizi her zaman kullanın'],
+    'Karmik Bağ':   ['Tekrar eden kalıpları kırmaya çalışın', 'Duygusal tükenmişliğe dikkat edin', 'Gerektiğinde destek almaktan çekinmeyin'],
+    'Ruhsal Bağ':   ['Yüzeysel kalmamaya özen gösterin', 'İletişimi aktif ve canlı tutun', 'Sabırsızlık tuzağına düşmeyin'],
+    'Hafif Bağ':    ['Gerçekçi olmayan beklentilere girmeyin', 'Doğal gelişimi zorlamayın', 'Geçici olabileceğini kabul edin'],
+    'Zayıf Bağ':    ['Uyumsuzluğu dürüstçe kabul edin', 'Zorlamaktan ve ısrar etmekten kaçının', 'Enerjinizi boşa harcamayın'],
+    'Belirsiz Bağ': ['Belirsizliği strese ve kaygıya dönüştürmeyin', 'Acele ve erken karar vermeyin', 'Her iki tarafa da zaman ve alan tanıyın'],
+  };
+
   // ── Element Tablosu ──────────────────────────────────────────────────────
 
   static const Map<String, String> _elements = {
@@ -490,6 +593,12 @@ class RuhsalBagEngine {
       lifePathNumber1: yy1,
       lifePathNumber2: yy2,
       signScore: burcSkor.round().clamp(0, 100),
+      gucluYonler: _gucluYonler[kat.ad] ?? [],
+      zayifYonler: _zayifYonler[kat.ad] ?? [],
+      tavsiyeler: _tavsiyeler[kat.ad] ?? [],
+      enerjiBarlari: _enerjiBarlari[kat.ad] ?? {},
+      uyumlular: _uyumlular[kat.ad] ?? [],
+      dikkatler: _dikkatler[kat.ad] ?? [],
     );
   }
 }

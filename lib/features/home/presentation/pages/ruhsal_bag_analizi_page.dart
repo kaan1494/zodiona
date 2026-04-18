@@ -742,8 +742,20 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
 
           const SizedBox(height: 20),
 
-          // Detaylar
-          _buildDetaylar(s, kullaniciIsim),
+          // Güçlü / Zayıf Yönler
+          _buildGucluZayif(s),
+          const SizedBox(height: 14),
+
+          // Tavsiyeler
+          _buildTavsiyeler(s),
+          const SizedBox(height: 14),
+
+          // Enerji Barları
+          _buildEnerjiBarlar(s),
+          const SizedBox(height: 14),
+
+          // Uyumlu / Dikkat
+          _buildUyumluDikkat(s),
 
           const SizedBox(height: 28),
 
@@ -784,7 +796,7 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
     );
   }
 
-  Widget _buildDetaylar(RuhsalBagResult s, String kullaniciIsim) {
+  Widget _buildGucluZayif(RuhsalBagResult s) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -796,49 +808,250 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Analiz Detayları',
+            '⚖️  Güçlü & Zayıf Yönler',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFFF2D293),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.add_circle_outline_rounded,
+                          color: Color(0xFF6EE7B7), size: 14),
+                      const SizedBox(width: 4),
+                      Text('Artılar',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFF6EE7B7),
+                              fontWeight: FontWeight.w700)),
+                    ]),
+                    const SizedBox(height: 6),
+                    ...s.gucluYonler.map((y) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text('• $y',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.white70, height: 1.4)),
+                        )),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      const Icon(Icons.remove_circle_outline_rounded,
+                          color: Color(0xFFFCA5A5), size: 14),
+                      const SizedBox(width: 4),
+                      Text('Eksiler',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: const Color(0xFFFCA5A5),
+                              fontWeight: FontWeight.w700)),
+                    ]),
+                    const SizedBox(height: 6),
+                    ...s.zayifYonler.map((y) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text('• $y',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: Colors.white70, height: 1.4)),
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTavsiyeler(RuhsalBagResult s) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.05),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '✨  Tavsiyeler',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: const Color(0xFFF2D293),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...s.tavsiyeler.asMap().entries.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF6B3EC6).withValues(alpha: 0.6),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '${e.key + 1}',
+                        style: const TextStyle(
+                            color: Color(0xFFF2D293),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(e.value,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.white.withValues(alpha: 0.80), height: 1.45)),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnerjiBarlar(RuhsalBagResult s) {
+    const renkler = <String, Color>{
+      'Duygusal': Color(0xFFFF8FAB),
+      'Zihinsel': Color(0xFF93C5FD),
+      'Karmik':   Color(0xFFC4B5FD),
+      'Ruhsal':   Color(0xFF6EE7B7),
+      'Fiziksel': Color(0xFFFCD34D),
+    };
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.05),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '🌀  Ruhsal Enerji Boyutları',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: const Color(0xFFF2D293),
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 14),
-          _detayRow(
-            '🔢  Numeroloji',
-            '$kullaniciIsim = ${s.nameNumber1}  •  ${_secilenIsim ?? '?'} = ${s.nameNumber2}',
-          ),
-          const Divider(color: Colors.white12, height: 18),
-          _detayRow(
-            '🌀  Yaşam Yolu',
-            '$kullaniciIsim = ${s.lifePathNumber1}  •  ${_secilenIsim ?? '?'} = ${s.lifePathNumber2}',
-          ),
-          const Divider(color: Colors.white12, height: 18),
-          _detayRow('⭐  Burç Uyumu', '%${s.signScore}'),
+          ...s.enerjiBarlari.entries.map((e) {
+            final renk = renkler[e.key] ?? const Color(0xFFF2D293);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(e.key,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.white70)),
+                      Text('%${e.value}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: renk, fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: e.value / 100,
+                      backgroundColor: Colors.white12,
+                      valueColor: AlwaysStoppedAnimation<Color>(renk),
+                      minHeight: 7,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 
-  Widget _detayRow(String baslik, String deger) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Text(
-            baslik,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.white60),
+  Widget _buildUyumluDikkat(RuhsalBagResult s) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.white.withValues(alpha: 0.05),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.check_circle_outline_rounded,
+                      color: Color(0xFF6EE7B7), size: 15),
+                  const SizedBox(width: 5),
+                  Text('Uyumlu',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF6EE7B7),
+                          fontWeight: FontWeight.w700)),
+                ]),
+                const SizedBox(height: 8),
+                ...s.uyumlular.map((u) => Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: Text('• $u',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.white70, height: 1.4)),
+                    )),
+              ],
+            ),
           ),
-        ),
-        Text(
-          deger,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+          Container(
+              width: 1,
+              color: Colors.white12,
+              margin: const EdgeInsets.symmetric(horizontal: 12)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      color: Color(0xFFFCD34D), size: 15),
+                  const SizedBox(width: 5),
+                  Text('Dikkat',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFFFCD34D),
+                          fontWeight: FontWeight.w700)),
+                ]),
+                const SizedBox(height: 8),
+                ...s.dikkatler.map((d) => Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: Text('• $d',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: Colors.white70, height: 1.4)),
+                    )),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
