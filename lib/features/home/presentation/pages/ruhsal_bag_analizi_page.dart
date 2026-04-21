@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/ruhsal_bag_engine.dart';
+import '../../../../services/iap_service.dart';
+import '../widgets/jeton_widgets.dart';
 import '../../../../services/jeton_service.dart';
 import '../../../../services/kozmik_rehber_service.dart';
 import '../../../../utils/zodiac.dart';
@@ -48,6 +50,7 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
   int _adCount = 0;
   bool _adLoading = false;
   StreamSubscription<int>? _balanceSub;
+  StreamSubscription<IapResult>? _iapSub;
 
   @override
   void initState() {
@@ -55,6 +58,29 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
     _listenBalance();
     _loadAdCount();
     if (!kIsWeb) JetonService.preloadAd();
+    _initIap();
+  }
+
+  Future<void> _initIap() async {
+    if (kIsWeb) return;
+    _iapSub = IapService.instance.resultStream.listen((result) {
+      if (!mounted) return;
+      if (result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎉 ${result.addedTokens} jeton hesabına eklendi!'),
+            backgroundColor: const Color(0xFF1E7A3D),
+          ),
+        );
+      } else if (result.isError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage ?? 'Satın alma başarısız.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    });
   }
 
   void _listenBalance() {
@@ -71,6 +97,7 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
   @override
   void dispose() {
     _balanceSub?.cancel();
+    _iapSub?.cancel();
     _isimCtrl.dispose();
     super.dispose();
   }
@@ -230,7 +257,10 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           '⚡ Jeton Yetersiz',
-          style: TextStyle(color: Color(0xFFF2D293), fontWeight: FontWeight.w700),
+          style: TextStyle(
+            color: Color(0xFFF2D293),
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: const Text(
           'Analiz yapmak için jetonunuz kalmadı.\nReklam izleyerek ücretsiz jeton kazanabilirsiniz.',
@@ -245,6 +275,91 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Jeton satın alma dialog ──────────────────────────────────────────
+
+  void _showPurchaseDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF130A35),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '✨ Jeton Satın Al',
+                style: TextStyle(
+                  color: Color(0xFFF2D293),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Ne kadar çok alırsan o kadar avantajlı!',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white60, fontSize: 13),
+              ),
+              const SizedBox(height: 18),
+              ...JetonService.paketler.map(
+                (p) => JetonPaketSatiri(
+                  paket: p,
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _onPaketSatinAl(p);
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text(
+                  'Vazgeç',
+                  style: TextStyle(color: Colors.white38),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _onPaketSatinAl(JetonPaketi paket) async {
+    if (kIsWeb) {
+      _showUnavailableSnack();
+      return;
+    }
+    final iap = IapService.instance;
+    final product = iap.productForJeton(paket.jeton);
+    if (product == null || !iap.isAvailable) {
+      _showUnavailableSnack();
+      return;
+    }
+    try {
+      await iap.buy(product);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Satın alma başlatılamadı: $e'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  void _showUnavailableSnack() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Satın alma şu an kullanılamıyor. Yakında aktif olacak!'),
+        backgroundColor: Color(0xFF3D1E7A),
       ),
     );
   }
@@ -512,9 +627,9 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
           const SizedBox(height: 8),
           Text(
             'Yapay zeka yıldızları yorumluyor',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.white54,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.white54),
           ),
         ],
       ),
@@ -535,14 +650,14 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
           Expanded(
             child: Text(
               '🔮 Ruhsal Bağ Analizi',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: const Color(0xFFF2D293),
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          // Jeton bakiye
-          _RuhsalBagJetonBadge(balance: _balance),
+          // Jeton bakiye + artı butonu
+          JetonBadge(balance: _balance, onAddTap: _showPurchaseDialog),
         ],
       ),
     );
@@ -1294,44 +1409,6 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFF2C98A)),
-      ),
-    );
-  }
-}
-
-// ─── Jeton Rozeti ─────────────────────────────────────────────────────────────
-
-class _RuhsalBagJetonBadge extends StatelessWidget {
-  const _RuhsalBagJetonBadge({required this.balance});
-
-  final int balance;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: const Color(0xFF1A0848),
-        border: Border.all(
-          color: const Color(0xFFF2D293).withValues(alpha: 0.5),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.toll_rounded, color: Color(0xFFF2D293), size: 16),
-          const SizedBox(width: 5),
-          Text(
-            '$balance',
-            style: const TextStyle(
-              color: Color(0xFFF2D293),
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-            ),
-          ),
-        ],
       ),
     );
   }

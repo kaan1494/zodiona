@@ -292,69 +292,93 @@ class _PeriodicHoroscopeSectionState extends State<PeriodicHoroscopeSection> {
       builder: (sheetContext) {
         return FractionallySizedBox(
           heightFactor: 0.86,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF2E1870), Color(0xFF221258)],
-              ),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white30,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/onboarding/home_page.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
                   ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _TopChip(text: chipText),
-                              _TopChip(text: dateText, compact: true),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            title,
-                            style: Theme.of(sheetContext).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: const Color(0xFFF2D293),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            body,
-                            style: Theme.of(sheetContext).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  height: 1.45,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                          ),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xCC0B1026),
+                          Color(0xEE0B1026),
+                          Color(0xFF0B1026),
                         ],
+                        stops: [0.0, 0.55, 1.0],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                SafeArea(
+                  top: false,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white30,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(18, 16, 18, 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _TopChip(text: chipText),
+                                  _TopChip(text: dateText, compact: true),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                title,
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: const Color(0xFFF2D293),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                body,
+                                style: Theme.of(sheetContext)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
+                                      height: 1.6,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         );

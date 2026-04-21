@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../admin/presentation/admin_access_gate_screen.dart';
 import '../../auth/presentation/auth_screen.dart';
@@ -1073,14 +1075,26 @@ class _ContactCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              _SocialIcon(icon: Icons.camera_alt_outlined),
-              SizedBox(width: 10),
-              _SocialIcon(icon: Icons.close),
-              SizedBox(width: 10),
-              _SocialIcon(icon: Icons.music_note),
-              SizedBox(width: 10),
-              _SocialIcon(icon: Icons.play_arrow),
+            children: [
+              _SocialIcon(
+                icon: FontAwesomeIcons.instagram,
+                url: 'https://www.instagram.com/zodionaofficial/',
+              ),
+              const SizedBox(width: 10),
+              _SocialIcon(
+                icon: FontAwesomeIcons.tiktok,
+                url: 'https://www.tiktok.com/@zodionaofficial',
+              ),
+              const SizedBox(width: 10),
+              _SocialIcon(
+                icon: FontAwesomeIcons.youtube,
+                url: 'https://www.youtube.com/@Zodionaofficial',
+              ),
+              const SizedBox(width: 10),
+              _SocialIcon(
+                icon: FontAwesomeIcons.facebook,
+                url: 'https://www.facebook.com/people/Zodiona/61572010933557/',
+              ),
             ],
           ),
         ],
@@ -1090,19 +1104,30 @@ class _ContactCard extends StatelessWidget {
 }
 
 class _SocialIcon extends StatelessWidget {
-  const _SocialIcon({required this.icon});
+  const _SocialIcon({required this.icon, required this.url});
 
   final IconData icon;
+  final String url;
+
+  Future<void> _launch() async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.65),
+    return GestureDetector(
+      onTap: _launch,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.65),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: FaIcon(icon, color: const Color(0xFF1E1B3D), size: 22),
       ),
-      padding: const EdgeInsets.all(12),
-      child: Icon(icon, color: const Color(0xFF1E1B3D)),
     );
   }
 }

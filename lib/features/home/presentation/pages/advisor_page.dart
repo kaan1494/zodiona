@@ -564,8 +564,7 @@ class _MyChatsTab extends StatelessWidget {
           );
         }
         return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(bottom: 16),
           itemCount: chats.length,
           itemBuilder: (context, i) {
             final chat = chats[i];
