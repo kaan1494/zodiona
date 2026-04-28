@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../pages/kozmik_rehber_page.dart';
+import 'cosmic_orb_icon.dart';
 
 class KozmikRehberCard extends StatefulWidget {
   const KozmikRehberCard({super.key});
@@ -85,6 +86,8 @@ class _KozmikRehberCardState extends State<KozmikRehberCard>
                       color: Color(0xFFEADDB1),
                       size: 24,
                     ),
+                    const SizedBox(width: 4),
+                    const CosmicOrbIcon(size: 38),
                   ],
                 ),
                 const SizedBox(height: 8),

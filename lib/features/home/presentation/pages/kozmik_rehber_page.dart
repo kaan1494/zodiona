@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../services/iap_service.dart';
 import '../../../../services/jeton_service.dart';
+import '../widgets/cosmic_orb_icon.dart';
 import '../widgets/jeton_widgets.dart';
 import 'kozmik_rehber_chat_page.dart';
 import 'kozmik_rehber_history_page.dart';
@@ -122,6 +123,7 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
               ...JetonService.paketler.map(
                 (p) => JetonPaketSatiri(
                   paket: p,
+                  storePrice: IapService.instance.productForJeton(p.jeton)?.price,
                   onTap: () {
                     Navigator.of(ctx).pop();
                     _onPaketSatinAl(p);
@@ -283,7 +285,7 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
                             ),
                           ),
                         ),
-                        // ── Jeton bakiye + artı butonu ──────────────────────
+                        // ── Jeton bakiye + artı butonu ──────────────────
                         JetonBadge(
                           balance: _balance,
                           onAddTap: _showPurchaseDialog,
@@ -294,29 +296,41 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
 
                   // â”€â”€ Logo (baÅŸlÄ±ÄŸa yakÄ±n, 120x120) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   const SizedBox(height: 6),
-                  Container(
-                    width: 150,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFF2D293),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFF2D293).withValues(alpha: 0.3),
-                          blurRadius: 28,
-                          spreadRadius: 5,
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 150,
+                        height: 150,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFF2D293),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFF2D293,
+                              ).withValues(alpha: 0.3),
+                              blurRadius: 28,
+                              spreadRadius: 5,
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/kozmik/kozmik.png',
-                        fit: BoxFit.cover,
+                        child: ClipOval(
+                          child: Image.asset(
+                            'assets/kozmik/kozmik.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
-                    ),
+                      const Positioned(
+                        right: -75,
+                        top: 52,
+                        child: CosmicOrbIcon(size: 46),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 16),
@@ -614,4 +628,3 @@ class _AdButton extends StatelessWidget {
     );
   }
 }
-

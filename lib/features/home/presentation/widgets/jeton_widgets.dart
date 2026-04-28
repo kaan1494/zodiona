@@ -62,10 +62,17 @@ class JetonBadge extends StatelessWidget {
 // ─── Jeton Paketi Satır ───────────────────────────────────────────────────────
 
 class JetonPaketSatiri extends StatelessWidget {
-  const JetonPaketSatiri({super.key, required this.paket, required this.onTap});
+  const JetonPaketSatiri({
+    super.key,
+    required this.paket,
+    required this.onTap,
+    this.storePrice,
+  });
 
   final JetonPaketi paket;
   final VoidCallback onTap;
+  /// Play Store'dan gelen gerçek fiyat (KDV dahil). Null ise fiyatTL gösterilir.
+  final String? storePrice;
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +152,7 @@ class JetonPaketSatiri extends StatelessWidget {
               ),
             ),
             Text(
-              '${paket.fiyatTL} ₺',
+              storePrice ?? '${paket.fiyatTL} ₺',
               style: const TextStyle(
                 color: Color(0xFFF2D293),
                 fontSize: 16,

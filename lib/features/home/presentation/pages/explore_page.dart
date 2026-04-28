@@ -5,6 +5,8 @@ class ExplorePage extends StatelessWidget {
 
   final Widget header;
 
+  // TODO: Haftalık Denge Rehberi - AdMob entegrasyonu tamamlandıktan sonra aktif et
+  // ignore: unused_field
   static const List<_WeeklyGuideCardData> _weeklyGuideCards = [
     _WeeklyGuideCardData(
       title: 'Güneş Tutulmasının Ardından\nFarkındalık Meditasyonu',
@@ -3869,27 +3871,27 @@ Gördüğün gibi bitkiler, yağlar ve ritüeller sana yepyeni bir evrenin kapı
             children: [
               header,
               const SizedBox(height: 14),
-              Text(
-                'Haftalık Denge Rehberi',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 305,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _weeklyGuideCards.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final card = _weeklyGuideCards[index];
-                    return _WeeklyGuideCard(card: card);
-                  },
-                ),
-              ),
-              const SizedBox(height: 18),
+              // Text(
+              //   'Haftalık Denge Rehberi',
+              //   style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              //     color: Colors.white,
+              //     fontWeight: FontWeight.w700,
+              //   ),
+              // ),
+              // const SizedBox(height: 12),
+              // SizedBox(
+              //   height: 305,
+              //   child: ListView.separated(
+              //     scrollDirection: Axis.horizontal,
+              //     itemCount: _weeklyGuideCards.length,
+              //     separatorBuilder: (_, _) => const SizedBox(width: 12),
+              //     itemBuilder: (context, index) {
+              //       final card = _weeklyGuideCards[index];
+              //       return _WeeklyGuideCard(card: card);
+              //     },
+              //   ),
+              // ),
+              // const SizedBox(height: 18),
               Text(
                 'Kozmik Bilgelik',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -3966,6 +3968,7 @@ class _CosmicArticleData {
   final double imageScale;
 }
 
+// ignore: unused_element
 class _WeeklyGuideCard extends StatelessWidget {
   const _WeeklyGuideCard({required this.card});
 
