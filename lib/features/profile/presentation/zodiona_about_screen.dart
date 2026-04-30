@@ -7,7 +7,7 @@ import 'faq_screen.dart';
 class ZodionaAboutScreen extends StatelessWidget {
   const ZodionaAboutScreen({super.key});
 
-  static const String _appVersion = '1.0.9';
+  static const String _appVersion = '2.0.2';
 
   @override
   Widget build(BuildContext context) {

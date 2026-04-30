@@ -461,18 +461,6 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
                                             ),
                                           ),
                                         ),
-                                        Container(
-                                          width: 250,
-                                          height: 250,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.transparent,
-                                            border: Border.all(
-                                              color: const Color(0xA0F5E6C7),
-                                              width: 2,
-                                            ),
-                                          ),
-                                        ),
                                         Positioned(
                                           left: 16,
                                           child: _CircleProfileNode(

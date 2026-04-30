@@ -15,30 +15,33 @@ class JetonBadge extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: const Color(0xFF1A0848),
-            border: Border.all(
-              color: const Color(0xFFF2D293).withValues(alpha: 0.5),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CoinIcon(size: 22),
-              const SizedBox(width: 8),
-              Text(
-                '$balance',
-                style: const TextStyle(
-                  color: Color(0xFFF2D293),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
+        GestureDetector(
+          onTap: onAddTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: const Color(0xFF1A0848),
+              border: Border.all(
+                color: const Color(0xFFF2D293).withValues(alpha: 0.5),
+                width: 1,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CoinIcon(size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  '$balance',
+                  style: const TextStyle(
+                    color: Color(0xFFF2D293),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 6),
@@ -71,6 +74,7 @@ class JetonPaketSatiri extends StatelessWidget {
 
   final JetonPaketi paket;
   final VoidCallback onTap;
+
   /// Play Store'dan gelen gerçek fiyat (KDV dahil). Null ise fiyatTL gösterilir.
   final String? storePrice;
 
@@ -107,7 +111,9 @@ class JetonPaketSatiri extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
                     children: [
                       Text(
                         '${paket.jeton} Jeton',
@@ -117,8 +123,7 @@ class JetonPaketSatiri extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (isPopular) ...[
-                        const SizedBox(width: 6),
+                      if (isPopular)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -137,7 +142,6 @@ class JetonPaketSatiri extends StatelessWidget {
                             ),
                           ),
                         ),
-                      ],
                     ],
                   ),
                   if (tasarruf > 0)
@@ -152,7 +156,7 @@ class JetonPaketSatiri extends StatelessWidget {
               ),
             ),
             Text(
-              storePrice ?? '${paket.fiyatTL} ₺',
+              storePrice ?? paket.fiyatGoster,
               style: const TextStyle(
                 color: Color(0xFFF2D293),
                 fontSize: 16,

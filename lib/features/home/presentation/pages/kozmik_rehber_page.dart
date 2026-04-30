@@ -100,42 +100,94 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
       builder: (ctx) => Dialog(
         backgroundColor: const Color(0xFF130A35),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.80,
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              const Text(
-                '✨ Jeton Satın Al',
-                style: TextStyle(
-                  color: Color(0xFFF2D293),
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 8),
+                      const Text(
+                        '✨ Jeton Satın Al',
+                        style: TextStyle(
+                          color: Color(0xFFF2D293),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Ne kadar çok alırsan o kadar avantajlı!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white60, fontSize: 13),
+                      ),
+                      const SizedBox(height: 18),
+                      ...JetonService.paketler.map(
+                        (p) => JetonPaketSatiri(
+                          paket: p,
+                          storePrice: IapService.instance
+                              .productForJeton(p.jeton)
+                              ?.price,
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _onPaketSatinAl(p);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                            side: const BorderSide(
+                              color: Colors.white24,
+                              width: 1,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Vazgeç',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'Ne kadar çok alırsan o kadar avantajlı!',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white60, fontSize: 13),
-              ),
-              const SizedBox(height: 18),
-              ...JetonService.paketler.map(
-                (p) => JetonPaketSatiri(
-                  paket: p,
-                  storePrice: IapService.instance.productForJeton(p.jeton)?.price,
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _onPaketSatinAl(p);
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(
-                  'Vazgeç',
-                  style: TextStyle(color: Colors.white38),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(ctx).pop(),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white12,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white70,
+                      size: 18,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -354,9 +406,52 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
                     ),
                   ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
 
-                  // â”€â”€ MenÃ¼ butonlarÄ± â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                  // -- Jeton bilgi cubuğu --
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0x553D1E7A), Color(0x442E1568)],
+                        ),
+                        border: Border.all(
+                          color: const Color(
+                            0xFFF2D293,
+                          ).withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Text('✨', style: TextStyle(fontSize: 18)),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Her soru 1 jeton · Reklam izleyerek ücretsiz kazan veya sağ üstten uygun fiyata satın al 🛒',
+                              style: TextStyle(
+                                color: Color(0xFFF2D293),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // -- Menü butonları --
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../services/jeton_service.dart';
 import '../../../../services/tarot_selection_service.dart';
 import 'kozmik_rehber_tarot_chat_page.dart';
 import 'previous_insights_page.dart';
@@ -255,6 +256,10 @@ class _TarotCardPageState extends State<TarotCardPage> {
   bool _onCooldown = false;
   bool _hasPrevious = false;
   bool _loaded = false;
+  bool _showSwipeHint = false;
+  Timer? _swipeHintTimer;
+  int _cooldownAdCount = 0; // bu oturumda izlenen reklam sayısı
+  bool _isAdLoading = false;
   // Continuous offset: 0.0 → (totalCards - cardsPerView), sürükleyince güncellenir
   double _fanOffset = 0.0;
   bool _isDragging = false;
@@ -282,7 +287,13 @@ class _TarotCardPageState extends State<TarotCardPage> {
         _cooldownRemaining = remaining;
         _loaded = true;
       });
-      if (cooldown) _startCountdown();
+      if (cooldown) {
+        _startCountdown();
+        final adCount = await TarotSelectionService.getCooldownAdCount();
+        if (mounted) setState(() => _cooldownAdCount = adCount);
+      } else {
+        setState(() => _showSwipeHint = true);
+      }
     }
   }
 
@@ -307,6 +318,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _swipeHintTimer?.cancel();
     super.dispose();
   }
 
@@ -365,6 +377,57 @@ class _TarotCardPageState extends State<TarotCardPage> {
     );
   }
 
+  Future<void> _watchCooldownAd() async {
+    if (_isAdLoading) return;
+    final slots = await TarotSelectionService.remainingAdSlots();
+    if (slots <= 0) return;
+    setState(() => _isAdLoading = true);
+
+    await JetonService.showRewardedAd(
+      onRewarded: () async {
+        final newRemaining = await TarotSelectionService.applyAdReduction();
+        final newCount = await TarotSelectionService.getCooldownAdCount();
+        if (!mounted) return;
+        setState(() {
+          _cooldownRemaining = newRemaining;
+          _cooldownAdCount = newCount;
+          if (newRemaining == Duration.zero) {
+            _onCooldown = false;
+            _countdownTimer?.cancel();
+          }
+          _isAdLoading = false;
+        });
+        if (_onCooldown) _startCountdown();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Color(0xFF1A1050),
+              content: Text(
+                '2 saat kısaltıldı! 🌟',
+                style: TextStyle(color: Color(0xFFF2D9A6)),
+              ),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      onError: (err) {
+        if (!mounted) return;
+        setState(() => _isAdLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF1A1050),
+            content: Text(
+              err,
+              style: const TextStyle(color: Color(0xFFF2D9A6)),
+            ),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showCardDetail(_TarotCardData cardData) async {
     await showGeneralDialog(
       context: context,
@@ -390,7 +453,10 @@ class _TarotCardPageState extends State<TarotCardPage> {
   }
 
   void _onFanDragStart(DragStartDetails _) {
-    setState(() => _isDragging = true);
+    setState(() {
+      _isDragging = true;
+      _showSwipeHint = false;
+    });
   }
 
   void _onFanDrag(DragUpdateDetails d) {
@@ -463,18 +529,40 @@ class _TarotCardPageState extends State<TarotCardPage> {
                 ),
                 const SizedBox(height: 8),
                 if (_onCooldown)
-                  _CooldownBanner(remaining: _cooldownRemaining)
+                  _CooldownBanner(
+                    remaining: _cooldownRemaining,
+                    adCount: _cooldownAdCount,
+                    isAdLoading: _isAdLoading,
+                    onWatchAd: _watchCooldownAd,
+                  )
                 else
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      'Gözlerini kapat ve kalbindeki cevapsız soruyu ve niyetini düşün, sana en yakın gelen yıldızı seç.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.70),
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Gözlerini kapat ve kalbindeki cevapsız soruyu ve niyetini düşün, sana en yakın gelen yıldızı seç.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.70),
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Seçtiğin 5 yıldız, evrenin sana özel mesajını taşıyor. Kartlarını belirledikten sonra Kozmik Rehber’e götür ve derin anlamını keşfet — her kart, hayatındaki bir sorunun cevabı olabilir.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: const Color(
+                              0xFFF2D9A6,
+                            ).withValues(alpha: 0.75),
+                            fontSize: 12,
+                            height: 1.55,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 const SizedBox(height: 16),
@@ -694,8 +782,23 @@ class _TarotCardPageState extends State<TarotCardPage> {
                                             ),
                                           );
                                         }(),
+                                      // Swipe ok animasyonu – kart tepelerinin hemen üstünde
+                                      if (_showSwipeHint &&
+                                          !_onCooldown &&
+                                          _selectedIndices.length <
+                                              _kMaxSelection)
+                                        Positioned(
+                                          bottom:
+                                              cardBottomOffset + cardH * 0.28,
+                                          left: 0,
+                                          right: 0,
+                                          child: const Center(
+                                            child: _SwipeArrowsHint(),
+                                          ),
+                                        ),
                                       // Swipe uyarısı – kart tepelerinin hemen üstünde
-                                      if (!_onCooldown)
+                                      if (!_onCooldown &&
+                                          _selectedIndices.isEmpty)
                                         Positioned(
                                           bottom: cardBottomOffset + cardH + 8,
                                           left: 0,
@@ -923,6 +1026,170 @@ class _CardFace extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Swipe arrows hint (oklar + birleşen yay)
+// ──────────────────────────────────────────────────────────────
+
+class _SwipeArrowsHint extends StatefulWidget {
+  const _SwipeArrowsHint();
+
+  @override
+  State<_SwipeArrowsHint> createState() => _SwipeArrowsHintState();
+}
+
+class _SwipeArrowsHintState extends State<_SwipeArrowsHint>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+  late final Animation<double> _slide;
+
+  static const double _arrowDiam = 48.0;
+  static const double _arcLift = 22.0;
+  static const double _totalW = 280.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 650),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(
+      begin: 0.55,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _slide = Tween<double>(
+      begin: 0.0,
+      end: 8.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Widget _arrowCircle(IconData icon) {
+    return Container(
+      width: _arrowDiam,
+      height: _arrowDiam,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: 0.25),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.60),
+          width: 1.5,
+        ),
+      ),
+      child: Icon(icon, color: Colors.white, size: 28),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (_, _) {
+        return SizedBox(
+          width: _totalW,
+          height: _arrowDiam + _arcLift,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Bağlantı yayı
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _ConnectingArcPainter(
+                    opacity: _opacity.value,
+                    arrowDiam: _arrowDiam,
+                    arcLift: _arcLift,
+                    totalW: _totalW,
+                  ),
+                ),
+              ),
+              // Sol ok
+              Positioned(
+                left: 0,
+                bottom: 0,
+                child: Transform.translate(
+                  offset: Offset(-_slide.value, 0),
+                  child: Opacity(
+                    opacity: _opacity.value,
+                    child: _arrowCircle(Icons.chevron_left_rounded),
+                  ),
+                ),
+              ),
+              // Sağ ok
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Transform.translate(
+                  offset: Offset(_slide.value, 0),
+                  child: Opacity(
+                    opacity: _opacity.value,
+                    child: _arrowCircle(Icons.chevron_right_rounded),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// İki oku yukarıda birleştiren yay painter
+// ──────────────────────────────────────────────────────────────
+
+class _ConnectingArcPainter extends CustomPainter {
+  const _ConnectingArcPainter({
+    required this.opacity,
+    required this.arrowDiam,
+    required this.arcLift,
+    required this.totalW,
+  });
+
+  final double opacity;
+  final double arrowDiam;
+  final double arcLift;
+  final double totalW;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final startX = arrowDiam;
+    final endX = totalW - arrowDiam;
+    final centerY = size.height - arrowDiam / 2;
+    final controlY = centerY - arcLift - arrowDiam * 0.2;
+
+    final path = Path()
+      ..moveTo(startX, centerY)
+      ..quadraticBezierTo(totalW / 2, controlY, endX, centerY);
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..shader = LinearGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.0),
+          Colors.white.withValues(alpha: opacity),
+          Colors.white.withValues(alpha: opacity),
+          Colors.white.withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.18, 0.82, 1.0],
+      ).createShader(Rect.fromLTRB(startX, controlY, endX, centerY));
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConnectingArcPainter old) =>
+      old.opacity != opacity;
+}
+
+// ──────────────────────────────────────────────────────────────
 // Swipe hint badge (pulses to draw attention)
 // ──────────────────────────────────────────────────────────────
 
@@ -1002,7 +1269,7 @@ class _SwipeHintBadgeState extends State<_SwipeHintBadge>
             ),
             const SizedBox(height: 2),
             Text(
-              '${widget.cardCount} kart arasından seç',
+              '${widget.cardCount} kart arasından 5 adet seç',
               style: const TextStyle(
                 color: Color(0xFFF2D9A6),
                 fontSize: 12,
@@ -1021,15 +1288,26 @@ class _SwipeHintBadgeState extends State<_SwipeHintBadge>
 // ──────────────────────────────────────────────────────────────
 
 class _CooldownBanner extends StatelessWidget {
-  const _CooldownBanner({required this.remaining});
+  const _CooldownBanner({
+    required this.remaining,
+    required this.adCount,
+    required this.isAdLoading,
+    required this.onWatchAd,
+  });
 
   final Duration remaining;
+  final int adCount;
+  final bool isAdLoading;
+  final VoidCallback onWatchAd;
+
+  static const _maxAds = 4;
 
   @override
   Widget build(BuildContext context) {
     final h = remaining.inHours.toString().padLeft(2, '0');
     final m = (remaining.inMinutes % 60).toString().padLeft(2, '0');
     final s = (remaining.inSeconds % 60).toString().padLeft(2, '0');
+    final slotsLeft = (_maxAds - adCount).clamp(0, _maxAds);
     return Column(
       children: [
         Text(
@@ -1058,6 +1336,76 @@ class _CooldownBanner extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 14),
+        if (slotsLeft > 0)
+          GestureDetector(
+            onTap: isAdLoading ? null : onWatchAd,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: isAdLoading
+                      ? [const Color(0xFF3D2A6A), const Color(0xFF2A1A50)]
+                      : [const Color(0xFF7B52C1), const Color(0xFF3D1E7A)],
+                ),
+                border: Border.all(
+                  color: const Color(0xFFF2D293).withValues(alpha: 0.45),
+                ),
+              ),
+              child: isAdLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFF2D293),
+                      ),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.play_circle_outline_rounded,
+                          color: Color(0xFFF2D293),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'Beklemeyi Kısalt — Reklam İzle',
+                              style: TextStyle(
+                                color: Color(0xFFF2D293),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              '$slotsLeft hak kaldı',
+                              style: TextStyle(
+                                color: const Color(
+                                  0xFFF2D293,
+                                ).withValues(alpha: 0.70),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+            ),
+          )
+        else
+          Text(
+            'Tüm reklam haklarını kullandın.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.45),
+              fontSize: 12,
+            ),
+          ),
       ],
     );
   }

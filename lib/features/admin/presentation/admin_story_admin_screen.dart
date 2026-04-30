@@ -23,6 +23,7 @@ enum _AdminPanelTab {
   advisorChats,
   weeklyHoroscope,
   kozmikAiChats,
+  jetons,
 }
 
 class AdminStoryAdminScreen extends StatefulWidget {
@@ -278,6 +279,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return 'Admin - Haftalık Yorumlar';
       case _AdminPanelTab.kozmikAiChats:
         return 'Admin - Kozmik AI Sohbetleri';
+      case _AdminPanelTab.jetons:
+        return 'Admin - Jeton Yönetimi';
     }
   }
 
@@ -625,6 +628,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             title: 'Kozmik AI Sohbetleri',
             tab: _AdminPanelTab.kozmikAiChats,
           ),
+          _buildNavItem(
+            icon: Icons.toll_outlined,
+            title: 'Jeton Yönetimi',
+            tab: _AdminPanelTab.jetons,
+          ),
         ],
       ),
     );
@@ -697,6 +705,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return const _WeeklyHoroscopeMgmtSection();
       case _AdminPanelTab.kozmikAiChats:
         return const SizedBox.shrink(); // two-pane, rendered in build()
+      case _AdminPanelTab.jetons:
+        return _jetonYonetimSection();
     }
   }
 
@@ -885,6 +895,149 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
           ],
         );
       },
+    );
+  }
+
+  // ── Jeton Yönetimi ─────────────────────────────────────────────────────────
+  Widget _jetonYonetimSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Jeton Yönetimi'),
+        const SizedBox(height: 10),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .orderBy('jetonBakiye', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final docs = snapshot.data!.docs;
+            if (docs.isEmpty) return const Text('Kullanıcı bulunamadı.');
+
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data();
+                final name = _resolveUserName(data);
+                final email = _resolveUserEmail(data);
+                final bakiye = (data['jetonBakiye'] as num?)?.toInt() ?? 0;
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    title: Text(name),
+                    subtitle: Text(email),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x553D1E7A),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.toll,
+                                size: 16,
+                                color: Color(0xFFF2D293),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$bakiye',
+                                style: const TextStyle(
+                                  color: Color(0xFFF2D293),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: 'Jeton Ekle',
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            color: Color(0xFF81C784),
+                          ),
+                          onPressed: () =>
+                              _showJetonEkleDialog(doc.id, name, bakiye),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showJetonEkleDialog(
+    String uid,
+    String name,
+    int mevcutBakiye,
+  ) async {
+    final controller = TextEditingController();
+    final result = await showDialog<int>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$name — Jeton Ekle'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Mevcut bakiye: $mevcutBakiye jeton'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Eklenecek jeton miktarı',
+                hintText: 'Örn: 10',
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text.trim());
+              if (val != null && val > 0) Navigator.of(ctx).pop(val);
+            },
+            child: const Text('Ekle'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null) return;
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'jetonBakiye': FieldValue.increment(result),
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name kullanıcısına $result jeton eklendi.'),
+        backgroundColor: Colors.green.shade700,
+      ),
     );
   }
 
