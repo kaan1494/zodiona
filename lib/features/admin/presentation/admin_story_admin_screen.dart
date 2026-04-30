@@ -908,13 +908,18 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('users')
-              .orderBy('jetonBakiye', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
-            final docs = snapshot.data!.docs;
+            final docs = List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+              snapshot.data!.docs,
+            )..sort((a, b) {
+              final aB = (a.data()['jetonBakiye'] as num?)?.toInt() ?? 0;
+              final bB = (b.data()['jetonBakiye'] as num?)?.toInt() ?? 0;
+              return bB.compareTo(aB);
+            });
             if (docs.isEmpty) return const Text('Kullanıcı bulunamadı.');
 
             return Column(
