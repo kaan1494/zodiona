@@ -6,9 +6,16 @@ import 'package:flutter/material.dart';
 
 import '../../../../utils/zodiac.dart';
 import '../../../home/domain/birth_chart_content.dart';
+import '../../../profile/presentation/premium_membership_screen.dart';
 
 class BirthChartDetailPage extends StatefulWidget {
-  const BirthChartDetailPage({super.key});
+  const BirthChartDetailPage({super.key, this.externalData, this.ownerName});
+
+  /// Eğer verilirse Firestore yerine bu harita kullanılır (arkadaş doğum haritası için).
+  final Map<String, dynamic>? externalData;
+
+  /// Sayfanın başlığında gösterilecek isim (ör. "Maria").
+  final String? ownerName;
 
   @override
   State<BirthChartDetailPage> createState() => _BirthChartDetailPageState();
@@ -16,10 +23,74 @@ class BirthChartDetailPage extends StatefulWidget {
 
 class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
   int _selectedTabIndex = 0;
+  bool _isPremium = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    if (!mounted) return;
+    setState(() {
+      _isPremium = (doc.data()?['isPremium'] as bool?) ?? false;
+    });
+  }
+
+  Widget _buildChartContent(BuildContext context, Map<String, dynamic> data) {
+    final birthData = _BirthUserData.fromMap(data);
+    final chart = _NatalChartBuilder.build(birthData);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _SignText(icon: '☉', sign: chart.sunSign),
+              const SizedBox(width: 12),
+              _SignText(icon: '☾', sign: chart.moonSign),
+              const SizedBox(width: 12),
+              _SignText(icon: '↑', sign: chart.risingSign),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: SizedBox(
+              width: 260,
+              height: 260,
+              child: CustomPaint(painter: _NatalChartPainter(chart: chart)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _TabBarPills(
+            selectedIndex: _selectedTabIndex,
+            onChanged: (index) => setState(() => _selectedTabIndex = index),
+          ),
+          const SizedBox(height: 16),
+          ..._buildTabCards(context, chart),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
+    final isExternal = widget.externalData != null;
+    final titleText = isExternal
+        ? '${widget.ownerName ?? "Arkadaş"}\'ın Doğum Haritası'
+        : 'Doğum Haritan';
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0520),
@@ -51,10 +122,20 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
                   padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
                   child: Row(
                     children: [
-                      const SizedBox(width: 38),
+                      if (isExternal)
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white70,
+                          ),
+                          splashRadius: 20,
+                        )
+                      else
+                        const SizedBox(width: 38),
                       Expanded(
                         child: Text(
-                          'Doğum Haritan',
+                          titleText,
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
@@ -63,15 +144,22 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
                               ),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close, color: Colors.white70),
-                        splashRadius: 20,
-                      ),
+                      if (!isExternal)
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close, color: Colors.white70),
+                          splashRadius: 20,
+                        )
+                      else
+                        const SizedBox(width: 38),
                     ],
                   ),
                 ),
-                if (uid == null)
+                if (isExternal)
+                  Expanded(
+                    child: _buildChartContent(context, widget.externalData!),
+                  )
+                else if (uid == null)
                   Expanded(
                     child: Center(
                       child: Text(
@@ -92,55 +180,7 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
                           builder: (context, snapshot) {
                             final data =
                                 snapshot.data?.data() ?? <String, dynamic>{};
-                            final birthData = _BirthUserData.fromMap(data);
-                            final chart = _NatalChartBuilder.build(birthData);
-
-                            return SingleChildScrollView(
-                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 26),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _SignText(icon: '☉', sign: chart.sunSign),
-                                      const SizedBox(width: 12),
-                                      _SignText(
-                                        icon: '☾',
-                                        sign: chart.moonSign,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _SignText(
-                                        icon: '↑',
-                                        sign: chart.risingSign,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Center(
-                                    child: SizedBox(
-                                      width: 260,
-                                      height: 260,
-                                      child: CustomPaint(
-                                        painter: _NatalChartPainter(
-                                          chart: chart,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  _TabBarPills(
-                                    selectedIndex: _selectedTabIndex,
-                                    onChanged: (index) {
-                                      setState(() => _selectedTabIndex = index);
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
-                                  ..._buildTabCards(context, chart),
-                                ],
-                              ),
-                            );
+                            return _buildChartContent(context, data);
                           },
                         ),
                   ),
@@ -160,33 +200,126 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
       _ => chart.personalityCards,
     };
 
-    return items
-        .map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: _BirthChartInfoCard(
-              title: item.title,
-              subtitle: item.subtitle,
-              detail: item.detail,
-              glyph: item.glyph,
-              color: item.color,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => _BirthChartContentPage(
-                      title: item.title,
-                      subtitle: item.subtitle,
-                      glyph: item.glyph,
-                      color: item.color,
-                      content: item.content,
-                    ),
+    // Kişilik sekmesi (index 3) kısıtlanmıyor
+    final lockable = _selectedTabIndex < 3;
+    const freeCount = 2;
+
+    final widgets = <Widget>[];
+    for (int i = 0; i < items.length; i++) {
+      if (lockable && !_isPremium && i >= freeCount) break;
+      final item = items[i];
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: _BirthChartInfoCard(
+            title: item.title,
+            subtitle: item.subtitle,
+            detail: item.detail,
+            glyph: item.glyph,
+            color: item.color,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => _BirthChartContentPage(
+                    title: item.title,
+                    subtitle: item.subtitle,
+                    glyph: item.glyph,
+                    color: item.color,
+                    content: item.content,
                   ),
-                );
-              },
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    if (lockable && !_isPremium && items.length > freeCount) {
+      widgets.add(
+        GestureDetector(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const PremiumMembershipScreen(),
             ),
           ),
-        )
-        .toList(growable: false);
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF2A1060).withValues(alpha: 0.85),
+                  const Color(0xFF130D35).withValues(alpha: 0.95),
+                ],
+              ),
+              border: Border.all(
+                color: const Color(0xFFECCB8E).withValues(alpha: 0.45),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.lock_outline,
+                  color: Color(0xFFECCB8E),
+                  size: 28,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Kalan ${items.length - freeCount} sonuç Premium üyelere özel',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFECCB8E),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Tüm gezegen, ev ve açı yorumlarına ulaşmak için Premium\'a geç.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFFECCB8E).withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: const Text(
+                    '✨  Premium\'a Geç',
+                    style: TextStyle(
+                      color: Color(0xFFECCB8E),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return widgets;
   }
 }
 

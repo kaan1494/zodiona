@@ -24,6 +24,7 @@ enum _AdminPanelTab {
   weeklyHoroscope,
   kozmikAiChats,
   jetons,
+  tamErisimPremium,
 }
 
 class AdminStoryAdminScreen extends StatefulWidget {
@@ -72,11 +73,13 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
   final _titleController = TextEditingController();
   final _userSearchController = TextEditingController();
   final _premiumSearchController = TextEditingController();
+  final _tamErisimSearchController = TextEditingController();
 
   _AdminPanelTab _activeTab = _AdminPanelTab.dashboard;
   bool _isSidebarExpanded = true;
   String _userSearchQuery = '';
   String _premiumSearchQuery = '';
+  String _tamErisimSearchQuery = '';
   AdvisorChatSummary? _selectedAdvisorChat;
   String? _selectedKozmikUid;
   String? _selectedKozmikName;
@@ -92,6 +95,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     _titleController.dispose();
     _userSearchController.dispose();
     _premiumSearchController.dispose();
+    _tamErisimSearchController.dispose();
     for (final s in _segments) {
       s.dispose();
     }
@@ -281,6 +285,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return 'Admin - Kozmik AI Sohbetleri';
       case _AdminPanelTab.jetons:
         return 'Admin - Jeton Yönetimi';
+      case _AdminPanelTab.tamErisimPremium:
+        return 'Admin - Tam Erişim Premium';
     }
   }
 
@@ -614,6 +620,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             tab: _AdminPanelTab.premium,
           ),
           _buildNavItem(
+            icon: Icons.verified_user_outlined,
+            title: 'Tam Erişim Premium',
+            tab: _AdminPanelTab.tamErisimPremium,
+          ),
+          _buildNavItem(
             icon: Icons.chat_outlined,
             title: 'Danışman Mesajları',
             tab: _AdminPanelTab.advisorChats,
@@ -707,6 +718,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return const SizedBox.shrink(); // two-pane, rendered in build()
       case _AdminPanelTab.jetons:
         return _jetonYonetimSection();
+      case _AdminPanelTab.tamErisimPremium:
+        return _tamErisimPremiumSection();
     }
   }
 
@@ -906,20 +919,19 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         _sectionTitle('Jeton Yönetimi'),
         const SizedBox(height: 10),
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .snapshots(),
+          stream: FirebaseFirestore.instance.collection('users').snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
-            final docs = List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
-              snapshot.data!.docs,
-            )..sort((a, b) {
-              final aB = (a.data()['jetonBakiye'] as num?)?.toInt() ?? 0;
-              final bB = (b.data()['jetonBakiye'] as num?)?.toInt() ?? 0;
-              return bB.compareTo(aB);
-            });
+            final docs =
+                List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                  snapshot.data!.docs,
+                )..sort((a, b) {
+                  final aB = (a.data()['jetonBakiye'] as num?)?.toInt() ?? 0;
+                  final bB = (b.data()['jetonBakiye'] as num?)?.toInt() ?? 0;
+                  return bB.compareTo(aB);
+                });
             if (docs.isEmpty) return const Text('Kullanıcı bulunamadı.');
 
             return Column(
@@ -1042,6 +1054,668 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       SnackBar(
         content: Text('$name kullanıcısına $result jeton eklendi.'),
         backgroundColor: Colors.green.shade700,
+      ),
+    );
+  }
+
+  // ─── Tam Erişim Premium Yönetimi ────────────────────────────────────────────
+
+  Widget _tamErisimPremiumSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _sectionTitle('Tam Erişim Premium Üyeler')),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3D1E7A),
+                foregroundColor: const Color(0xFFF2D28E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.person_add_outlined, size: 18),
+              label: const Text('Premium Ekle'),
+              onPressed: _showAddPremiumDialog,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _tamErisimSearchController,
+          onChanged: (v) =>
+              setState(() => _tamErisimSearchQuery = v.trim().toLowerCase()),
+          decoration: InputDecoration(
+            labelText: 'Kullanıcı ara (isim, e-posta, UID)',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _tamErisimSearchQuery.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _tamErisimSearchController.clear();
+                      setState(() => _tamErisimSearchQuery = '');
+                    },
+                  ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .where('isPremium', isEqualTo: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Text(
+                'Hata: ${snapshot.error}',
+                style: const TextStyle(color: Colors.redAccent),
+              );
+            }
+
+            final docs =
+                List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+                  snapshot.data?.docs ?? [],
+                )..sort((a, b) {
+                  final aExp = _resolveDateTimeValue(
+                    a.data()['premiumExpireDate'],
+                  );
+                  final bExp = _resolveDateTimeValue(
+                    b.data()['premiumExpireDate'],
+                  );
+                  if (aExp == null && bExp == null) return 0;
+                  if (aExp == null) return 1;
+                  if (bExp == null) return -1;
+                  return bExp.compareTo(aExp);
+                });
+
+            final filtered = _tamErisimSearchQuery.isEmpty
+                ? docs
+                : docs.where((doc) {
+                    final data = doc.data();
+                    final name = _resolveUserName(data).toLowerCase();
+                    final email = _resolveUserEmail(data).toLowerCase();
+                    final uid = doc.id.toLowerCase();
+                    return name.contains(_tamErisimSearchQuery) ||
+                        email.contains(_tamErisimSearchQuery) ||
+                        uid.contains(_tamErisimSearchQuery);
+                  }).toList();
+
+            if (filtered.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                alignment: Alignment.center,
+                child: Text(
+                  _tamErisimSearchQuery.isEmpty
+                      ? 'Henüz premium üye bulunmuyor.'
+                      : 'Aramayla eşleşen premium üye bulunamadı.',
+                  style: const TextStyle(color: Colors.white54),
+                ),
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '${filtered.length} premium üye',
+                    style: const TextStyle(
+                      color: Color(0xFFF2D28E),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                ...filtered.map((doc) {
+                  final data = doc.data();
+                  final name = _resolveUserName(data);
+                  final email = _resolveUserEmail(data);
+                  final expiry = _resolveDateTimeValue(
+                    data['premiumExpireDate'],
+                  );
+                  final plan = (data['premiumPlan'] as String?) ?? 'manuel';
+                  final isExpired =
+                      expiry != null && expiry.isBefore(DateTime.now());
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      email,
+                                      style: const TextStyle(
+                                        color: Colors.white60,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'UID: ${doc.id}',
+                                      style: const TextStyle(
+                                        color: Colors.white38,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isExpired
+                                          ? Colors.red.withValues(alpha: 0.25)
+                                          : const Color(0x3344C767),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      isExpired
+                                          ? 'Süresi Dolmuş'
+                                          : 'Premium Aktif',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isExpired
+                                            ? Colors.redAccent
+                                            : const Color(0xFF44C767),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _premiumPlanLabel(plan),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white38,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today_outlined,
+                                size: 13,
+                                color: Colors.white38,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                expiry != null
+                                    ? 'Bitiş: ${_formatDateTime(expiry)}'
+                                    : 'Bitiş tarihi yok',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isExpired
+                                      ? Colors.redAccent
+                                      : Colors.white60,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFF2D28E),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                ),
+                                icon: const Icon(
+                                  Icons.edit_calendar_outlined,
+                                  size: 15,
+                                ),
+                                label: const Text('Süreyi Güncelle'),
+                                onPressed: () =>
+                                    _showUpdatePremiumDialog(doc.id, name),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.redAccent,
+                                  textStyle: const TextStyle(fontSize: 12),
+                                ),
+                                icon: const Icon(
+                                  Icons.remove_circle_outline,
+                                  size: 15,
+                                ),
+                                label: const Text('Kaldır'),
+                                onPressed: () =>
+                                    _confirmRevokePremium(doc.id, name),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  String _premiumPlanLabel(String plan) {
+    switch (plan) {
+      case 'monthly':
+        return 'Aylık Plan';
+      case '6months':
+        return '6 Aylık Plan';
+      case 'yearly':
+        return 'Yıllık Plan';
+      default:
+        return 'Manuel Ekleme';
+    }
+  }
+
+  Future<void> _showAddPremiumDialog() async {
+    String searchQ = '';
+    String? selectedUid;
+    String? selectedName;
+    String selectedPlan = 'monthly';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1A0848),
+            title: const Text(
+              'Premium Üye Ekle',
+              style: TextStyle(color: Color(0xFFF2D28E)),
+            ),
+            content: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Kullanıcı ara (isim, e-posta veya UID):',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      hintText: 'Ara...',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (v) =>
+                        setDlgState(() => searchQ = v.trim().toLowerCase()),
+                  ),
+                  const SizedBox(height: 10),
+                  if (searchQ.length >= 2)
+                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .snapshots(),
+                      builder: (context, snap) {
+                        if (!snap.hasData) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        final results = snap.data!.docs
+                            .where((doc) {
+                              final d = doc.data();
+                              final n = _resolveUserName(d).toLowerCase();
+                              final e = _resolveUserEmail(d).toLowerCase();
+                              final u = doc.id.toLowerCase();
+                              return n.contains(searchQ) ||
+                                  e.contains(searchQ) ||
+                                  u.contains(searchQ);
+                            })
+                            .take(6)
+                            .toList();
+
+                        if (results.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'Kullanıcı bulunamadı.',
+                              style: TextStyle(color: Colors.white38),
+                            ),
+                          );
+                        }
+
+                        return Column(
+                          children: results.map((doc) {
+                            final d = doc.data();
+                            final n = _resolveUserName(d);
+                            final e = _resolveUserEmail(d);
+                            final isSelected = selectedUid == doc.id;
+                            return ListTile(
+                              dense: true,
+                              selected: isSelected,
+                              selectedTileColor: const Color(0x223D1E7A),
+                              selectedColor: const Color(0xFFF2D28E),
+                              title: Text(n),
+                              subtitle: Text(
+                                '$e\n${doc.id}',
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              trailing: isSelected
+                                  ? const Icon(
+                                      Icons.check_circle,
+                                      color: Color(0xFF44C767),
+                                    )
+                                  : null,
+                              onTap: () => setDlgState(() {
+                                selectedUid = doc.id;
+                                selectedName = n;
+                              }),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  if (selectedUid != null) ...[
+                    const Divider(color: Colors.white24, height: 20),
+                    Text(
+                      'Seçilen: $selectedName',
+                      style: const TextStyle(
+                        color: Color(0xFF44C767),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Plan Süresi:',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        _planChip(
+                          'monthly',
+                          'Aylık',
+                          selectedPlan,
+                          (v) => setDlgState(() => selectedPlan = v),
+                        ),
+                        _planChip(
+                          '6months',
+                          '6 Aylık',
+                          selectedPlan,
+                          (v) => setDlgState(() => selectedPlan = v),
+                        ),
+                        _planChip(
+                          'yearly',
+                          'Yıllık',
+                          selectedPlan,
+                          (v) => setDlgState(() => selectedPlan = v),
+                        ),
+                        _planChip(
+                          'manual',
+                          'Manuel',
+                          selectedPlan,
+                          (v) => setDlgState(() => selectedPlan = v),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('İptal'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3D1E7A),
+                  foregroundColor: const Color(0xFFF2D28E),
+                ),
+                onPressed: selectedUid == null
+                    ? null
+                    : () => Navigator.of(ctx).pop(true),
+                child: const Text('Premium Ver'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (result != true || selectedUid == null) return;
+
+    final expiry = _expiryDateForPlan(selectedPlan);
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(selectedUid)
+        .update({
+          'isPremium': true,
+          'premiumExpireDate': expiry != null
+              ? Timestamp.fromDate(expiry)
+              : null,
+          'premiumPlan': selectedPlan,
+        });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '$selectedName kullanıcısına premium verildi'
+          '${expiry != null ? ' (${_formatDateTime(expiry)} tarihine kadar)' : ''}.',
+        ),
+        backgroundColor: Colors.green.shade700,
+      ),
+    );
+  }
+
+  Future<void> _showUpdatePremiumDialog(String uid, String name) async {
+    String selectedPlan = 'monthly';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          backgroundColor: const Color(0xFF1A0848),
+          title: Text(
+            '$name – Süre Güncelle',
+            style: const TextStyle(color: Color(0xFFF2D28E)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Yeni plan süresi:',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _planChip(
+                    'monthly',
+                    'Aylık',
+                    selectedPlan,
+                    (v) => setDlgState(() => selectedPlan = v),
+                  ),
+                  _planChip(
+                    '6months',
+                    '6 Aylık',
+                    selectedPlan,
+                    (v) => setDlgState(() => selectedPlan = v),
+                  ),
+                  _planChip(
+                    'yearly',
+                    'Yıllık',
+                    selectedPlan,
+                    (v) => setDlgState(() => selectedPlan = v),
+                  ),
+                  _planChip(
+                    'manual',
+                    'Manuel (Süresiz)',
+                    selectedPlan,
+                    (v) => setDlgState(() => selectedPlan = v),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF3D1E7A),
+                foregroundColor: const Color(0xFFF2D28E),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Güncelle'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != true) return;
+
+    final expiry = _expiryDateForPlan(selectedPlan);
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'premiumExpireDate': expiry != null ? Timestamp.fromDate(expiry) : null,
+      'premiumPlan': selectedPlan,
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name kullanıcısının premium süresi güncellendi.'),
+        backgroundColor: Colors.green.shade700,
+      ),
+    );
+  }
+
+  Future<void> _confirmRevokePremium(String uid, String name) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A0848),
+        title: const Text(
+          'Premiumu Kaldır',
+          style: TextStyle(color: Colors.redAccent),
+        ),
+        content: Text(
+          '$name kullanıcısının premium erişimi kaldırılacak. Onaylıyor musunuz?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade800,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Kaldır'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'isPremium': false,
+      'premiumExpireDate': null,
+      'premiumPlan': null,
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name kullanıcısının premium erişimi kaldırıldı.'),
+        backgroundColor: Colors.red.shade700,
+      ),
+    );
+  }
+
+  DateTime? _expiryDateForPlan(String plan) {
+    final now = DateTime.now();
+    switch (plan) {
+      case 'monthly':
+        return now.add(const Duration(days: 30));
+      case '6months':
+        return now.add(const Duration(days: 183));
+      case 'yearly':
+        return now.add(const Duration(days: 365));
+      default:
+        return null; // manuel = süresiz
+    }
+  }
+
+  Widget _planChip(
+    String value,
+    String label,
+    String selected,
+    void Function(String) onSelect,
+  ) {
+    final isSelected = value == selected;
+    return GestureDetector(
+      onTap: () => onSelect(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF3D1E7A)
+              : Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFF2D28E) : Colors.white24,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected ? const Color(0xFFF2D28E) : Colors.white70,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -1337,6 +2011,43 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                           ...detailRows.map(
                             (entry) => _detailInfoRow(entry.key, entry.value),
                           ),
+                          if (isPremium) ...[
+                            const SizedBox(height: 8),
+                            const Divider(height: 1, color: Colors.white12),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFFF2D28E),
+                                    textStyle: const TextStyle(fontSize: 12),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.edit_calendar_outlined,
+                                    size: 15,
+                                  ),
+                                  label: const Text('Süreyi Güncelle'),
+                                  onPressed: () =>
+                                      _showUpdatePremiumDialog(doc.id, name),
+                                ),
+                                const SizedBox(width: 8),
+                                TextButton.icon(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.redAccent,
+                                    textStyle: const TextStyle(fontSize: 12),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.remove_circle_outline,
+                                    size: 15,
+                                  ),
+                                  label: const Text('Premium Kaldır'),
+                                  onPressed: () =>
+                                      _confirmRevokePremium(doc.id, name),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
