@@ -1106,7 +1106,7 @@ class _ContactCard extends StatelessWidget {
 class _SocialIcon extends StatelessWidget {
   const _SocialIcon({required this.icon, required this.url});
 
-  final IconData icon;
+  final FaIconData icon;
   final String url;
 
   Future<void> _launch() async {
