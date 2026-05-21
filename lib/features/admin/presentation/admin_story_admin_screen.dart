@@ -709,7 +709,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
       case _AdminPanelTab.support:
         return _supportSection();
       case _AdminPanelTab.premium:
-        return _usersSection(premiumOnly: true);
+        return _danismanSatinAlanlarSection();
       case _AdminPanelTab.advisorChats:
         return _advisorChatsSection();
       case _AdminPanelTab.weeklyHoroscope:
@@ -1055,6 +1055,204 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         content: Text('$name kullanıcısına $result jeton eklendi.'),
         backgroundColor: Colors.green.shade700,
       ),
+    );
+  }
+
+  // ─── Danışman Satın Alanlar ─────────────────────────────────────────────────
+
+  Widget _danismanSatinAlanlarSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Danışman Satın Alanlar'),
+        const SizedBox(height: 4),
+        const Text(
+          'Danışmanlık hizmeti satın almış kullanıcılar',
+          style: TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        const SizedBox(height: 14),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('advisor_chats')
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                !snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Text(
+                'Hata: \${snapshot.error}',
+                style: const TextStyle(color: Colors.redAccent),
+              );
+            }
+
+            final docs = snapshot.data?.docs ?? [];
+
+            // userId'ye göre grupla
+            final Map<String, List<Map<String, dynamic>>> grouped = {};
+            for (final doc in docs) {
+              final data = doc.data();
+              final uid = (data['userId'] as String?) ?? '';
+              if (uid.isEmpty) continue;
+              grouped.putIfAbsent(uid, () => []).add(data);
+            }
+
+            if (grouped.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                alignment: Alignment.center,
+                child: const Text(
+                  'Henüz danışmanlık satın alan kullanıcı yok.',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '\${grouped.length} kullanıcı',
+                    style: const TextStyle(
+                      color: Color(0xFFF2D28E),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                ...grouped.entries.map((entry) {
+                  final uid = entry.key;
+                  final chats = entry.value;
+                  final firstName = chats.first;
+                  final userName =
+                      (firstName['userName'] as String?)?.trim() ?? 'İsimsiz';
+                  final userEmail =
+                      (firstName['userEmail'] as String?) ?? '';
+                  final chatCount = chats.length;
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Theme(
+                      data: Theme.of(
+                        context,
+                      ).copyWith(dividerColor: Colors.transparent),
+                      child: ExpansionTile(
+                        tilePadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        childrenPadding: const EdgeInsets.fromLTRB(
+                          16,
+                          0,
+                          16,
+                          12,
+                        ),
+                        title: Text(userName),
+                        subtitle: Text(
+                          'UID: \$uid\n\$userEmail',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 11,
+                          ),
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0x334488FF),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                '\$chatCount sohbet',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF88AAFF),
+                                ),
+                              ),
+                            ),
+                            const Icon(Icons.expand_more),
+                          ],
+                        ),
+                        children: [
+                          const Divider(height: 1, color: Colors.white24),
+                          const SizedBox(height: 8),
+                          ...chats.map((chat) {
+                            final advisorName =
+                                (chat['advisorName'] as String?) ?? '-';
+                            final consultationType =
+                                (chat['consultationType'] as String?) ?? '-';
+                            final status =
+                                (chat['status'] as String?) ?? '-';
+                            final createdAt = chat['createdAt'];
+                            DateTime? createdDate;
+                            if (createdAt is Timestamp) {
+                              createdDate = createdAt.toDate();
+                            }
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.chat_bubble_outline,
+                                    size: 14,
+                                    color: Colors.white38,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '\$advisorName · \$consultationType',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    status == 'open'
+                                        ? 'Açık'
+                                        : 'Kapalı',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: status == 'open'
+                                          ? Colors.greenAccent
+                                          : Colors.white38,
+                                    ),
+                                  ),
+                                  if (createdDate != null) ...
+                                    [
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        _formatDateTime(createdDate),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.white38,
+                                        ),
+                                      ),
+                                    ],
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 
