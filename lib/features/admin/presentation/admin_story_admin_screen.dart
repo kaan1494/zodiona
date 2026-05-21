@@ -1152,7 +1152,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                         ),
                         title: Text(userName),
                         subtitle: Text(
-                          'UID: \$uid\n\$userEmail',
+                          'UID: $uid\n$userEmail',
                           style: const TextStyle(
                             color: Colors.white54,
                             fontSize: 11,
@@ -1172,7 +1172,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
-                                '\$chatCount sohbet',
+                                '$chatCount sohbet',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF88AAFF),
@@ -1210,7 +1210,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      '\$advisorName · \$consultationType',
+                                      '$advisorName · $consultationType',
                                       style: const TextStyle(
                                         fontSize: 12,
                                         color: Colors.white70,
