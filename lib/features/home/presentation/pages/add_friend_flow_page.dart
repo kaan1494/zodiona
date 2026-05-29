@@ -12,6 +12,7 @@ import '../../../../utils/zodiac.dart';
 import '../../domain/periodic_horoscope_generator.dart';
 import '../../domain/relationship_weekly_comment_generator.dart';
 import '../../domain/zodiona_daily_comment_generator.dart';
+import 'birth_chart_detail_page.dart';
 
 class AddCompatibilityFriendPage extends StatefulWidget {
   const AddCompatibilityFriendPage({super.key, required this.uid});
@@ -1361,7 +1362,7 @@ class _CompatibilityFriendDetailPageState
     required String friendRising,
     required String friendVenus,
   }) {
-    final filters = ['Bugün', 'Bu Hafta', 'Transitler', 'Doğum Haritası'];
+    final filters = ['Bugün', 'Bu Hafta', 'Doğum Haritası'];
 
     Widget contentCard;
     if (_selectedFriendFilter == 'Bugün') {
@@ -1452,7 +1453,20 @@ class _CompatibilityFriendDetailPageState
                 (f) => _FilterChip(
                   label: f,
                   selected: _selectedFriendFilter == f,
-                  onTap: () => setState(() => _selectedFriendFilter = f),
+                  onTap: () {
+                    if (f == 'Doğum Haritası') {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BirthChartDetailPage(
+                            externalData: widget.friendData,
+                            ownerName: friendName,
+                          ),
+                        ),
+                      );
+                    } else {
+                      setState(() => _selectedFriendFilter = f);
+                    }
+                  },
                 ),
               )
               .toList(),

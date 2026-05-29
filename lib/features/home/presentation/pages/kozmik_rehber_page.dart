@@ -240,43 +240,40 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
     if (_adLoading) return;
     setState(() => _adLoading = true);
 
-    await JetonService.showAd(
-      onAdCount: (adCount) {
-        if (!mounted) return;
-        setState(() {
-          _adCount = adCount;
-          _adLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '1 reklam izlendi ($adCount/2). 1 reklam daha izle, jeton kazan!',
+    try {
+      await JetonService.showAd(
+        onAdCount: (adCount) {
+          if (!mounted) return;
+          setState(() => _adCount = adCount);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '1 reklam izlendi ($adCount/2). 1 reklam daha izle, jeton kazan!',
+              ),
+              backgroundColor: const Color(0xFF3D1E7A),
             ),
-            backgroundColor: const Color(0xFF3D1E7A),
-          ),
-        );
-      },
-      onToken: () {
-        if (!mounted) return;
-        setState(() {
-          _adCount = 0;
-          _adLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🎉 1 jeton kazandın! Bakiyene eklendi.'),
-            backgroundColor: Color(0xFF1E7A3D),
-          ),
-        );
-      },
-      onError: (err) {
-        if (!mounted) return;
-        setState(() => _adLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err), backgroundColor: Colors.red.shade700),
-        );
-      },
-    );
+          );
+        },
+        onToken: () {
+          if (!mounted) return;
+          setState(() => _adCount = 0);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎉 1 jeton kazandın! Bakiyene eklendi.'),
+              backgroundColor: Color(0xFF1E7A3D),
+            ),
+          );
+        },
+        onError: (err) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(err), backgroundColor: Colors.red.shade700),
+          );
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _adLoading = false);
+    }
   }
 
   @override
@@ -309,7 +306,6 @@ class _KozmikRehberPageState extends State<KozmikRehberPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // â”€â”€ Ãœst baÅŸlÄ±k â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,

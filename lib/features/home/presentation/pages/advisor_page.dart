@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -50,88 +51,53 @@ class _AdvisorPageState extends State<AdvisorPage> {
     return value;
   }
 
-  static const List<_AdvisorData> _defaultAdvisors = [
+  static const List<_AdvisorData> _yillikAdvisors = [
     _AdvisorData(
       name: 'Ece Bingör',
-      priceText: '₺4.799,99',
+      priceText: '₺3.500,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/danısman/ecebingör.jpg',
-    ),
-    _AdvisorData(
-      name: 'Ebru Yıldırım',
-      priceText: '₺4.799,99',
-      bio:
-          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
-  static const List<_AdvisorData> _horaryAdvisors = [
+  static const List<_AdvisorData> _iliskiAdvisors = [
     _AdvisorData(
       name: 'Ece Bingör',
-      priceText: '₺899,99',
+      priceText: '₺5.000,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/danısman/ecebingör.jpg',
-    ),
-    _AdvisorData(
-      name: 'Ebru Yıldırım',
-      priceText: '₺899,99',
-      bio:
-          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
   static const List<_AdvisorData> _birthChartAdvisors = [
     _AdvisorData(
       name: 'Ece Bingör',
-      priceText: '₺1.799,99',
+      priceText: '₺5.000,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/danısman/ecebingör.jpg',
-    ),
-    _AdvisorData(
-      name: 'Ebru Yıldırım',
-      priceText: '₺1.799,99',
-      bio:
-          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
-  static const List<_AdvisorData> _astrocartographyAdvisors = [
+  static const List<_AdvisorData> _tanismaAyrilikAdvisors = [
     _AdvisorData(
       name: 'Ece Bingör',
-      priceText: '₺1.399,00',
+      priceText: '₺3.500,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/danısman/ecebingör.jpg',
-    ),
-    _AdvisorData(
-      name: 'Ebru Yıldırım',
-      priceText: '₺1.399,00',
-      bio:
-          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
-  static const List<_AdvisorData> _electionAdvisors = [
+  static const List<_AdvisorData> _ikizAlevAdvisors = [
     _AdvisorData(
       name: 'Ece Bingör',
-      priceText: '₺1.399,00',
+      priceText: '₺5.000,00',
       bio:
           'Ece Bingör 11 Ekim 1989 istanbul doğumludur. Çocukluk yıllarından itibaren evrenin sistemine olan  ilgisini Ziraat mühendisi olarak doğaya katkı sağladıktan sonra okült ilimlerle birleştirmiştir. İnsanı ve Yaratılan herşeyin düzenini anlamaya çalışırken Astrolojide Uzmanlaşmıştır. 2016 senesinden beri bu alanda kendini geliştirip insanlara kendi hayatlarında bilinç sıçraması yaptırmayı amaç edinmiştir. Astroloji danışmanlığı ile beraber ruhsal dönüşüme katkı sağlamaktadır.',
       imagePath: 'assets/danısman/ecebingör.jpg',
-    ),
-    _AdvisorData(
-      name: 'Ebru Yıldırım',
-      priceText: '₺1.399,00',
-      bio:
-          'Ebru Yıldırım, Eskişehir doğumludur. Yazılım alanındaki profesyonel kariyerini, çocukluk yıllarından gelen astroloji ilgisiyle harmanlayarak danışmanlık hizmetine taşımıştır. Analitik zekâ ve güçlü sezgileri bir araya getiren yaklaşımıyla, bireylere yaşam yolculuklarında netlik ve farkındalık kazandırmayı amaçlar.',
-      imagePath: 'assets/danısman/ebruyıldıırm.jpg',
     ),
   ];
 
@@ -141,81 +107,50 @@ class _AdvisorPageState extends State<AdvisorPage> {
       productId: 'zodiona_danisman_yillik',
       description:
           'Önündeki 12 ayın ana temalarını, fırsat pencerelerini ve dikkat gerektiren eşikleri birlikte yorumlarız. Böylece yılını daha planlı ve bilinçli yönetebilirsin.',
-      avatars: [
-        'assets/danısman/ecebingör.jpg',
-        'assets/danısman/ebruyıldıırm.jpg',
-      ],
-      extraCount: 1,
+      avatars: ['assets/danısman/ecebingör.jpg'],
       detailDescription:
           'Doğum haritandan yola çıkarak bir yıl boyunca öne çıkacak dönemleri; başlangıç, tamamlanma ve dönüşüm başlıklarıyla netleştirir. Bu çalışma, zamanlamayı doğru kurmak ve enerjini doğru alana yönlendirmek için kişisel bir rota sunar.',
-      detailAdvisors: _defaultAdvisors,
+      detailAdvisors: _yillikAdvisors,
     ),
     _ConsultationCardData(
       title: 'İlişki Uyumu',
       productId: 'zodiona_danisman_iliski',
       description:
           'Seninle seçtiğin kişinin harita dinamiklerini karşılaştırarak güçlü bağları, zorlanma noktalarını ve ilişkiyi büyütecek iletişim anahtarlarını görünür kılar.',
-      avatars: [
-        'assets/danısman/ecebingör.jpg',
-        'assets/danısman/ebruyıldıırm.jpg',
-      ],
+      avatars: ['assets/danısman/ecebingör.jpg'],
       detailDescription:
           'İki haritanın birbirini nasıl tamamladığını; duygusal ihtiyaçlar, beklentiler ve çatışma alanları üzerinden ele alır. Amaç, ilişkiyi daha sağlıklı bir ritimde ilerletebilmen için farkındalık ve yön kazandırmaktır.',
-      detailAdvisors: _defaultAdvisors,
-    ),
-    _ConsultationCardData(
-      title: 'Danışmana Sor - Horary',
-      productId: 'zodiona_danisman_horary',
-      description:
-          'Zamanı kritik bir soruya odaklanıp sorunun sorulduğu ana ait harita ile kısa vadede en net yönü bulmaya yardımcı olan özel bir analiz sunar.',
-      avatars: [
-        'assets/danısman/ecebingör.jpg',
-        'assets/danısman/ebruyıldıırm.jpg',
-      ],
-      extraCount: 1,
-      detailDescription:
-          'Horary Astrolojisi, net cevaplar aradığın evet-hayır sorularına ışık tutmak için kullanılır. Sorunun sorulduğu anın haritası üzerinden yapılan bu yorumlama; aşk, kariyer, eğitim, sağlık, finans ve aile kararlarında kısa vadede daha net bir yön görmeni sağlar.',
-      detailAdvisors: _horaryAdvisors,
+      detailAdvisors: _iliskiAdvisors,
     ),
     _ConsultationCardData(
       title: 'Doğum Haritası Analizi',
       productId: 'zodiona_danisman_dogum',
       description:
           'Potansiyelini, güçlü taraflarını ve gelişim alanlarını kişisel harita yerleşimlerin üzerinden okuyarak daha net bir öz farkındalık sağlar.',
-      avatars: [
-        'assets/danısman/ecebingör.jpg',
-        'assets/danısman/ebruyıldıırm.jpg',
-      ],
-      extraCount: 1,
+      avatars: ['assets/danısman/ecebingör.jpg'],
       detailDescription:
           'Doğduğun anda gökyüzünün sana çizdiği kişisel haritayı inceleyerek seni sen yapan dinamikleri ortaya koyar. Potansiyellerin, gelişim alanların, içsel gücün ve yaşamındaki olası dönüm noktaları bu analizle görünür hâle gelir.',
       detailAdvisors: _birthChartAdvisors,
     ),
     _ConsultationCardData(
-      title: 'Eleksiyon Astrolojisi',
-      productId: 'zodiona_danisman_elektion',
+      title: 'Tanışma & Ayrılık An Harita Analizi',
+      productId: 'zodiona_danisman_tanisma_ayrilik',
       description:
-          'Yeni adımlar için en uygun zaman aralıklarını seçmene yardımcı olur; taşınma, iş değişimi ya da resmi başlangıçlarda doğru ritmi yakalamanı destekler.',
-      avatars: [
-        'assets/danısman/ecebingör.jpg',
-        'assets/danısman/ebruyıldıırm.jpg',
-      ],
+          'İki önemli anın — tanışmanın ya da ayrılığın — haritasını okuyarak ilişkinin kozmik başlangıcını veya kapanışını derinlemesine analiz eder.',
+      avatars: ['assets/danısman/ecebingör.jpg'],
       detailDescription:
-          'Hayatındaki önemli adımlar için en doğru anı bulmana yardımcı olur. Yeni bir işe başlamak, taşınmak, bir ilişkiyi başlatmak ya da önemli kararlar almak istiyorsan; gökyüzünün desteğini yanında hissetmek için bu analiz ideal bir zamanlama rehberi sunar.',
-      detailAdvisors: _electionAdvisors,
+          'Tanışma ya da ayrılık anının haritası; o momentin enerjisini, iki kişi arasındaki karma bağları ve ilişkinin ruhsal temasını gözler önüne serer. Neden o an, neden o kişiyle sorularının kozmik cevaplarını bu analizle keşfedebilirsin.',
+      detailAdvisors: _tanismaAyrilikAdvisors,
     ),
     _ConsultationCardData(
-      title: 'Astrokartografi',
-      productId: 'zodiona_danisman_astrokart',
+      title: 'İkiz Alev & İkiz Ruh Analizi',
+      productId: 'zodiona_danisman_ikiz_alev',
       description:
-          'Haritandaki gezegen etkilerini coğrafi hatlarla eşleştirerek yaşam, kariyer ve ilişki temalarında hangi bölgelerin seni daha fazla desteklediğini gösterir.',
-      avatars: [
-        'assets/danısman/ecebingör.jpg',
-        'assets/danısman/ebruyıldıırm.jpg',
-      ],
+          'Ruhsal düzeyde derin bir bağ hissettiğin kişiyle aramızdaki kozmik bağlantıyı; ikiz alev ya da ikiz ruh dinamikleri üzerinden haritalayarak anlamlandırır.',
+      avatars: ['assets/danısman/ecebingör.jpg'],
       detailDescription:
-          'Doğum haritandaki gezegen hatlarını dünyanın farklı coğrafyalarıyla eşleştirerek, hangi yerlerin senin için daha şanslı, destekleyici ya da dönüştürücü olduğunu ortaya koyar. Kariyer fırsatları, yaşam amacı, ruhsal büyüme ve ilişkiler için güçlü bir konum rehberi sağlar.',
-      detailAdvisors: _astrocartographyAdvisors,
+          'İkiz alev ve ikiz ruh ilişkileri, sıradan sinastri analizlerinin ötesine geçer. Bu çalışma; iki ruhun evrensel bağını, karmalık örüntüleri, ilişkinin büyüme potansiyelini ve ruhsal görevini doğum haritaları üzerinden derinlemesine ele alır.',
+      detailAdvisors: _ikizAlevAdvisors,
     ),
   ];
 
@@ -230,7 +165,7 @@ class _AdvisorPageState extends State<AdvisorPage> {
           title: card.title,
           productId: card.productId,
           description: card.detailDescription!,
-          advisors: card.detailAdvisors ?? _defaultAdvisors,
+          advisors: card.detailAdvisors ?? _yillikAdvisors,
         ),
       ),
     );
@@ -411,7 +346,7 @@ class _ConsultationTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _AvatarRow(avatars: card.avatars, extraCount: card.extraCount),
+                _AvatarRow(avatars: card.avatars),
               ],
             ),
           ),
@@ -642,6 +577,23 @@ class _ChatSummaryCard extends StatelessWidget {
                       fontSize: 11,
                     ),
                   ),
+                  if (chat.isClosed) ...[
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade900.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'Sonlandırıldı',
+                        style: TextStyle(color: Colors.white70, fontSize: 10),
+                      ),
+                    ),
+                  ],
                   if (chat.lastMessage.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -674,10 +626,9 @@ class _ChatSummaryCard extends StatelessWidget {
 }
 
 class _AvatarRow extends StatelessWidget {
-  const _AvatarRow({required this.avatars, required this.extraCount});
+  const _AvatarRow({required this.avatars});
 
   final List<String> avatars;
-  final int? extraCount;
 
   @override
   Widget build(BuildContext context) {
@@ -694,17 +645,6 @@ class _AvatarRow extends StatelessWidget {
               child: _AdvisorAvatar(imagePath: entry.value, size: 34),
             ),
           ),
-          if (extraCount != null && extraCount! > 0)
-            Padding(
-              padding: const EdgeInsets.only(left: 2),
-              child: Text(
-                '+$extraCount',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -773,12 +713,61 @@ class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
   }
 
   Future<void> _onSelectAdvisor(_AdvisorData advisor) async {
-    if (!IapService.instance.isAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Google Play Billing bu cihazda kullanılamıyor.'),
-        ),
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    setState(() => _isLoadingChat = true);
+    _pendingAdvisorImagePath = advisor.imagePath;
+
+    // Önce ücretsiz erişim var mı kontrol et
+    try {
+      final grant = await AdvisorChatService().checkFreeGrant(
+        userId: uid,
+        productId: widget.productId,
       );
+
+      if (grant != null) {
+        // Ücretsiz erişim var — direkt chat oluştur
+        final userProfile =
+            (await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(uid)
+                    .get())
+                .data() ??
+            {};
+        final chatId = await AdvisorChatService().getOrCreateChat(
+          advisorName: advisor.name,
+          consultationType: widget.title,
+          userProfile: userProfile,
+        );
+        await AdvisorChatService().markGrantUsed(grant.id, chatId);
+        if (!mounted) return;
+        setState(() => _isLoadingChat = false);
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AdvisorChatPage(
+              chatId: chatId,
+              advisorName: advisor.name,
+              consultationType: widget.title,
+              advisorImagePath: advisor.imagePath,
+            ),
+          ),
+        );
+        return;
+      }
+    } catch (_) {
+      // Ücretsiz erişim kontrolü başarısız olursa normal satın alma akışına geç
+    }
+
+    if (!IapService.instance.isAvailable) {
+      if (mounted) {
+        setState(() => _isLoadingChat = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Play Billing bu cihazda kullanılamıyor.'),
+          ),
+        );
+      }
       return;
     }
 
@@ -786,12 +775,10 @@ class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
       widget.productId,
     );
     if (product == null) {
+      if (mounted) setState(() => _isLoadingChat = false);
       _showProductNotFoundDialog();
       return;
     }
-
-    setState(() => _isLoadingChat = true);
-    _pendingAdvisorImagePath = advisor.imagePath;
 
     final started = await IapService.instance.buyConsultation(
       product: product,
@@ -1077,7 +1064,6 @@ class _ConsultationCardData {
     required this.productId,
     required this.description,
     required this.avatars,
-    this.extraCount,
     this.detailDescription,
     this.detailAdvisors,
   });
@@ -1086,7 +1072,6 @@ class _ConsultationCardData {
   final String productId;
   final String description;
   final List<String> avatars;
-  final int? extraCount;
   final String? detailDescription;
   final List<_AdvisorData>? detailAdvisors;
 }

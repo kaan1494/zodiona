@@ -157,10 +157,9 @@ exports.verifyAndAddTokens = onCall(async (request) => {
 const IAP_CONSULTATION_MAP = {
   zodiona_danisman_yillik: "Yıllık Öngörü",
   zodiona_danisman_iliski: "İlişki Uyumu",
-  zodiona_danisman_horary: "Danışmana Sor - Horary",
   zodiona_danisman_dogum: "Doğum Haritası Analizi",
-  zodiona_danisman_elektion: "Eleksiyon Astrolojisi",
-  zodiona_danisman_astrokart: "Astrokartografi",
+  zodiona_danisman_tanisma_ayrilik: "Tanışma & Ayrılık An Harita Analizi",
+  zodiona_danisman_ikiz_alev: "İkiz Alev & İkiz Ruh Analizi",
 };
 
 exports.verifyAndCreateConsultation = onCall(async (request) => {
@@ -238,4 +237,72 @@ exports.verifyAndCreateConsultation = onCall(async (request) => {
     `[CONSULTATION] ${uid} → ${productId} (${advisorName}) → chatId: ${chatId}`
   );
   return { chatId };
+});
+
+// ── Premium Abonelik Doğrulama ────────────────────────────────────────────────
+//
+// Google Play Console'da tanımlanması gereken abonelik/ürün ID'leri:
+//   zodiona_premium_monthly → Aylık Premium    (₺75)
+//   zodiona_premium_6month  → 6 Aylık Premium  (₺390)
+//   zodiona_premium_yearly  → Yıllık Premium   (₺550)
+
+const IAP_PREMIUM_MAP = {
+  zodiona_premium_monthly: { plan: "monthly", days: 30 },
+  zodiona_premium_6month: { plan: "6months", days: 183 },
+  zodiona_premium_yearly: { plan: "yearly", days: 365 },
+};
+
+exports.verifyAndActivatePremium = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Giriş yapılmamış.");
+  }
+
+  const { productId, purchaseToken, platform } = request.data ?? {};
+
+  if (!productId || !purchaseToken || !platform) {
+    throw new HttpsError("invalid-argument", "Eksik parametre.");
+  }
+
+  const premiumInfo = IAP_PREMIUM_MAP[productId];
+  if (!premiumInfo) {
+    throw new HttpsError("invalid-argument", `Geçersiz ürün ID: ${productId}`);
+  }
+
+  const db = getFirestore();
+
+  // Aynı purchaseToken daha önce işlendi mi? (tekrar saldırısını engelle)
+  const processedRef = db
+    .collection("processed_purchases")
+    .doc(purchaseToken);
+
+  const processedSnap = await processedRef.get();
+  if (processedSnap.exists) {
+    return { activated: true, alreadyProcessed: true };
+  }
+
+  const premiumExpireDate = new Date();
+  premiumExpireDate.setDate(premiumExpireDate.getDate() + premiumInfo.days);
+
+  // Transaction: premium aktif et + satın almayı kaydet (atomik)
+  await db.runTransaction(async (tx) => {
+    const userRef = db.collection("users").doc(uid);
+    tx.update(userRef, {
+      isPremium: true,
+      premiumExpireDate: premiumExpireDate,
+      premiumPlan: premiumInfo.plan,
+    });
+    tx.set(processedRef, {
+      uid,
+      productId,
+      platform,
+      plan: premiumInfo.plan,
+      processedAt: new Date().toISOString(),
+    });
+  });
+
+  console.log(
+    `[PREMIUM] ${uid} → ${productId} → ${premiumInfo.plan} (${premiumInfo.days} gün)`
+  );
+  return { activated: true, plan: premiumInfo.plan, days: premiumInfo.days };
 });

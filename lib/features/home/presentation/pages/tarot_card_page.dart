@@ -383,49 +383,51 @@ class _TarotCardPageState extends State<TarotCardPage> {
     if (slots <= 0) return;
     setState(() => _isAdLoading = true);
 
-    await JetonService.showRewardedAd(
-      onRewarded: () async {
-        final newRemaining = await TarotSelectionService.applyAdReduction();
-        final newCount = await TarotSelectionService.getCooldownAdCount();
-        if (!mounted) return;
-        setState(() {
-          _cooldownRemaining = newRemaining;
-          _cooldownAdCount = newCount;
-          if (newRemaining == Duration.zero) {
-            _onCooldown = false;
-            _countdownTimer?.cancel();
-          }
-          _isAdLoading = false;
-        });
-        if (_onCooldown) _startCountdown();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              backgroundColor: Color(0xFF1A1050),
-              content: Text(
-                '2 saat kısaltıldı! 🌟',
-                style: TextStyle(color: Color(0xFFF2D9A6)),
+    try {
+      await JetonService.showRewardedAd(
+        onRewarded: () async {
+          final newRemaining = await TarotSelectionService.applyAdReduction();
+          final newCount = await TarotSelectionService.getCooldownAdCount();
+          if (!mounted) return;
+          setState(() {
+            _cooldownRemaining = newRemaining;
+            _cooldownAdCount = newCount;
+            if (newRemaining == Duration.zero) {
+              _onCooldown = false;
+              _countdownTimer?.cancel();
+            }
+          });
+          if (_onCooldown) _startCountdown();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                backgroundColor: Color(0xFF1A1050),
+                content: Text(
+                  '2 saat kısaltıldı! 🌟',
+                  style: TextStyle(color: Color(0xFFF2D9A6)),
+                ),
+                duration: Duration(seconds: 2),
               ),
-              duration: Duration(seconds: 2),
+            );
+          }
+        },
+        onError: (err) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: const Color(0xFF1A1050),
+              content: Text(
+                err,
+                style: const TextStyle(color: Color(0xFFF2D9A6)),
+              ),
+              duration: const Duration(seconds: 3),
             ),
           );
-        }
-      },
-      onError: (err) {
-        if (!mounted) return;
-        setState(() => _isAdLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: const Color(0xFF1A1050),
-            content: Text(
-              err,
-              style: const TextStyle(color: Color(0xFFF2D9A6)),
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      },
-    );
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _isAdLoading = false);
+    }
   }
 
   Future<void> _showCardDetail(_TarotCardData cardData) async {
@@ -473,6 +475,8 @@ class _TarotCardPageState extends State<TarotCardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenH = MediaQuery.of(context).size.height;
+    final smallScreen = screenH < 700;
     return Scaffold(
       backgroundColor: const Color(0xFF0A0520),
       body: Stack(
@@ -513,11 +517,11 @@ class _TarotCardPageState extends State<TarotCardPage> {
                       ),
                       const Expanded(
                         child: Text(
-                          'Yıldız Seç',
+                          'Yıldızlardan Kartını Seç',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFFF2D9A6),
-                            fontSize: 22,
+                            fontSize: 20,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.4,
                           ),
@@ -527,7 +531,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: smallScreen ? 4 : 8),
                 if (_onCooldown)
                   _CooldownBanner(
                     remaining: _cooldownRemaining,
@@ -549,7 +553,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                             height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        SizedBox(height: smallScreen ? 4 : 10),
                         Text(
                           'Seçtiğin 5 yıldız, evrenin sana özel mesajını taşıyor. Kartlarını belirledikten sonra Kozmik Rehber’e götür ve derin anlamını keşfet — her kart, hayatındaki bir sorunun cevabı olabilir.',
                           textAlign: TextAlign.center,
@@ -565,7 +569,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                       ],
                     ),
                   ),
-                const SizedBox(height: 16),
+                SizedBox(height: smallScreen ? 6 : 16),
                 // Counter
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -589,7 +593,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: smallScreen ? 4 : 8),
                 // Geçmiş butonu
                 if (_hasPrevious)
                   GestureDetector(
@@ -620,7 +624,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Yıldızların önceki mesajını oku',
+                            'Geçmiş mesajlarını gör',
                             style: TextStyle(
                               color: const Color(
                                 0xFFF2D9A6,
@@ -634,7 +638,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                       ),
                     ),
                   ),
-                if (_hasPrevious) const SizedBox(height: 8),
+                if (_hasPrevious) SizedBox(height: smallScreen ? 4 : 8),
                 // Seçilen kartlar rafı
                 if (_selectedIndices.isNotEmpty && !_onCooldown)
                   SizedBox(
@@ -702,7 +706,7 @@ class _TarotCardPageState extends State<TarotCardPage> {
                     ),
                   ),
                 if (_selectedIndices.isNotEmpty && !_onCooldown)
-                  const SizedBox(height: 8),
+                  SizedBox(height: smallScreen ? 4 : 8),
                 // Sürekli kaydırmalı fan – sürükleyince kartlar gerçek zamanlı kayar
                 Expanded(
                   child: _loaded
@@ -727,9 +731,9 @@ class _TarotCardPageState extends State<TarotCardPage> {
                               // Pivot noktası: kartların aşağı-merkezi, fan yayını oluşturur
                               final pivotY =
                                   constraints.maxHeight + cardH * 0.28;
-                              // Kartları ortaya taşı (ekranın %50 üstünden)
+                              // Kartları biraz aşağıya taşı (ekranın %40 üstünden)
                               final cardBottomOffset =
-                                  constraints.maxHeight * 0.50 - cardH * 0.28;
+                                  constraints.maxHeight * 0.40 - cardH * 0.28;
                               return ClipRect(
                                 child: SizedBox(
                                   width: constraints.maxWidth,
@@ -800,7 +804,11 @@ class _TarotCardPageState extends State<TarotCardPage> {
                                       if (!_onCooldown &&
                                           _selectedIndices.isEmpty)
                                         Positioned(
-                                          bottom: cardBottomOffset + cardH + 8,
+                                          bottom: (cardBottomOffset + cardH + 8)
+                                              .clamp(
+                                                4.0,
+                                                constraints.maxHeight - 60.0,
+                                              ),
                                           left: 0,
                                           right: 0,
                                           child: Center(

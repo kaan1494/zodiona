@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'add_friend_flow_page.dart';
 import 'kozmik_rehber_uyum_chat_page.dart';
+import '../../../profile/presentation/premium_membership_screen.dart';
 import '../../../../services/astro_api_service.dart';
 import '../../../../utils/zodiac.dart';
 
@@ -22,6 +23,7 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
   final Set<String> _inFlightFriendRequests = <String>{};
   final Map<String, DateTime> _lastFriendAstroAttemptAt = <String, DateTime>{};
   Timer? _friendAstroRetryTicker;
+  bool _isPremium = false;
 
   @override
   void initState() {
@@ -31,6 +33,20 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
         return;
       }
       setState(() {});
+    });
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    if (!mounted) return;
+    setState(() {
+      _isPremium = (doc.data()?['isPremium'] as bool?) ?? false;
     });
   }
 
@@ -259,10 +275,18 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
   Future<void> _onAddFriendTap(
     BuildContext context, {
     required String? uid,
+    bool hasExistingFriends = false,
   }) async {
     if (uid == null || uid.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Kullanici oturumu bulunamadi.')),
+      );
+      return;
+    }
+
+    if (hasExistingFriends && !_isPremium) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => const PremiumMembershipScreen()),
       );
       return;
     }
@@ -409,7 +433,11 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
                         if (hasAnyFriend) ...[
                           const Spacer(),
                           _CompactAddFriendButton(
-                            onTap: () => _onAddFriendTap(context, uid: uid),
+                            onTap: () => _onAddFriendTap(
+                              context,
+                              uid: uid,
+                              hasExistingFriends: hasAnyFriend,
+                            ),
                           ),
                         ],
                       ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../services/advisor_chat_service.dart';
@@ -25,9 +27,20 @@ class _AdvisorChatPageState extends State<AdvisorChatPage> {
   final _scrollController = ScrollController();
   final _service = AdvisorChatService();
   bool _isSending = false;
+  bool _isClosed = false;
+  StreamSubscription<String>? _statusSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _statusSub = _service.chatStatusStream(widget.chatId).listen((status) {
+      if (mounted) setState(() => _isClosed = status == 'closed');
+    });
+  }
 
   @override
   void dispose() {
+    _statusSub?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -86,9 +99,10 @@ class _AdvisorChatPageState extends State<AdvisorChatPage> {
             child: Column(
               children: [
                 _buildAppBar(),
+                if (_isClosed) _buildClosedBanner(),
                 const Divider(color: Color(0x33FFFFFF), height: 1),
                 Expanded(child: _buildMessages()),
-                _buildInputBar(),
+                if (!_isClosed) _buildInputBar(),
               ],
             ),
           ),
@@ -158,12 +172,34 @@ class _AdvisorChatPageState extends State<AdvisorChatPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E7A3E).withValues(alpha: 0.8),
+              color: _isClosed
+                  ? Colors.red.shade800.withValues(alpha: 0.85)
+                  : const Color(0xFF1E7A3E).withValues(alpha: 0.8),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text(
-              'Çevrimiçi',
-              style: TextStyle(color: Colors.white, fontSize: 11),
+            child: Text(
+              _isClosed ? 'Sonlandırıldı' : 'Çevrimiçi',
+              style: const TextStyle(color: Colors.white, fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClosedBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Colors.red.shade900.withValues(alpha: 0.85),
+      child: const Row(
+        children: [
+          Icon(Icons.lock_outline, color: Colors.white70, size: 16),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Bu sohbet danışman tarafından sonlandırıldı. Geçmiş mesajları okuyabilirsiniz.',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
           ),
         ],

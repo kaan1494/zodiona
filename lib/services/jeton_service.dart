@@ -121,6 +121,7 @@ class JetonService {
   // ── Ödüllü reklam göster ─────────────────────────────────────────────────
   static RewardedAd? _rewardedAd;
   static bool _isAdLoading = false;
+  static bool _isAdShowing = false;
   static Completer<bool>? _loadCompleter;
 
   /// Reklamı ön bellekler.
@@ -185,18 +186,27 @@ class JetonService {
       return;
     }
 
+    if (_isAdShowing) return;
+
     final ad = _rewardedAd!;
     _rewardedAd = null;
+    _isAdShowing = true;
+
+    final completer = Completer<void>();
 
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
+        _isAdShowing = false;
         a.dispose();
         Future.delayed(const Duration(seconds: 2), preloadAd);
+        if (!completer.isCompleted) completer.complete();
       },
       onAdFailedToShowFullScreenContent: (a, error) {
+        _isAdShowing = false;
         a.dispose();
         onError('Reklam gösterilemedi: ${error.message}');
         preloadAd();
+        if (!completer.isCompleted) completer.complete();
       },
     );
 
@@ -210,6 +220,7 @@ class JetonService {
         }
       },
     );
+    await completer.future;
   }
 
   /// Sadece ödülü tetikleyen generic reklam gösterimi.
@@ -240,18 +251,27 @@ class JetonService {
       return;
     }
 
+    if (_isAdShowing) return;
+
     final ad = _rewardedAd!;
     _rewardedAd = null;
+    _isAdShowing = true;
+
+    final completer = Completer<void>();
 
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
+        _isAdShowing = false;
         a.dispose();
         Future.delayed(const Duration(seconds: 2), preloadAd);
+        if (!completer.isCompleted) completer.complete();
       },
       onAdFailedToShowFullScreenContent: (a, error) {
+        _isAdShowing = false;
         a.dispose();
         onError('Reklam gösterilemedi: ${error.message}');
         preloadAd();
+        if (!completer.isCompleted) completer.complete();
       },
     );
 
@@ -260,6 +280,7 @@ class JetonService {
         await onRewarded();
       },
     );
+    await completer.future;
   }
 
   // ── Jeton paketi tanımları ────────────────────────────────────────────────

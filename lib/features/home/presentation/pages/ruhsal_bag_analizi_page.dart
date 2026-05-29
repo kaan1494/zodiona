@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/ruhsal_bag_engine.dart';
 import '../../../../services/iap_service.dart';
+import '../../../profile/presentation/premium_membership_screen.dart';
 import '../widgets/jeton_widgets.dart';
 import '../../../../services/jeton_service.dart';
 import '../../../../services/kozmik_rehber_service.dart';
@@ -370,43 +371,40 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
     if (_adLoading) return;
     setState(() => _adLoading = true);
 
-    await JetonService.showAd(
-      onAdCount: (adCount) {
-        if (!mounted) return;
-        setState(() {
-          _adCount = adCount;
-          _adLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '1 reklam izlendi ($adCount/2). 1 reklam daha izle, jeton kazan!',
+    try {
+      await JetonService.showAd(
+        onAdCount: (adCount) {
+          if (!mounted) return;
+          setState(() => _adCount = adCount);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '1 reklam izlendi ($adCount/2). 1 reklam daha izle, jeton kazan!',
+              ),
+              backgroundColor: const Color(0xFF3D1E7A),
             ),
-            backgroundColor: const Color(0xFF3D1E7A),
-          ),
-        );
-      },
-      onToken: () {
-        if (!mounted) return;
-        setState(() {
-          _adCount = 0;
-          _adLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('🎉 1 jeton kazandın! Bakiyene eklendi.'),
-            backgroundColor: Color(0xFF1E7A3D),
-          ),
-        );
-      },
-      onError: (err) {
-        if (!mounted) return;
-        setState(() => _adLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(err), backgroundColor: Colors.red.shade700),
-        );
-      },
-    );
+          );
+        },
+        onToken: () {
+          if (!mounted) return;
+          setState(() => _adCount = 0);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎉 1 jeton kazandın! Bakiyene eklendi.'),
+              backgroundColor: Color(0xFF1E7A3D),
+            ),
+          );
+        },
+        onError: (err) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(err), backgroundColor: Colors.red.shade700),
+          );
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _adLoading = false);
+    }
   }
 
   // ── Arkadaş seç ────────────────────────────────────────────────────────
@@ -730,6 +728,7 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
     Map<String, dynamic> kullanici,
     List<MapEntry<String, Map<String, dynamic>>> arkadaslar,
   ) {
+    final isPremium = kullanici['isPremium'] == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -755,62 +754,156 @@ class _RuhsalBagAnaliziPageState extends State<RuhsalBagAnaliziPage> {
           const SizedBox(height: 12),
         ],
 
-        // Yeni kişi ekle
-        GestureDetector(
-          onTap: () {
-            setState(() {
-              _formGosteriliyor = !_formGosteriliyor;
-              if (_formGosteriliyor) {
-                // Önceki arkadaş seçimini temizle
-                _secilenIsim = null;
-                _secilenTarih = null;
-                _secilenGunes = null;
-                _secilenAy = null;
-                _secilenVenus = null;
-                _secilenYukselen = null;
-                _sonuc = null;
-              }
-            });
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _formGosteriliyor
-                    ? const Color(0xFFF2D293)
-                    : Colors.white30,
-                width: _formGosteriliyor ? 1.5 : 1,
-              ),
-              color: _formGosteriliyor
-                  ? const Color(0xFF4A2880).withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.05),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.person_add_alt_1_rounded,
+        // Yeni kişi ekle – premium kısıtlaması
+        if (arkadaslar.isNotEmpty && !isPremium)
+          _buildYeniKisiPremiumLock()
+        else
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _formGosteriliyor = !_formGosteriliyor;
+                if (_formGosteriliyor) {
+                  // Önceki arkadaş seçimini temizle
+                  _secilenIsim = null;
+                  _secilenTarih = null;
+                  _secilenGunes = null;
+                  _secilenAy = null;
+                  _secilenVenus = null;
+                  _secilenYukselen = null;
+                  _sonuc = null;
+                }
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
                   color: _formGosteriliyor
                       ? const Color(0xFFF2D293)
-                      : Colors.white60,
-                  size: 22,
+                      : Colors.white30,
+                  width: _formGosteriliyor ? 1.5 : 1,
                 ),
-                const SizedBox(width: 10),
-                Text(
-                  'Yeni kişi ekle',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: _formGosteriliyor
+                    ? const Color(0xFF4A2880).withValues(alpha: 0.4)
+                    : Colors.white.withValues(alpha: 0.05),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person_add_alt_1_rounded,
                     color: _formGosteriliyor
                         ? const Color(0xFFF2D293)
-                        : Colors.white70,
-                    fontWeight: FontWeight.w500,
+                        : Colors.white60,
+                    size: 22,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Text(
+                    'Yeni kişi ekle',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: _formGosteriliyor
+                          ? const Color(0xFFF2D293)
+                          : Colors.white70,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildYeniKisiPremiumLock() {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const PremiumMembershipScreen(),
+        ),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFFECCB8E).withValues(alpha: 0.45),
+            width: 1.5,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF2A1060).withValues(alpha: 0.55),
+              const Color(0xFF130D35).withValues(alpha: 0.80),
+            ],
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF4A2880).withValues(alpha: 0.6),
+                border: Border.all(
+                  color: const Color(0xFFECCB8E).withValues(alpha: 0.4),
+                ),
+              ),
+              child: const Icon(
+                Icons.lock_outline,
+                color: Color(0xFFECCB8E),
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Yeni kişi ekle',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Colors.white54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Birden fazla kişi eklemek için Premium gerekli',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: Colors.white38),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                ),
+                border: Border.all(
+                  color: const Color(0xFFECCB8E).withValues(alpha: 0.4),
+                ),
+              ),
+              child: const Text(
+                'Premium\'a Geç',
+                style: TextStyle(
+                  color: Color(0xFFECCB8E),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

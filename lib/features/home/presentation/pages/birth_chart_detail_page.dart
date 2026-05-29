@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -200,123 +201,54 @@ class _BirthChartDetailPageState extends State<BirthChartDetailPage> {
       _ => chart.personalityCards,
     };
 
-    // Kişilik sekmesi (index 3) kısıtlanmıyor
-    final lockable = _selectedTabIndex < 3;
-    const freeCount = 2;
+    // Kişilik sekmesinde 1. kart açık, diğerleri premium
+    final lockable = true;
+    final freeCount = _selectedTabIndex == 3 ? 1 : 2;
 
     final widgets = <Widget>[];
     for (int i = 0; i < items.length; i++) {
-      if (lockable && !_isPremium && i >= freeCount) break;
       final item = items[i];
-      widgets.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: _BirthChartInfoCard(
-            title: item.title,
-            subtitle: item.subtitle,
-            detail: item.detail,
-            glyph: item.glyph,
-            color: item.color,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => _BirthChartContentPage(
-                    title: item.title,
-                    subtitle: item.subtitle,
-                    glyph: item.glyph,
-                    color: item.color,
-                    content: item.content,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-    }
+      final isLocked = lockable && !_isPremium && i >= freeCount;
 
-    if (lockable && !_isPremium && items.length > freeCount) {
-      widgets.add(
-        GestureDetector(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => const PremiumMembershipScreen(),
-            ),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF2A1060).withValues(alpha: 0.85),
-                  const Color(0xFF130D35).withValues(alpha: 0.95),
-                ],
-              ),
-              border: Border.all(
-                color: const Color(0xFFECCB8E).withValues(alpha: 0.45),
-                width: 1.5,
-              ),
-            ),
-            child: Column(
-              children: [
-                const Icon(
-                  Icons.lock_outline,
-                  color: Color(0xFFECCB8E),
-                  size: 28,
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Kalan ${items.length - freeCount} sonuç Premium üyelere özel',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFFECCB8E),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Tüm gezegen, ev ve açı yorumlarına ulaşmak için Premium\'a geç.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
-                    ),
-                    border: Border.all(
-                      color: const Color(0xFFECCB8E).withValues(alpha: 0.4),
+      Widget card = Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: _BirthChartInfoCard(
+          title: item.title,
+          subtitle: item.subtitle,
+          detail: item.detail,
+          glyph: item.glyph,
+          color: item.color,
+          isLocked: isLocked,
+          onTap: isLocked
+              ? () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => _BirthChartContentPage(
+                      title: item.title,
+                      subtitle: item.subtitle,
+                      glyph: item.glyph,
+                      color: item.color,
+                      content: item.content,
+                      isLocked: true,
                     ),
                   ),
-                  child: const Text(
-                    '✨  Premium\'a Geç',
-                    style: TextStyle(
-                      color: Color(0xFFECCB8E),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
+                )
+              : () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => _BirthChartContentPage(
+                        title: item.title,
+                        subtitle: item.subtitle,
+                        glyph: item.glyph,
+                        color: item.color,
+                        content: item.content,
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  );
+                },
         ),
       );
+
+      widgets.add(card);
     }
 
     return widgets;
@@ -398,6 +330,7 @@ class _BirthChartInfoCard extends StatelessWidget {
     required this.glyph,
     required this.color,
     required this.onTap,
+    this.isLocked = false,
   });
 
   final String title;
@@ -406,6 +339,7 @@ class _BirthChartInfoCard extends StatelessWidget {
   final String glyph;
   final Color color;
   final VoidCallback onTap;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -461,7 +395,21 @@ class _BirthChartInfoCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, color: Colors.white54, size: 28),
+            if (isLocked)
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.1),
+                ),
+                child: const Icon(
+                  Icons.lock,
+                  color: Color(0xFFB490F5),
+                  size: 18,
+                ),
+              )
+            else
+              const Icon(Icons.chevron_right, color: Colors.white54, size: 28),
           ],
         ),
       ),
@@ -519,6 +467,7 @@ class _BirthChartContentPage extends StatelessWidget {
     required this.glyph,
     required this.color,
     required this.content,
+    this.isLocked = false,
   });
 
   final String title;
@@ -526,6 +475,7 @@ class _BirthChartContentPage extends StatelessWidget {
   final String glyph;
   final Color color;
   final String content;
+  final bool isLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -585,84 +535,232 @@ class _BirthChartContentPage extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  color.withValues(alpha: 0.95),
-                                  color.withValues(alpha: 0.2),
-                                  const Color(0xFF1E0850),
-                                ],
-                                stops: const [0.0, 0.55, 1.0],
-                              ),
-                              border: Border.all(color: Colors.white12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: color.withValues(alpha: 0.4),
-                                  blurRadius: 28,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                glyph,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      color: const Color(0xFFFFF2D2),
-                                      fontWeight: FontWeight.w700,
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          20,
+                          8,
+                          20,
+                          isLocked ? 120 : 32,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(
+                              child: Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      color.withValues(alpha: 0.95),
+                                      color.withValues(alpha: 0.2),
+                                      const Color(0xFF1E0850),
+                                    ],
+                                    stops: const [0.0, 0.55, 1.0],
+                                  ),
+                                  border: Border.all(color: Colors.white12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: color.withValues(alpha: 0.4),
+                                      blurRadius: 28,
+                                      spreadRadius: 2,
                                     ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          subtitle,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: const Color(0xFFECD6A8),
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(20),
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                const Color(0xFF3D1E7A).withValues(alpha: 0.88),
-                                const Color(0xFF2E1568).withValues(alpha: 0.88),
-                              ],
-                            ),
-                            border: Border.all(color: Colors.white10),
-                          ),
-                          child: Text(
-                            content,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.92),
-                                  height: 1.7,
+                                  ],
                                 ),
+                                child: Center(
+                                  child: Text(
+                                    glyph,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          color: const Color(0xFFFFF2D2),
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              subtitle,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFFECD6A8),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                            const SizedBox(height: 24),
+                            if (isLocked)
+                              Stack(
+                                children: [
+                                  // Tüm metin buğulu
+                                  ImageFiltered(
+                                    imageFilter: ImageFilter.blur(
+                                      sigmaX: 7,
+                                      sigmaY: 7,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(20),
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            const Color(
+                                              0xFF3D1E7A,
+                                            ).withValues(alpha: 0.88),
+                                            const Color(
+                                              0xFF2E1568,
+                                            ).withValues(alpha: 0.88),
+                                          ],
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.white10,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        content,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.92,
+                                              ),
+                                              height: 1.7,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                  // İlk satır net
+                                  Positioned(
+                                    top: 20,
+                                    left: 20,
+                                    right: 20,
+                                    child: Text(
+                                      content,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.92,
+                                            ),
+                                            height: 1.7,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      const Color(
+                                        0xFF3D1E7A,
+                                      ).withValues(alpha: 0.88),
+                                      const Color(
+                                        0xFF2E1568,
+                                      ).withValues(alpha: 0.88),
+                                    ],
+                                  ),
+                                  border: Border.all(color: Colors.white10),
+                                ),
+                                child: Text(
+                                  content,
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.92,
+                                        ),
+                                        height: 1.7,
+                                      ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (isLocked)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0x000A0520), Color(0xF50A0520)],
+                              ),
+                            ),
+                            padding: const EdgeInsets.fromLTRB(20, 48, 20, 28),
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      const PremiumMembershipScreen(),
+                                ),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF8B5CF6),
+                                      Color(0xFF6D28D9),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF6D28D9,
+                                      ).withValues(alpha: 0.5),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.workspace_premium,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Premium\'a Geç',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ],

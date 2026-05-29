@@ -5,6 +5,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
+import 'consultation_products.dart';
+
+export 'consultation_products.dart' show kIapProductDanismanlik;
+
 /// Google Play Console → Uygulamanız → Para kazanma → Ürünler'de
 /// bu ID'leri "Consumable" (tüketilebilir) ürün olarak oluştur.
 /// Fiyatları TL cinsinden ayarla (Play Console'da yapılır, burada sadece ID).
@@ -16,16 +20,17 @@ const Map<String, int> kIapProductJetonlar = {
   'zodiona_jetons_250': 250,
 };
 
+/// Google Play Console → Para kazanma → Abonelikler veya Ürünler'de
+/// bu ID'leri "Yönetilen ürün" (non-consumable) olarak oluştur.
+const Map<String, String> kIapProductPremium = {
+  'zodiona_premium_monthly': 'monthly',
+  'zodiona_premium_6month': '6months',
+  'zodiona_premium_yearly': 'yearly',
+};
+
 /// Google Play Console → Para kazanma → Ürünler'de
 /// bu ID'leri "Yönetilen ürün" (consumable) olarak oluştur.
-const Map<String, String> kIapProductDanismanlik = {
-  'zodiona_danisman_yillik': 'Yıllık Öngörü',
-  'zodiona_danisman_iliski': 'İlişki Uyumu',
-  'zodiona_danisman_horary': 'Danışmana Sor - Horary',
-  'zodiona_danisman_dogum': 'Doğum Haritası Analizi',
-  'zodiona_danisman_elektion': 'Eleksiyon Astrolojisi',
-  'zodiona_danisman_astrokart': 'Astrokartografi',
-};
+// kIapProductDanismanlik, consultation_products.dart'tan re-export edilir.
 
 /// Google Play Billing (in_app_purchase) yönetim servisi.
 class IapService {
@@ -41,6 +46,9 @@ class IapService {
 
   List<ProductDetails> _consultantProducts = [];
   List<ProductDetails> get consultantProducts => _consultantProducts;
+
+  List<ProductDetails> _premiumProducts = [];
+  List<ProductDetails> get premiumProducts => _premiumProducts;
 
   String? _pendingAdvisorName;
   String? get pendingAdvisorName => _pendingAdvisorName;
@@ -79,6 +87,7 @@ class IapService {
     final allIds = {
       ...kIapProductJetonlar.keys,
       ...kIapProductDanismanlik.keys,
+      ...kIapProductPremium.keys,
     };
     final response = await _iap.queryProductDetails(allIds);
 
@@ -100,9 +109,14 @@ class IapService {
         .where((p) => kIapProductDanismanlik.containsKey(p.id))
         .toList();
 
+    _premiumProducts = response.productDetails
+        .where((p) => kIapProductPremium.containsKey(p.id))
+        .toList();
+
     debugPrint(
       '[IAP] ${_products.length} jeton ürünü, '
-      '${_consultantProducts.length} danışmanlık ürünü yüklendi.',
+      '${_consultantProducts.length} danışmanlık ürünü, '
+      '${_premiumProducts.length} premium ürünü yüklendi.',
     );
   }
 
@@ -134,10 +148,37 @@ class IapService {
 
   /// Satın alma türüne göre uygun teslim fonksiyonunu çağırır.
   Future<void> _deliverPurchase(PurchaseDetails purchase) async {
-    if (kIapProductDanismanlik.containsKey(purchase.productID)) {
+    if (kIapProductPremium.containsKey(purchase.productID)) {
+      await _deliverPremium(purchase);
+    } else if (kIapProductDanismanlik.containsKey(purchase.productID)) {
       await _deliverConsultation(purchase);
     } else {
       await _deliverJeton(purchase);
+    }
+  }
+
+  /// Cloud Function ile doğrular, premium üyeliği aktif eder.
+  Future<void> _deliverPremium(PurchaseDetails purchase) async {
+    try {
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'verifyAndActivatePremium',
+      );
+
+      final result = await callable.call<Map<String, dynamic>>({
+        'productId': purchase.productID,
+        'purchaseToken': purchase.verificationData.serverVerificationData,
+        'platform': Platform.isAndroid ? 'android' : 'ios',
+      });
+
+      final plan = (result.data['plan'] as String?) ?? '';
+      _resultController.add(IapResult.premiumActivated(plan: plan));
+    } catch (e) {
+      debugPrint('[IAP] Premium teslimi hatası: $e');
+      _resultController.add(
+        IapResult.error(
+          'Premium aktifleştirilirken bir hata oluştu. Lütfen tekrar dene.',
+        ),
+      );
     }
   }
 
@@ -202,6 +243,13 @@ class IapService {
     }
   }
 
+  /// Premium abonelik satın alma akışını başlatır.
+  Future<bool> buyPremium(ProductDetails product) async {
+    if (!_isAvailable || kIsWeb) return false;
+    final param = PurchaseParam(productDetails: product);
+    return _iap.buyNonConsumable(purchaseParam: param);
+  }
+
   /// Belirtilen ürünü satın alma akışını başlatır.
   Future<bool> buy(ProductDetails product) async {
     if (!_isAvailable || kIsWeb) return false;
@@ -218,6 +266,17 @@ class IapService {
     _pendingAdvisorName = advisorName;
     final param = PurchaseParam(productDetails: product);
     return _iap.buyConsumable(purchaseParam: param);
+  }
+
+  /// Plan anahtarına göre premium [ProductDetails]'ini döner.
+  /// Plan anahtarları: 'monthly', '6months', 'yearly'
+  ProductDetails? productForPremium(String planKey) {
+    final productId = kIapProductPremium.entries
+        .where((e) => e.value == planKey)
+        .map((e) => e.key)
+        .firstOrNull;
+    if (productId == null) return null;
+    return _premiumProducts.where((p) => p.id == productId).firstOrNull;
   }
 
   /// Jeton miktarına göre ilgili [ProductDetails]'i döner.
@@ -250,6 +309,7 @@ class IapResult {
     this.errorMessage,
     this.chatId,
     this.consultationType,
+    this.premiumPlan,
   });
 
   factory IapResult.success({
@@ -270,6 +330,9 @@ class IapResult {
     consultationType: consultationType,
   );
 
+  factory IapResult.premiumActivated({required String plan}) =>
+      IapResult._(status: IapStatus.premiumActivated, premiumPlan: plan);
+
   factory IapResult.error(String message) =>
       IapResult._(status: IapStatus.error, errorMessage: message);
 
@@ -282,11 +345,19 @@ class IapResult {
   final String? errorMessage;
   final String? chatId;
   final String? consultationType;
+  final String? premiumPlan;
 
   bool get isSuccess => status == IapStatus.success;
   bool get isConsultationSuccess => status == IapStatus.consultationSuccess;
+  bool get isPremiumActivated => status == IapStatus.premiumActivated;
   bool get isCancelled => status == IapStatus.cancelled;
   bool get isError => status == IapStatus.error;
 }
 
-enum IapStatus { success, consultationSuccess, error, cancelled }
+enum IapStatus {
+  success,
+  consultationSuccess,
+  premiumActivated,
+  error,
+  cancelled,
+}

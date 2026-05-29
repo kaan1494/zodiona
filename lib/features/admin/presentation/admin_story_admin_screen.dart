@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import '../../../models/astro_story.dart';
 import '../../../services/advisor_chat_service.dart';
 import '../../../services/astro_story_service.dart';
+import '../../../services/consultation_products.dart';
 import '../../../utils/city_normalizer.dart';
 import '../../../utils/web_image_picker.dart';
 import '../../auth/presentation/auth_screen.dart';
@@ -988,6 +989,18 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                           onPressed: () =>
                               _showJetonEkleDialog(doc.id, name, bakiye),
                         ),
+                        IconButton(
+                          tooltip: 'Ücretsiz Danışmanlık Ver',
+                          icon: const Icon(
+                            Icons.card_giftcard,
+                            color: Color(0xFFFFD700),
+                          ),
+                          onPressed: () => _showFreeConsultationDialog(
+                            doc.id,
+                            name,
+                            doc.data()['email']?.toString() ?? '',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1055,6 +1068,138 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         content: Text('$name kullanıcısına $result jeton eklendi.'),
         backgroundColor: Colors.green.shade700,
       ),
+    );
+  }
+
+  Future<void> _showFreeConsultationDialog(
+    String uid,
+    String name,
+    String email,
+  ) async {
+    String? selectedProductId;
+    const advisorName = 'Ece Bingör';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1A1E5A),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0x55F2D9A6)),
+              ),
+              title: Text(
+                '$name — Ücretsiz Danışmanlık Ver',
+                style: const TextStyle(
+                  color: Color(0xFFF2D9A6),
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Danışmanlık Türü',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    // ignore: deprecated_member_use
+                    value: selectedProductId,
+                    dropdownColor: const Color(0xFF1A1E5A),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: const Color(0xFF0F1240),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide:
+                            const BorderSide(color: Color(0x55F2D9A6)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide:
+                            const BorderSide(color: Color(0x55F2D9A6)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    hint: const Text(
+                      'Seçiniz...',
+                      style: TextStyle(color: Colors.white38),
+                    ),
+                    items: kIapProductDanismanlik.entries
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.key,
+                            child: Text(
+                              e.value,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) =>
+                        setDialogState(() => selectedProductId = v),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Danışman',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    advisorName,
+                    style: TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text(
+                    'İptal',
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5C3EFF),
+                  ),
+                  onPressed: selectedProductId == null
+                      ? null
+                      : () async {
+                          Navigator.of(ctx).pop();
+                          await AdvisorChatService().grantFreeConsultation(
+                            userId: uid,
+                            userEmail: email,
+                            productId: selectedProductId!,
+                            consultationType:
+                                kIapProductDanismanlik[selectedProductId]!,
+                            advisorName: advisorName,
+                          );
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '$name kullanıcısına ücretsiz danışmanlık tanımlandı.',
+                              ),
+                              backgroundColor: Colors.green.shade700,
+                            ),
+                          );
+                        },
+                  child: const Text('Tanımla'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -1129,8 +1274,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                   final firstName = chats.first;
                   final userName =
                       (firstName['userName'] as String?)?.trim() ?? 'İsimsiz';
-                  final userEmail =
-                      (firstName['userEmail'] as String?) ?? '';
+                  final userEmail = (firstName['userEmail'] as String?) ?? '';
                   final chatCount = chats.length;
 
                   return Card(
@@ -1190,16 +1334,14 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                 (chat['advisorName'] as String?) ?? '-';
                             final consultationType =
                                 (chat['consultationType'] as String?) ?? '-';
-                            final status =
-                                (chat['status'] as String?) ?? '-';
+                            final status = (chat['status'] as String?) ?? '-';
                             final createdAt = chat['createdAt'];
                             DateTime? createdDate;
                             if (createdAt is Timestamp) {
                               createdDate = createdAt.toDate();
                             }
                             return Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 children: [
                                   const Icon(
@@ -1218,9 +1360,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                     ),
                                   ),
                                   Text(
-                                    status == 'open'
-                                        ? 'Açık'
-                                        : 'Kapalı',
+                                    status == 'open' ? 'Açık' : 'Kapalı',
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: status == 'open'
@@ -1228,17 +1368,16 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                           : Colors.white38,
                                     ),
                                   ),
-                                  if (createdDate != null) ...
-                                    [
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _formatDateTime(createdDate),
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.white38,
-                                        ),
+                                  if (createdDate != null) ...[
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _formatDateTime(createdDate),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.white38,
                                       ),
-                                    ],
+                                    ),
+                                  ],
                                 ],
                               ),
                             );
@@ -2542,16 +2681,35 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             isThreeLine: true,
-                            trailing: chat.unreadByAdmin
+                            trailing: chat.isClosed
                                 ? Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF5C3EFF),
-                                      shape: BoxShape.circle,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade900,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'KAPALI',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   )
-                                : null,
+                                : chat.unreadByAdmin
+                                    ? Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF5C3EFF),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      )
+                                    : null,
                             onTap: () => _openAdvisorChatDetail(chat),
                           ),
                         );
@@ -3159,12 +3317,39 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
   final _replyController = TextEditingController();
   final _scrollController = ScrollController();
   bool _sending = false;
+  bool _isClosed = false;
+  bool _closingInProgress = false;
+  StreamSubscription<String>? _statusSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _isClosed = widget.chat.isClosed;
+    _statusSub =
+        AdvisorChatService().chatStatusStream(widget.chat.id).listen((status) {
+      if (mounted) setState(() => _isClosed = status == 'closed');
+    });
+  }
 
   @override
   void dispose() {
+    _statusSub?.cancel();
     _replyController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleChatStatus() async {
+    setState(() => _closingInProgress = true);
+    try {
+      if (_isClosed) {
+        await AdvisorChatService().reopenChat(widget.chat.id);
+      } else {
+        await AdvisorChatService().closeChat(widget.chat.id);
+      }
+    } finally {
+      if (mounted) setState(() => _closingInProgress = false);
+    }
   }
 
   Future<void> _sendReply() async {
@@ -3307,6 +3492,35 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                           ),
                         ),
                       ),
+                      if (_closingInProgress)
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFFFD700),
+                            strokeWidth: 2,
+                          ),
+                        )
+                      else
+                        TextButton.icon(
+                          onPressed: _toggleChatStatus,
+                          icon: Icon(
+                            _isClosed ? Icons.lock_open : Icons.lock_outline,
+                            size: 14,
+                          ),
+                          label: Text(
+                            _isClosed ? 'Yeniden Aç' : 'Sohbeti Sonlandır',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                _isClosed ? Colors.greenAccent : Colors.redAccent,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                          ),
+                        ),
                       IconButton(
                         icon: const Icon(
                           Icons.close,

@@ -36,7 +36,7 @@ class AstroApiService {
   const AstroApiService({
     this.baseUrl = _defaultBaseUrl,
     this.apiKey = _defaultApiKey,
-    this.requestTimeout = const Duration(seconds: 45),
+    this.requestTimeout = const Duration(seconds: 90),
   });
 
   static const _defaultBaseUrl = String.fromEnvironment(

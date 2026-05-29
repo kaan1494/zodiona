@@ -1,6 +1,11 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../../../profile/presentation/premium_membership_screen.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key, required this.header});
@@ -442,6 +447,7 @@ class _DailyMoonDetailPageState extends State<_DailyMoonDetailPage> {
   final Set<_DetailCategory> _expanded = <_DetailCategory>{};
   final PageController _beautyPageController = PageController();
   int _beautyPageIndex = 0;
+  bool _isPremium = false;
 
   static const List<_DetailCategory> _orderedCategories = [
     _DetailCategory.beauty,
@@ -460,6 +466,20 @@ class _DailyMoonDetailPageState extends State<_DailyMoonDetailPage> {
       widget.initialDate.month,
       widget.initialDate.day,
     );
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    if (!mounted) return;
+    setState(() {
+      _isPremium = (doc.data()?['isPremium'] as bool?) ?? false;
+    });
   }
 
   @override
@@ -559,6 +579,7 @@ class _DailyMoonDetailPageState extends State<_DailyMoonDetailPage> {
                         category: category,
                         pages: dayData[category] ?? const [],
                         expanded: _expanded.contains(category),
+                        isPremium: _isPremium,
                         beautyPageController: _beautyPageController,
                         beautyPageIndex: _beautyPageIndex,
                         onBeautyPageChanged: (index) {
@@ -947,6 +968,7 @@ class _InsightExpandableCard extends StatelessWidget {
     required this.beautyPageController,
     required this.beautyPageIndex,
     required this.onBeautyPageChanged,
+    required this.isPremium,
   });
 
   final _DetailCategory category;
@@ -956,6 +978,13 @@ class _InsightExpandableCard extends StatelessWidget {
   final PageController beautyPageController;
   final int beautyPageIndex;
   final ValueChanged<int> onBeautyPageChanged;
+  final bool isPremium;
+
+  static bool _isLocked(_DetailCategory cat) =>
+      cat == _DetailCategory.career ||
+      cat == _DetailCategory.money ||
+      cat == _DetailCategory.health ||
+      cat == _DetailCategory.intimacy;
 
   @override
   Widget build(BuildContext context) {
@@ -963,6 +992,7 @@ class _InsightExpandableCard extends StatelessWidget {
     final title = _categoryTitle(category);
     final icon = _categoryIcon(category);
     final isBeauty = category == _DetailCategory.beauty;
+    final locked = _isLocked(category) && !isPremium;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -984,6 +1014,7 @@ class _InsightExpandableCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: Column(
               children: [
+                // ── Başlık satırı ──────────────────────────────────────
                 Row(
                   children: [
                     Text(icon, style: const TextStyle(fontSize: 30)),
@@ -998,6 +1029,15 @@ class _InsightExpandableCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (locked)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 6),
+                        child: Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFFECCB8E),
+                          size: 20,
+                        ),
+                      ),
                     Icon(
                       expanded
                           ? Icons.keyboard_arrow_up
@@ -1007,11 +1047,14 @@ class _InsightExpandableCard extends StatelessWidget {
                     ),
                   ],
                 ),
+                // ── Genişletilmiş içerik ───────────────────────────────
                 if (expanded) ...[
                   const SizedBox(height: 10),
                   Container(height: 1.2, color: const Color(0xFFD5C099)),
                   const SizedBox(height: 14),
-                  if (isBeauty && pages.length > 1)
+                  if (locked)
+                    _LockedContent(text: pages.isEmpty ? '' : pages.first)
+                  else if (isBeauty && pages.length > 1)
                     SizedBox(
                       height: 256,
                       child: PageView.builder(
@@ -1043,7 +1086,7 @@ class _InsightExpandableCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  if (isBeauty && pages.length > 1) ...[
+                  if (isBeauty && pages.length > 1 && !locked) ...[
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -1069,6 +1112,129 @@ class _InsightExpandableCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Kilitli içerik: ilk cümle görünür, gerisi bulanık + premium CTA
+class _LockedContent extends StatelessWidget {
+  const _LockedContent({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // İlk satır – açık
+        Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            color: Colors.white,
+            height: 1.45,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        // Bulanık alan + premium CTA
+        ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              // Bulanık metin (tam metin, arka plan için)
+              ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Text(
+                  text,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white,
+                    height: 1.45,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              // Karartma gradyanı + CTA
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PremiumMembershipScreen(),
+                    ),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          const Color(0xFF2A1060).withValues(alpha: 0.55),
+                          const Color(0xFF130D35).withValues(alpha: 0.92),
+                        ],
+                      ),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFFECCB8E),
+                          size: 26,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Premium ol, tüm özelliklerden\nsınırsız faydalan',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFFECCB8E),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            height: 1.45,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
+                            ),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFECCB8E,
+                              ).withValues(alpha: 0.5),
+                            ),
+                          ),
+                          child: const Text(
+                            'Premium\'a Geç',
+                            style: TextStyle(
+                              color: Color(0xFFECCB8E),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

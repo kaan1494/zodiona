@@ -45,6 +45,16 @@ class TarotSelectionService {
         .doc('current');
   }
 
+  static Future<bool> _isUserPremium() async {
+    final uid = _uid;
+    if (uid == null) return false;
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    return snap.data()?['isPremium'] == true;
+  }
+
   static Future<void> saveSelection(List<TarotSelectedCard> cards) async {
     final doc = _doc;
     if (doc == null) return;
@@ -76,11 +86,13 @@ class TarotSelectionService {
   }
 
   static Future<bool> isOnCooldown() async {
+    if (await _isUserPremium()) return false;
     final remaining = await cooldownRemaining();
     return remaining > Duration.zero;
   }
 
   static Future<Duration> cooldownRemaining() async {
+    if (await _isUserPremium()) return Duration.zero;
     final doc = _doc;
     if (doc == null) return Duration.zero;
     final snap = await doc.get();

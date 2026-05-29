@@ -655,7 +655,7 @@ class _TarotCardsDisplay extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Seçtiğin Kartlar',
+                'En Son Seçtiğin Kartlar',
                 style: TextStyle(
                   color: Color(0xFFF2D293),
                   fontSize: 15,

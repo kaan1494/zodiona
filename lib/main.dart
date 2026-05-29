@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'features/admin/presentation/admin_access_gate_screen.dart';
 import 'features/auth/presentation/auth_screen.dart';
@@ -183,7 +182,7 @@ class _AppBootstrapState extends State<_AppBootstrap> {
         }
 
         if (result?.updateRequired == true) {
-          return const _ForceUpdateScreen();
+          return const ForceUpdateScreen();
         }
 
         // Admin sayfasinda her zaman AdminAccessGateScreen'i goster
@@ -328,88 +327,6 @@ class _OrbitRing extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ForceUpdateScreen extends StatelessWidget {
-  const _ForceUpdateScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset('assets/onboarding/home_page.png', fit: BoxFit.cover),
-          Container(color: Colors.black.withValues(alpha: 0.6)),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('✨', style: TextStyle(fontSize: 56)),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Güncelleme Gerekli',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFF2D293),
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Zodiona\'nın yeni sürümü çıktı! Uygulamayı kullanmaya devam edebilmek için lütfen güncelle.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF2D293),
-                        foregroundColor: const Color(0xFF0B1026),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: () async {
-                        const url =
-                            'https://play.google.com/store/apps/details?id=com.zodiona.app';
-                        // url_launcher veya basit intent ile aç
-                        // ignore: deprecated_member_use
-                        final uri = Uri.parse(url);
-                        try {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        } catch (_) {}
-                      },
-                      child: const Text(
-                        'Şimdi Güncelle',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

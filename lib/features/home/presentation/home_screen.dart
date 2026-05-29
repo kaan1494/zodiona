@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../profile/presentation/profile_screen.dart';
+import '../../profile/presentation/premium_membership_screen.dart';
 import 'pages/advisor_page.dart';
 import 'pages/birth_chart_detail_page.dart';
 import 'pages/calendar_page.dart';
@@ -20,6 +21,7 @@ import 'widgets/periodic_horoscope_section.dart';
 import 'widgets/celestia_card_preview.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
+import '../../../services/force_update_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../utils/zodiac.dart';
 
@@ -30,19 +32,76 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 2;
   int _advisorInitialTabIndex = 0;
   int _advisorPageSeed = 0;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _versionSub;
+  Timer? _upsellTimer;
 
   @override
   void initState() {
     super.initState();
     NotificationService.initialize();
+    WidgetsBinding.instance.addObserver(this);
+    _listenVersionUpdates();
+    _scheduleUpsell();
+  }
+
+  void _scheduleUpsell() {
+    _upsellTimer = Timer(const Duration(seconds: 20), () async {
+      if (!mounted) return;
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final snap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      if (!mounted) return;
+      final isPremium = snap.data()?['isPremium'] == true;
+      if (!isPremium) {
+        await PremiumUpsellSheet.show(context);
+      }
+    });
+  }
+
+  void _listenVersionUpdates() {
+    _versionSub = FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('version')
+        .snapshots()
+        .listen((snap) async {
+          if (!mounted) return;
+          final required = await ForceUpdateService.instance
+              .isUpdateRequiredFromData(snap.data());
+          if (required && mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const ForceUpdateScreen()),
+              (_) => false,
+            );
+          }
+        });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ForceUpdateService.instance.isUpdateRequired().then((required) {
+        if (required && mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const ForceUpdateScreen()),
+            (_) => false,
+          );
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _upsellTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _versionSub?.cancel();
     super.dispose();
   }
 
@@ -519,7 +578,8 @@ class _HomeUserHeader extends StatefulWidget {
   State<_HomeUserHeader> createState() => _HomeUserHeaderState();
 }
 
-class _HomeUserHeaderState extends State<_HomeUserHeader> {
+class _HomeUserHeaderState extends State<_HomeUserHeader>
+    with WidgetsBindingObserver {
   final _astroApiService = const AstroApiService();
   static const _astroRetryInterval = Duration(seconds: 15);
   bool _isRefreshingAstro = false;
@@ -531,6 +591,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _astroRetryTicker = Timer.periodic(_astroRetryInterval, (_) {
       if (!mounted || _isRefreshingAstro) {
         return;
@@ -540,7 +601,19 @@ class _HomeUserHeaderState extends State<_HomeUserHeader> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted && !_isRefreshingAstro) {
+      // Uygulama arka plandan döndüğünde bekleme süresini sıfırla,
+      // böylece "Bilinmiyor" değerleri hâlâ eksikse hemen yeniden denensin.
+      setState(() {
+        _lastAstroAttemptAt = null;
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _astroRetryTicker?.cancel();
     super.dispose();
   }
