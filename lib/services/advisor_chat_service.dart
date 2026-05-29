@@ -23,7 +23,7 @@ class AdvisorChatMessage {
 
   final String id;
   final String text;
-  final String senderType; // 'user' | 'admin'
+  final String senderType;
   final DateTime createdAt;
 
   bool get isFromUser => senderType == 'user';
@@ -76,12 +76,11 @@ class AdvisorChatSummary {
   final bool unreadByUser;
   final DateTime? updatedAt;
   final Map<String, dynamic> userProfile;
-  final String status; // 'open' | 'closed'
+  final String status;
 
   bool get isClosed => status == 'closed';
 }
 
-/// Ãœcretsiz danÄ±ÅŸmanlÄ±k eriÅŸim kaydÄ±.
 class FreeConsultationGrant {
   const FreeConsultationGrant({
     required this.id,
@@ -137,15 +136,13 @@ class AdvisorChatService {
   CollectionReference<Map<String, dynamic>> get _grantsRef =>
       _firestore.collection('free_consultations');
 
-  /// KullanÄ±cÄ±nÄ±n bu danÄ±ÅŸmanla aÃ§Ä±k bir konuÅŸmasÄ± varsa dÃ¶ndÃ¼rÃ¼r,
-  /// yoksa yeni bir konuÅŸma oluÅŸturur.
   Future<String> getOrCreateChat({
     required String advisorName,
     required String consultationType,
     required Map<String, dynamic> userProfile,
   }) async {
     final uid = _auth.currentUser?.uid;
-    if (uid == null) throw Exception('Oturum aÃ§Ä±lmamÄ±ÅŸ.');
+    if (uid == null) throw Exception('Oturum acilmamis.');
 
     final existing = await _chatsRef
         .where('userId', isEqualTo: uid)
@@ -175,7 +172,6 @@ class AdvisorChatService {
     return docRef.id;
   }
 
-  /// KullanÄ±cÄ± tarafÄ±: mesaj akÄ±ÅŸÄ±
   Stream<List<AdvisorChatMessage>> messagesStream(String chatId) {
     return _chatsRef
         .doc(chatId)
@@ -188,7 +184,6 @@ class AdvisorChatService {
         );
   }
 
-  /// Chat durum akÄ±ÅŸÄ± (open / closed).
   Stream<String> chatStatusStream(String chatId) {
     return _chatsRef
         .doc(chatId)
@@ -196,14 +191,12 @@ class AdvisorChatService {
         .map((snap) => snap.data()?['status'] as String? ?? 'open');
   }
 
-  /// Mesaj gÃ¶nder â€” senderType: 'user' veya 'admin'
   Future<void> sendMessage({
     required String chatId,
     required String text,
     required String senderType,
   }) async {
     final batch = _firestore.batch();
-
     final msgRef = _chatsRef.doc(chatId).collection('messages').doc();
     batch.set(msgRef, {
       'text': text,
@@ -211,18 +204,15 @@ class AdvisorChatService {
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
     });
-
     batch.update(_chatsRef.doc(chatId), {
       'lastMessage': text,
       'updatedAt': FieldValue.serverTimestamp(),
       'unreadByAdmin': senderType == 'user',
       'unreadByUser': senderType == 'admin',
     });
-
     await batch.commit();
   }
 
-  /// Admin: sohbeti sonlandÄ±r.
   Future<void> closeChat(String chatId) async {
     await _chatsRef.doc(chatId).update({
       'status': 'closed',
@@ -231,7 +221,6 @@ class AdvisorChatService {
     });
   }
 
-  /// Admin: sohbeti yeniden aÃ§.
   Future<void> reopenChat(String chatId) async {
     await _chatsRef.doc(chatId).update({
       'status': 'open',
@@ -239,7 +228,6 @@ class AdvisorChatService {
     });
   }
 
-  /// Admin: tÃ¼m konuÅŸmalarÄ± listele
   Stream<List<AdvisorChatSummary>> allChatsStream() {
     return _chatsRef
         .orderBy('updatedAt', descending: true)
@@ -250,7 +238,6 @@ class AdvisorChatService {
         );
   }
 
-  /// KullanÄ±cÄ±: kendi konuÅŸmalarÄ±nÄ± listele
   Stream<List<AdvisorChatSummary>> userChatsStream(String userId) {
     return _chatsRef.where('userId', isEqualTo: userId).snapshots().map((snap) {
       final list = snap.docs.map((d) => AdvisorChatSummary.fromDoc(d)).toList();
@@ -264,22 +251,41 @@ class AdvisorChatService {
     });
   }
 
-  /// Admin: belirli chat'i okundu iÅŸaretle
   Future<void> markReadByAdmin(String chatId) async {
     await _chatsRef.doc(chatId).update({'unreadByAdmin': false});
   }
 
-  // â”€â”€ Ãœcretsiz EriÅŸim YÃ¶netimi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Future<String> adminCreateChatForUser({
+    required String userId,
+    required String userEmail,
+    required String advisorName,
+    required String consultationType,
+    required Map<String, dynamic> userProfile,
+  }) async {
+    final docRef = await _chatsRef.add({
+      'userId': userId,
+      'userEmail': userEmail,
+      'userName': userProfile['name'] ?? '',
+      'advisorName': advisorName,
+      'consultationType': consultationType,
+      'status': 'open',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastMessage': '',
+      'unreadByAdmin': false,
+      'userProfile': userProfile,
+    });
+    return docRef.id;
+  }
 
-  /// Admin: kullanÄ±cÄ±ya Ã¼cretsiz danÄ±ÅŸmanlÄ±k eriÅŸimi ver.
-  Future<void> grantFreeConsultation({
+  Future<String> grantFreeConsultation({
     required String userId,
     required String userEmail,
     required String productId,
     required String consultationType,
     required String advisorName,
   }) async {
-    await _grantsRef.add({
+    final doc = await _grantsRef.add({
       'userId': userId,
       'userEmail': userEmail,
       'productId': productId,
@@ -289,9 +295,9 @@ class AdvisorChatService {
       'used': false,
       'chatId': null,
     });
+    return doc.id;
   }
 
-  /// KullanÄ±cÄ±: belirli bir Ã¼rÃ¼n iÃ§in kullanÄ±lmamÄ±ÅŸ Ã¼cretsiz eriÅŸimi kontrol et.
   Future<FreeConsultationGrant?> checkFreeGrant({
     required String userId,
     required String productId,
@@ -302,12 +308,10 @@ class AdvisorChatService {
         .where('used', isEqualTo: false)
         .limit(1)
         .get();
-
     if (snap.docs.isEmpty) return null;
     return FreeConsultationGrant.fromDoc(snap.docs.first);
   }
 
-  /// Ãœcretsiz eriÅŸimi kullanÄ±ldÄ± olarak iÅŸaretle ve chatId'yi kaydet.
   Future<void> markGrantUsed(String grantId, String chatId) async {
     await _grantsRef.doc(grantId).update({
       'used': true,
@@ -316,7 +320,6 @@ class AdvisorChatService {
     });
   }
 
-  /// Admin: tÃ¼m Ã¼cretsiz eriÅŸim kayÄ±tlarÄ±nÄ± listele.
   Stream<List<FreeConsultationGrant>> allGrantsStream() {
     return _grantsRef
         .orderBy('grantedAt', descending: true)
@@ -327,7 +330,6 @@ class AdvisorChatService {
         );
   }
 
-  /// Admin: belirli bir kullanÄ±cÄ±nÄ±n Ã¼cretsiz eriÅŸim kayÄ±tlarÄ±.
   Stream<List<FreeConsultationGrant>> userGrantsStream(String userId) {
     return _grantsRef
         .where('userId', isEqualTo: userId)
@@ -339,7 +341,6 @@ class AdvisorChatService {
         );
   }
 
-  /// Admin: Ã¼cretsiz eriÅŸim kaydÄ±nÄ± sil.
   Future<void> deleteGrant(String grantId) async {
     await _grantsRef.doc(grantId).delete();
   }
