@@ -1116,13 +1116,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                       fillColor: const Color(0xFF0F1240),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            const BorderSide(color: Color(0x55F2D9A6)),
+                        borderSide: const BorderSide(color: Color(0x55F2D9A6)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide:
-                            const BorderSide(color: Color(0x55F2D9A6)),
+                        borderSide: const BorderSide(color: Color(0x55F2D9A6)),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -1174,24 +1172,61 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                   onPressed: selectedProductId == null
                       ? null
                       : () async {
+                          final service = AdvisorChatService();
+                          final productId = selectedProductId!;
+                          final consultationType =
+                              kIapProductDanismanlik[productId]!;
                           Navigator.of(ctx).pop();
-                          await AdvisorChatService().grantFreeConsultation(
-                            userId: uid,
-                            userEmail: email,
-                            productId: selectedProductId!,
-                            consultationType:
-                                kIapProductDanismanlik[selectedProductId]!,
-                            advisorName: advisorName,
-                          );
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '$name kullanıcısına ücretsiz danışmanlık tanımlandı.',
+
+                          try {
+                            // 1. Kullanıcı profilini çek
+                            final userDoc = await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(uid)
+                                .get();
+                            final userProfile =
+                                userDoc.data() ?? <String, dynamic>{};
+
+                            // 2. Sohbeti oluştur
+                            final chatId =
+                                await service.adminCreateChatForUser(
+                              userId: uid,
+                              userEmail: email,
+                              advisorName: advisorName,
+                              consultationType: consultationType,
+                              userProfile: userProfile,
+                            );
+
+                            // 3. Grant kaydını oluştur ve kullanıldı işaretle
+                            final grantId =
+                                await service.grantFreeConsultation(
+                              userId: uid,
+                              userEmail: email,
+                              productId: productId,
+                              consultationType: consultationType,
+                              advisorName: advisorName,
+                            );
+                            await service.markGrantUsed(grantId, chatId);
+
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '$name kullanıcısına "$consultationType" danışmanlığı tanımlandı ve sohbet açıldı.',
+                                ),
+                                backgroundColor: Colors.green.shade700,
+                                duration: const Duration(seconds: 4),
                               ),
-                              backgroundColor: Colors.green.shade700,
-                            ),
-                          );
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Hata: $e'),
+                                backgroundColor: Colors.red.shade700,
+                              ),
+                            );
+                          }
                         },
                   child: const Text('Tanımla'),
                 ),
@@ -2701,15 +2736,15 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                     ),
                                   )
                                 : chat.unreadByAdmin
-                                    ? Container(
-                                        width: 10,
-                                        height: 10,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF5C3EFF),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      )
-                                    : null,
+                                ? Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF5C3EFF),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                : null,
                             onTap: () => _openAdvisorChatDetail(chat),
                           ),
                         );
@@ -3325,8 +3360,9 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
   void initState() {
     super.initState();
     _isClosed = widget.chat.isClosed;
-    _statusSub =
-        AdvisorChatService().chatStatusStream(widget.chat.id).listen((status) {
+    _statusSub = AdvisorChatService().chatStatusStream(widget.chat.id).listen((
+      status,
+    ) {
       if (mounted) setState(() => _isClosed = status == 'closed');
     });
   }
@@ -3513,8 +3549,9 @@ class _AdvisorChatDetailPanelState extends State<_AdvisorChatDetailPanel> {
                             style: const TextStyle(fontSize: 12),
                           ),
                           style: TextButton.styleFrom(
-                            foregroundColor:
-                                _isClosed ? Colors.greenAccent : Colors.redAccent,
+                            foregroundColor: _isClosed
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,

@@ -445,8 +445,86 @@ class _ReportsTab extends StatelessWidget {
   }
 }
 
-class _MyChatsTab extends StatelessWidget {
+class _MyChatsTab extends StatefulWidget {
   const _MyChatsTab({super.key});
+
+  @override
+  State<_MyChatsTab> createState() => _MyChatsTabState();
+}
+
+class _MyChatsTabState extends State<_MyChatsTab> {
+  Set<String> _knownChatIds = {};
+  bool _initialized = false;
+
+  void _onChatsUpdated(List<AdvisorChatSummary> chats, BuildContext context) {
+    final newIds = chats.map((c) => c.id).toSet();
+    if (!_initialized) {
+      _knownChatIds = newIds;
+      _initialized = true;
+      return;
+    }
+    final added = newIds.difference(_knownChatIds);
+    _knownChatIds = newIds;
+    if (added.isEmpty) return;
+
+    final newChat = chats.firstWhere((c) => added.contains(c.id));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1A1E5A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Color(0x55F2D9A6)),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.chat_bubble, color: Color(0xFFFFD700)),
+              SizedBox(width: 8),
+              Text(
+                'Yeni Danışmanlık Sohbeti',
+                style: TextStyle(color: Color(0xFFF2D9A6), fontSize: 16),
+              ),
+            ],
+          ),
+          content: Text(
+            '${newChat.advisorName} ile "${newChat.consultationType}" danışmanlık sohbetiniz açıldı.',
+            style: const TextStyle(color: Colors.white70, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text(
+                'Sonra',
+                style: TextStyle(color: Colors.white38),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF5C3EFF),
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AdvisorChatPage(
+                      chatId: newChat.id,
+                      advisorName: newChat.advisorName,
+                      consultationType: newChat.consultationType,
+                      advisorImagePath:
+                          'assets/admin_story_presets/story_05.png',
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Sohbete Git'),
+            ),
+          ],
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -476,6 +554,7 @@ class _MyChatsTab extends StatelessWidget {
           );
         }
         final chats = snap.data ?? [];
+        _onChatsUpdated(chats, context);
         if (chats.isEmpty) {
           return Align(
             alignment: Alignment.topCenter,
