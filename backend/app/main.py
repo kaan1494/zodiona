@@ -312,10 +312,11 @@ def recalc_missing_astro(
     _init_firebase()
     db = admin_firestore.client()
 
-    # 'pending' = onboarding'de API çağrısı yapılamadı, veri bekleniyor
+    # moonSign == 'Bilinmiyor' olan tüm kullanıcıları bul
+    # (birthTimezone 'pending', null veya boş olabilir — hepsini yakala)
     pending_docs = (
         db.collection("users")
-        .where("birthTimezone", "==", "pending")
+        .where("moonSign", "==", "Bilinmiyor")
         .stream()
     )
 
@@ -330,11 +331,15 @@ def recalc_missing_astro(
 
         # Gerekli alanları kontrol et
         birth_date_raw = data.get("birthDate")
-        birth_time_str = (data.get("birthTime") or "").strip()
         lat_raw = data.get("birthPlaceLat")
         lon_raw = data.get("birthPlaceLon")
 
-        if not birth_date_raw or not birth_time_str or lat_raw is None or lon_raw is None:
+        # birthTime: bilinmiyorsa veya boşsa 12:00 varsayılan kullan
+        birth_time_str = (data.get("birthTime") or "12:00").strip()
+        if not birth_time_str or data.get("birthTimeUnknown") is True:
+            birth_time_str = "12:00"
+
+        if not birth_date_raw or lat_raw is None or lon_raw is None:
             skipped += 1
             continue
 
