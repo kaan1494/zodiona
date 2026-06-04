@@ -23,6 +23,7 @@ import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
 import '../../../services/force_update_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/user_activity_service.dart';
 import '../../../utils/zodiac.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _advisorPageSeed = 0;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _versionSub;
   Timer? _upsellTimer;
+  DateTime? _tabEnteredAt;
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _listenVersionUpdates();
     _scheduleUpsell();
+    _tabEnteredAt = DateTime.now();
   }
 
   void _scheduleUpsell() {
@@ -85,7 +88,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && _tabEnteredAt != null) {
+        final duration = DateTime.now().difference(_tabEnteredAt!).inSeconds;
+        UserActivityService.logPageView(
+          uid: uid,
+          pageName: UserActivityService.tabName(_currentIndex),
+          durationSeconds: duration,
+        );
+        _tabEnteredAt = null;
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      _tabEnteredAt = DateTime.now();
       ForceUpdateService.instance.isUpdateRequired().then((required) {
         if (required && mounted) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -99,6 +115,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && _tabEnteredAt != null) {
+      final duration = DateTime.now().difference(_tabEnteredAt!).inSeconds;
+      UserActivityService.logPageView(
+        uid: uid,
+        pageName: UserActivityService.tabName(_currentIndex),
+        durationSeconds: duration,
+      );
+    }
     _upsellTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _versionSub?.cancel();
@@ -127,7 +152,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (_currentIndex == index) {
       return;
     }
-    setState(() => _currentIndex = index);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && _tabEnteredAt != null) {
+      final duration = DateTime.now().difference(_tabEnteredAt!).inSeconds;
+      UserActivityService.logPageView(
+        uid: uid,
+        pageName: UserActivityService.tabName(_currentIndex),
+        durationSeconds: duration,
+      );
+    }
+    setState(() {
+      _currentIndex = index;
+      _tabEnteredAt = DateTime.now();
+    });
   }
 
   @override

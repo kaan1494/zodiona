@@ -60,8 +60,9 @@ service cloud.firestore {
     }
 
     match /advisor_chats/{chatId} {
+      // Kullanici kendi chatini olusturabilir; admin herhangi bir user icin olusturabilir
       allow create: if signedIn()
-        && request.resource.data.userId == request.auth.uid;
+        && (request.resource.data.userId == request.auth.uid || isAdmin());
 
       allow read, update: if signedIn()
         && (resource.data.userId == request.auth.uid || isAdmin());
@@ -73,6 +74,14 @@ service cloud.firestore {
       }
     }
 
+    match /free_consultations/{grantId} {
+      // Sadece admin yazabilir; ilgili kullanici veya admin okuyabilir
+      allow create, update, delete: if isAdmin();
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow list: if isAdmin();
+    }
+
     match /weekly_horoscopes_general/{sign} {
       allow read: if signedIn();
       allow write: if isAdmin();
@@ -82,6 +91,23 @@ service cloud.firestore {
     match /app_config/{doc} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Kullanıcı aktivite takibi — kullanıcı kendi verisini yazar, admin okur
+    match /user_activity/{userId} {
+      allow write: if isOwner(userId);
+      allow read: if isAdmin();
+
+      match /events/{eventId} {
+        allow create: if isOwner(userId);
+        allow read: if isAdmin();
+      }
+    }
+
+    // Global analitik sayaçlar — oturum açmış her kullanıcı yazar, admin okur
+    match /analytics/{doc} {
+      allow write: if signedIn();
+      allow read: if isAdmin();
     }
 
     // Admin için tüm kullanıcıların kozmik sohbetlerini collectionGroup ile sorgulama

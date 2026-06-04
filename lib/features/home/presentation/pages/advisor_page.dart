@@ -1005,11 +1005,25 @@ class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          ...widget.advisors.map(
-                            (advisor) => _AdvisorDetailCard(
-                              advisor: advisor,
-                              onSelect: () => _onSelectAdvisor(advisor),
-                            ),
+                          Builder(
+                            builder: (context) {
+                              // Google Play'den gerçek fiyatı al (yoksa hard-coded)
+                              final product = IapService.instance
+                                  .productForConsultation(widget.productId);
+                              final realPrice = product?.price;
+                              return Column(
+                                children: widget.advisors
+                                    .map(
+                                      (advisor) => _AdvisorDetailCard(
+                                        advisor: advisor,
+                                        priceOverride: realPrice,
+                                        onSelect: () =>
+                                            _onSelectAdvisor(advisor),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -1026,10 +1040,15 @@ class _ConsultationDetailPageState extends State<_ConsultationDetailPage> {
 }
 
 class _AdvisorDetailCard extends StatelessWidget {
-  const _AdvisorDetailCard({required this.advisor, required this.onSelect});
+  const _AdvisorDetailCard({
+    required this.advisor,
+    required this.onSelect,
+    this.priceOverride,
+  });
 
   final _AdvisorData advisor;
   final VoidCallback onSelect;
+  final String? priceOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -1061,7 +1080,7 @@ class _AdvisorDetailCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      advisor.priceText,
+                      priceOverride ?? advisor.priceText,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: const Color(0xFFF3DFB0),
                         fontWeight: FontWeight.w500,

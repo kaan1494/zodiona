@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 import firebase_admin
 from firebase_admin import credentials
+from firebase_admin import firestore as admin_firestore
 from firebase_admin import messaging as admin_messaging
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -290,4 +291,118 @@ def notify_horoscope(
         total_failed += response.failure_count
 
     return {"sent": total_sent, "failed": total_failed}
+
+
+# ── Eksik Burç Verisi Toplu Düzeltme ─────────────────────────────────────────
+
+
+@app.post("/admin/recalc-missing-astro")
+def recalc_missing_astro(
+    x_api_key: str = Header(..., alias="X-API-Key"),
+) -> dict:
+    """
+    birthTimezone == 'pending' olan (yani onboarding sırasında API'ye
+    ulaşılamayan) tüm kullanıcılar için ay/yükselen/venüs burçlarını
+    yeniden hesaplayıp Firestore'a yazar.
+    """
+    expected_key = os.getenv("NOTIFY_API_KEY", "")
+    if not expected_key or x_api_key != expected_key:
+        raise HTTPException(status_code=403, detail="Yetkisiz erişim")
+
+    _init_firebase()
+    db = admin_firestore.client()
+
+    # 'pending' = onboarding'de API çağrısı yapılamadı, veri bekleniyor
+    pending_docs = (
+        db.collection("users")
+        .where("birthTimezone", "==", "pending")
+        .stream()
+    )
+
+    fixed = 0
+    failed = 0
+    skipped = 0
+    errors: list[str] = []
+
+    for doc in pending_docs:
+        data = doc.to_dict() or {}
+        uid = doc.id
+
+        # Gerekli alanları kontrol et
+        birth_date_raw = data.get("birthDate")
+        birth_time_str = (data.get("birthTime") or "").strip()
+        lat_raw = data.get("birthPlaceLat")
+        lon_raw = data.get("birthPlaceLon")
+
+        if not birth_date_raw or not birth_time_str or lat_raw is None or lon_raw is None:
+            skipped += 1
+            continue
+
+        try:
+            lat = float(lat_raw)
+            lon = float(lon_raw)
+        except (TypeError, ValueError):
+            skipped += 1
+            continue
+
+        # birthDate: Firestore Timestamp → datetime
+        try:
+            if hasattr(birth_date_raw, "seconds"):
+                birth_date_dt = datetime.utcfromtimestamp(birth_date_raw.seconds)
+            else:
+                birth_date_dt = datetime.fromisoformat(str(birth_date_raw))
+        except Exception:
+            skipped += 1
+            continue
+
+        # birthTime: "HH:MM" → saat + dakika
+        try:
+            h_str, m_str = birth_time_str.split(":")
+            bh, bm = int(h_str), int(m_str)
+        except Exception:
+            skipped += 1
+            continue
+
+        local_dt = birth_date_dt.replace(hour=bh, minute=bm, second=0, microsecond=0)
+
+        try:
+            tz_name = (
+                _tf.timezone_at(lng=lon, lat=lat)
+                or _tf.closest_timezone_at(lng=lon, lat=lat)
+            )
+            if not tz_name:
+                raise ValueError("Timezone bulunamadı")
+
+            local_zoned = local_dt.replace(tzinfo=ZoneInfo(tz_name))
+            utc_dt = local_zoned.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+
+            t = _ts.utc(
+                utc_dt.year, utc_dt.month, utc_dt.day,
+                utc_dt.hour, utc_dt.minute, utc_dt.second,
+            )
+            e = _earth.at(t)
+
+            _, sun_lon, _ = e.observe(_sun).apparent().ecliptic_latlon()
+            _, moon_lon, _ = e.observe(_moon).apparent().ecliptic_latlon()
+            _, venus_lon, _ = e.observe(_venus).apparent().ecliptic_latlon()
+            asc_lon = ascendant_longitude(utc_dt, latitude=lat, longitude=lon)
+
+            db.collection("users").document(uid).update({
+                "zodiacSign": sign_from_longitude(sun_lon.degrees),
+                "moonSign": sign_from_longitude(moon_lon.degrees),
+                "risingSign": sign_from_longitude(asc_lon),
+                "venusSign": sign_from_longitude(venus_lon.degrees),
+                "birthTimezone": tz_name,
+                "updatedAt": admin_firestore.SERVER_TIMESTAMP,
+            })
+            fixed += 1
+
+        except Exception as exc:
+            failed += 1
+            errors.append(f"{uid}: {exc}")
+
+    result = {"fixed": fixed, "failed": failed, "skipped": skipped}
+    if errors:
+        result["errors"] = errors[:20]  # ilk 20 hatayı döndür
+    return result
 

@@ -87,6 +87,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
 
   bool _isActive = true;
   bool _isSaving = false;
+  bool _isRecalcingAstro = false;
 
   final List<_SegmentDraft> _segments = [_SegmentDraft()];
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _cachedUserDocs = [];
@@ -906,6 +907,28 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 18),
+            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('analytics')
+                  .doc('page_stats')
+                  .snapshots(),
+              builder: (context, statsSnap) {
+                final rawData = statsSnap.data?.data() ?? {};
+                final pagesRaw =
+                    rawData['pages'] as Map<String, dynamic>? ?? {};
+                if (pagesRaw.isEmpty) return const SizedBox.shrink();
+                final pageCounts = pagesRaw.map(
+                  (k, v) => MapEntry(k, (v as num?)?.toInt() ?? 0),
+                );
+                return _distributionCard(
+                  title: 'Bölüm Kullanım İstatistikleri',
+                  distribution: pageCounts,
+                  accent: const Color(0xFFF2C98A),
+                  maxItems: 10,
+                );
+              },
+            ),
           ],
         );
       },
@@ -1188,8 +1211,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                                 userDoc.data() ?? <String, dynamic>{};
 
                             // 2. Sohbeti oluştur
-                            final chatId =
-                                await service.adminCreateChatForUser(
+                            final chatId = await service.adminCreateChatForUser(
                               userId: uid,
                               userEmail: email,
                               advisorName: advisorName,
@@ -1198,8 +1220,7 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                             );
 
                             // 3. Grant kaydını oluştur ve kullanıldı işaretle
-                            final grantId =
-                                await service.grantFreeConsultation(
+                            final grantId = await service.grantFreeConsultation(
                               userId: uid,
                               userEmail: email,
                               productId: productId,
@@ -2139,6 +2160,32 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
           ),
         ),
         const SizedBox(height: 10),
+        if (!premiumOnly)
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFF2C98A),
+              side: const BorderSide(color: Color(0x66F2C98A)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+            onPressed: _isRecalcingAstro ? null : _runAstroRecalc,
+            icon: _isRecalcingAstro
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Color(0xFFF2C98A),
+                    ),
+                  )
+                : const Icon(Icons.auto_fix_high_outlined, size: 16),
+            label: Text(
+              _isRecalcingAstro
+                  ? 'Burçlar yeniden hesaplanıyor...'
+                  : 'Eksik Burç Verilerini Düzelt',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        const SizedBox(height: 10),
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance.collection('users').snapshots(),
           builder: (context, snapshot) {
@@ -2420,6 +2467,23 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
                               ],
                             ),
                           ],
+                          const Divider(height: 1, color: Colors.white12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF9CE1AE),
+                                textStyle: const TextStyle(fontSize: 12),
+                              ),
+                              icon: const Icon(
+                                Icons.bar_chart_outlined,
+                                size: 15,
+                              ),
+                              label: const Text('Hareketleri Gör'),
+                              onPressed: () =>
+                                  _showUserActivitySheet(doc.id, name),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -3219,8 +3283,73 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
     return '$day.$month.$year $hour:$minute';
   }
 
+  void _showUserActivitySheet(String uid, String userName) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _UserActivityDialog(uid: uid, userName: userName),
+    );
+  }
+
   Widget _sectionTitle(String text) {
     return Text(text, style: Theme.of(context).textTheme.titleLarge);
+  }
+
+  Future<void> _runAstroRecalc() async {
+    if (_isRecalcingAstro) return;
+    setState(() => _isRecalcingAstro = true);
+
+    const baseUrl = String.fromEnvironment(
+      'ASTRO_API_BASE_URL',
+      defaultValue: 'https://zodiona-astro-api.onrender.com',
+    );
+    const apiKey = String.fromEnvironment(
+      'NOTIFY_API_KEY',
+      defaultValue: 'zod-notify-2026',
+    );
+
+    try {
+      final uri = Uri.parse('$baseUrl/admin/recalc-missing-astro');
+      final response = await http
+          .post(uri, headers: {'X-API-Key': apiKey})
+          .timeout(const Duration(minutes: 5));
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final fixed = body['fixed'] ?? 0;
+        final failed = body['failed'] ?? 0;
+        final skipped = body['skipped'] ?? 0;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Tamamlandı — Düzeltilen: $fixed, Atlanan: $skipped, Hata: $failed',
+            ),
+            backgroundColor: failed > 0
+                ? Colors.orange
+                : const Color(0xFF44C767),
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hata: ${response.statusCode} — ${response.body}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bağlantı hatası: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isRecalcingAstro = false);
+    }
   }
 
   Widget _buildPreviewImage(
@@ -4119,6 +4248,252 @@ class _WeeklyHoroscopeMgmtSectionState
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// ── Kullanıcı Aktivite Dialog ─────────────────────────────────────────────────
+class _UserActivityDialog extends StatelessWidget {
+  const _UserActivityDialog({required this.uid, required this.userName});
+
+  final String uid;
+  final String userName;
+
+  String _fmtDuration(int seconds) {
+    if (seconds < 60) return '${seconds}sn';
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    if (m < 60) return '${m}dk ${s}sn';
+    final h = m ~/ 60;
+    final rm = m % 60;
+    return '${h}sa ${rm}dk';
+  }
+
+  String _fmtTs(dynamic value) {
+    if (value is Timestamp) {
+      final dt = value.toDate().toLocal();
+      final d = dt.day.toString().padLeft(2, '0');
+      final mo = dt.month.toString().padLeft(2, '0');
+      final h = dt.hour.toString().padLeft(2, '0');
+      final mi = dt.minute.toString().padLeft(2, '0');
+      return '$d.$mo.${dt.year} $h:$mi';
+    }
+    return '-';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: const Color(0xFF1A1035),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.all(20),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640, maxHeight: 720),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Başlık
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.bar_chart_outlined,
+                    color: Color(0xFF9CE1AE),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$userName — Kullanım Hareketleri',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Colors.white12),
+            // İçerik
+            Expanded(
+              child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collection('user_activity')
+                    .doc(uid)
+                    .snapshots(),
+                builder: (context, summarySnap) {
+                  final summary = summarySnap.data?.data() ?? {};
+                  final pageCounts =
+                      (summary['pageCounts'] as Map<String, dynamic>? ?? {})
+                          .map((k, v) => MapEntry(k, (v as num).toInt()));
+                  final totalDuration =
+                      (summary['totalDuration'] as Map<String, dynamic>? ?? {})
+                          .map((k, v) => MapEntry(k, (v as num).toInt()));
+                  final sortedPages = pageCounts.entries.toList()
+                    ..sort((a, b) => b.value.compareTo(a.value));
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Bölüm özeti
+                        if (sortedPages.isNotEmpty) ...[
+                          const Text(
+                            'Bölüm Özeti',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: Color(0xFFF2C98A),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ...sortedPages.map((entry) {
+                            final dur = totalDuration[entry.key] ?? 0;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF9CE1AE),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      entry.key,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${entry.value}× ziyaret',
+                                    style: const TextStyle(
+                                      color: Colors.white60,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    _fmtDuration(dur),
+                                    style: const TextStyle(
+                                      color: Color(0xFFF2C98A),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 14),
+                          const Divider(color: Colors.white12),
+                          const SizedBox(height: 10),
+                        ],
+                        // Son aktiviteler
+                        const Text(
+                          'Son Aktiviteler',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: Color(0xFFF2C98A),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: FirebaseFirestore.instance
+                              .collection('user_activity')
+                              .doc(uid)
+                              .collection('events')
+                              .orderBy('startedAt', descending: true)
+                              .limit(50)
+                              .snapshots(),
+                          builder: (context, eventsSnap) {
+                            if (eventsSnap.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Padding(
+                                padding: EdgeInsets.only(top: 16),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            final events = eventsSnap.data?.docs ?? [];
+                            if (events.isEmpty) {
+                              return const Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Text(
+                                  'Henüz aktivite kaydı yok.\nKullanıcı uygulamayı kullandıkça veriler burada görünecek.',
+                                  style: TextStyle(color: Colors.white54),
+                                ),
+                              );
+                            }
+                            return Column(
+                              children: events.map((doc) {
+                                final d = doc.data();
+                                final page = d['page'] as String? ?? '-';
+                                final dur =
+                                    (d['durationSeconds'] as num?)?.toInt() ??
+                                    0;
+                                final ts = d['startedAt'];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          page,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        _fmtDuration(dur),
+                                        style: const TextStyle(
+                                          color: Color(0xFF9CE1AE),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Text(
+                                        _fmtTs(ts),
+                                        style: const TextStyle(
+                                          color: Colors.white38,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
