@@ -20,6 +20,7 @@ enum _AdminPanelTab {
   users,
   stories,
   support,
+  uidMisafir,
   premium,
   advisorChats,
   weeklyHoroscope,
@@ -277,6 +278,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return 'Admin - Astro Hikâyeler';
       case _AdminPanelTab.support:
         return 'Admin - Bize Ulaşın Mesajları';
+      case _AdminPanelTab.uidMisafir:
+        return 'Admin - UID Misafir';
       case _AdminPanelTab.premium:
         return 'Admin - Premium Kullanıcılar';
       case _AdminPanelTab.advisorChats:
@@ -617,6 +620,11 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
             tab: _AdminPanelTab.support,
           ),
           _buildNavItem(
+            icon: Icons.badge_outlined,
+            title: 'UID Misafir',
+            tab: _AdminPanelTab.uidMisafir,
+          ),
+          _buildNavItem(
             icon: Icons.workspace_premium_outlined,
             title: 'Premium Kullanıcılar',
             tab: _AdminPanelTab.premium,
@@ -710,6 +718,8 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         return _storiesSection();
       case _AdminPanelTab.support:
         return _supportSection();
+      case _AdminPanelTab.uidMisafir:
+        return _uidMisafirAttemptsSection();
       case _AdminPanelTab.premium:
         return _danismanSatinAlanlarSection();
       case _AdminPanelTab.advisorChats:
@@ -2856,6 +2866,132 @@ class _AdminStoryAdminScreenState extends State<AdminStoryAdminScreen> {
         _sectionTitle('Kullanıcılardan Gelen Mesajlar'),
         const SizedBox(height: 8),
         _supportMessagesSection(),
+      ],
+    );
+  }
+
+  Widget _uidMisafirAttemptsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('UID Misafir ve Üye Olmayan İndirim Denemeleri'),
+        const SizedBox(height: 8),
+        const Text(
+          'Bu liste, indirim kodu ekranında premium olmayan kullanıcıların ve misafirlerin denemelerini gösterir.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        const SizedBox(height: 10),
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: FirebaseFirestore.instance
+              .collection('discount_attempts')
+              .orderBy('createdAt', descending: true)
+              .limit(300)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              final err = snapshot.error;
+              final message = err is FirebaseException
+                  ? 'Kayıtlar yüklenemedi (${err.code}). Firestore index/rules kontrol edin.'
+                  : 'Kayıtlar yüklenemedi. Firestore erişimini kontrol edin.';
+              return Text(
+                message,
+                style: const TextStyle(color: Colors.orangeAccent),
+              );
+            }
+
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            final docs = List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+              snapshot.data?.docs ?? const [],
+            );
+
+            final filtered = docs
+                .where((doc) {
+                  final data = doc.data();
+                  final isPremiumUser = _asBool(data['isPremiumUser']);
+                  return !isPremiumUser;
+                })
+                .toList(growable: false);
+
+            if (filtered.isEmpty) {
+              return const Text(
+                'Henüz misafir/üye olmayan indirim denemesi kaydı yok.',
+              );
+            }
+
+            return Column(
+              children: filtered
+                  .map((doc) {
+                    final data = doc.data();
+                    final uid = (data['uid'] as String?)?.trim();
+                    final membershipType = (data['membershipType'] as String?)
+                        ?.trim();
+                    final status = (data['status'] as String?)?.trim();
+                    final code = (data['code'] as String?)?.trim();
+                    final store = (data['store'] as String?)?.trim();
+                    final created =
+                        _resolveDateTimeValue(data['createdAt']) ??
+                        _resolveDateTimeValue(data['createdAtClient']);
+
+                    final isGuest =
+                        membershipType == 'misafir' ||
+                        (uid != null &&
+                            uid.toLowerCase().startsWith('misafir_'));
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isGuest
+                              ? const Color(0xFF6B4EFF)
+                              : const Color(0xFF2A9D8F),
+                          child: Icon(
+                            isGuest
+                                ? Icons.person_off_outlined
+                                : Icons.person_outline,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                        title: Text(
+                          'UID: ${uid?.isNotEmpty == true ? uid : '-'}',
+                        ),
+                        subtitle: Text(
+                          'Kayıt: ${_formatDateTime(created)}\n'
+                          'Tip: ${membershipType?.isNotEmpty == true ? membershipType : '-'} | '
+                          'Durum: ${status?.isNotEmpty == true ? status : '-'}\n'
+                          'Kod: ${code?.isNotEmpty == true ? code : '-'} | '
+                          'Platform: ${store?.isNotEmpty == true ? store : '-'}',
+                        ),
+                        isThreeLine: true,
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isGuest
+                                ? const Color(0x3344A0FF)
+                                : const Color(0x3344C767),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            isGuest ? 'Misafir' : 'Üye Değil',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    );
+                  })
+                  .toList(growable: false),
+            );
+          },
+        ),
       ],
     );
   }
