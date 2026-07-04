@@ -3,11 +3,14 @@ from __future__ import annotations
 import json
 import math
 import os
+import urllib.error
+import urllib.request
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 import firebase_admin
+from firebase_admin import auth as admin_auth
 from firebase_admin import credentials
 from firebase_admin import firestore as admin_firestore
 from firebase_admin import messaging as admin_messaging
@@ -82,6 +85,20 @@ class AstroResponse(BaseModel):
     moonSign: str
     ascendant: str
     venusSign: str
+
+
+class OpenAiMessage(BaseModel):
+    role: str
+    content: str
+
+
+class OpenAiChatRequest(BaseModel):
+    messages: list[OpenAiMessage]
+    systemPrompt: str
+    model: str = "gpt-4o-mini"
+    maxTokens: int = 512
+    temperature: float = 0.75
+    responseFormat: dict[str, Any] | None = None
 
 
 def sign_from_longitude(deg: float) -> str:
@@ -189,6 +206,95 @@ def ascendant_longitude(utc_dt: datetime, latitude: float, longitude: float) -> 
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+def _verify_firebase_bearer(authorization: str | None) -> str:
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header gerekli")
+
+    prefix = "Bearer "
+    if not authorization.startswith(prefix):
+        raise HTTPException(status_code=401, detail="Bearer token gerekli")
+
+    token = authorization[len(prefix) :].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Bearer token boş olamaz")
+
+    _init_firebase()
+    try:
+        decoded = admin_auth.verify_id_token(token)
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail="Firebase token doğrulanamadı") from exc
+
+    uid = decoded.get("uid")
+    if not uid:
+        raise HTTPException(status_code=401, detail="Firebase token uid içermiyor")
+    return uid
+
+
+@app.post("/openai/chat")
+def openai_chat(
+    req: OpenAiChatRequest,
+    authorization: str | None = Header(default=None, alias="Authorization"),
+) -> dict[str, Any]:
+    """OpenAI chat/completions isteğini backend üzerinden geçirir."""
+    uid = _verify_firebase_bearer(authorization)
+
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise HTTPException(status_code=503, detail="OPENAI_API_KEY tanımlı değil")
+
+    messages: list[dict[str, str]] = [
+        {"role": "system", "content": req.systemPrompt},
+        *[{"role": message.role, "content": message.content} for message in req.messages],
+    ]
+
+    payload: dict[str, Any] = {
+        "model": req.model,
+        "messages": messages,
+        "max_tokens": req.maxTokens,
+        "temperature": req.temperature,
+    }
+    if req.responseFormat is not None:
+        payload["response_format"] = req.responseFormat
+
+    request = urllib.request.Request(
+        url="https://api.openai.com/v1/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=75) as response:
+            response_body = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
+        raise HTTPException(
+            status_code=exc.code,
+            detail=f"OpenAI hatası: {error_body}",
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"OpenAI bağlantı hatası: {exc}") from exc
+
+    data = json.loads(response_body)
+    choices = data.get("choices") or []
+    if not choices:
+        raise HTTPException(status_code=502, detail="OpenAI yanıtında choices yok")
+
+    content = choices[0].get("message", {}).get("content", "")
+    if not isinstance(content, str):
+        content = str(content)
+
+    return {
+        "uid": uid,
+        "content": content,
+        "model": data.get("model", req.model),
+        "usage": data.get("usage"),
+    }
 
 
 @app.get("/astro", response_model=AstroResponse)
@@ -316,7 +422,7 @@ def recalc_missing_astro(
     # (birthTimezone 'pending', null veya boş olabilir — hepsini yakala)
     pending_docs = (
         db.collection("users")
-        .where("moonSign", "==", "Bilinmiyor")
+        .limit(1)
         .stream()
     )
 

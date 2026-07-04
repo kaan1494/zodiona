@@ -22,27 +22,27 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   static const _jobOptions = <String>[
-    'Teknik ve Muhendislik',
-    'Saglik Hizmetleri',
-    'Egitim',
-    'Sanat, Tasarim ve Medya',
-    'Sivil Toplum ve Kamu Sektoru',
+    'Teknik ve Mühendislik',
+    'Sağlık Hizmetleri',
+    'Eğitim',
+    'Sanat, Tasarım ve Medya',
+    'Sivil Toplum ve Kamu Sektörü',
     'Spor ve Fitness',
-    'Serbest ve Bagimsiz Calisma',
-    'Ogrenci',
+    'Serbest ve Bağımsız Çalışma',
+    'Öğrenci',
     'Emekli',
-    'Diger',
+    'Diğer',
   ];
 
   static const _relationshipOptions = <String>[
     'Bekar',
-    'Iliskim var',
-    'Nisanli',
+    'İlişkim var',
+    'Nişanlı',
     'Evli',
-    'Bosanmis',
-    'Karmasik',
+    'Boşanmış',
+    'Karmaşık',
     'Dul',
-    'Acik iliski',
+    'Açık ilişki',
   ];
 
   static const _stepImages = <String>[
@@ -250,7 +250,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             children: [
               SizedBox(height: topSpacing),
               Text(
-                'Adin',
+                'Adın',
                 style: theme.textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -258,7 +258,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Yolculuga baslamadan once seni biraz tanimak istiyorum.',
+                'Yolculuğa başlamadan önce seni biraz tanımak istiyorum.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.white70,
                   fontWeight: FontWeight.w600,
@@ -268,7 +268,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               TextField(
                 controller: _nameController,
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDecoration('Adin'),
+                decoration: _inputDecoration('Adın'),
               ),
             ],
           ),
@@ -296,7 +296,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Dogdugun gun, hikayenin ilk sayfasi. Bu bilgiyi paylasirsan, gokyuzundeki izini daha net okuyabilirim.',
+          'Doğduğun gün, hikayenin ilk sayfası. Bu bilgiyi paylaşırsan, gökyüzündeki izini daha net okuyabilirim.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -333,7 +333,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Dogum Saatin',
+          'Doğum Saatin',
           style: theme.textTheme.titleLarge?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -341,7 +341,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Dogum saatin, gezegenlerin konumunu netlestirmemize yardimci olur.',
+          'Doğum saatin, gezegenlerin konumunu netleştirmemize yardımcı olur.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -398,7 +398,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Is',
+          'İş',
           style: theme.textTheme.titleLarge?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -406,7 +406,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Gunluk hayatinda seni en iyi anlatan rol hangisi?',
+          'Günlük hayatında seni en iyi anlatan rol hangisi?',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -425,7 +425,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Iliski Durumun',
+          'İlişki Durumun',
           style: theme.textTheme.titleLarge?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -433,7 +433,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Kalbinin ritmi nasil? Baglarini birlikte okuyalim.',
+          'Kalbinin ritmi nasıl? Bağlarını birlikte okuyalım.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -457,7 +457,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Dogum Yerin',
+          'Doğum Yerin',
           style: theme.textTheme.titleLarge?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
@@ -465,7 +465,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Dogum yerin, yildiz yolculugunun baslangic noktasi.',
+          'Doğum yerin, yıldız yolculuğunun başlangıç noktası.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -476,7 +476,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         TextField(
           controller: _placeController,
           style: const TextStyle(color: Colors.white),
-          decoration: _inputDecoration('Dogum yeri ara'),
+          decoration: _inputDecoration('Doğum yeri ara'),
           onChanged: _onPlaceChanged,
         ),
         const SizedBox(height: 16),
@@ -517,7 +517,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              'Sonuc bulunamadi. Farkli bir yazimla tekrar dene.',
+              'Sonuç bulunamadı. Farklı bir yazımla tekrar dene.',
               style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
               textAlign: TextAlign.center,
             ),
@@ -543,9 +543,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Ruhunun kimligini bilmek, sana daha ozel rehberlik ve\n'
-          'wellbeing onerileri sunmama yardimci olacak.\n'
-          'Cinsiyet bilgisini benimle paylasmak ister misin?',
+          'Ruhunun kimliğini bilmek, sana daha özel rehberlik ve\n'
+          'wellbeing önerileri sunmama yardımcı olacak.\n'
+          'Cinsiyet bilgisini benimle paylaşmak ister misin?',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: Colors.white70,
             fontWeight: FontWeight.w600,
@@ -574,18 +574,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(width: 16),
             _buildGenderCard(
               theme,
-              label: 'Kadin',
+              label: 'Kadın',
               icon: Icons.female,
-              isSelected: _gender == 'Kadin',
-              onTap: () => setState(() => _gender = 'Kadin'),
+              isSelected: _gender == 'Kadın',
+              onTap: () => setState(() => _gender = 'Kadın'),
             ),
             const SizedBox(width: 16),
             _buildGenderCard(
               theme,
-              label: 'Non Binary',
+              label: 'Belirtmek istemiyorum',
               icon: Icons.transgender,
-              isSelected: _gender == 'Non Binary',
-              onTap: () => setState(() => _gender = 'Non Binary'),
+              isSelected: _gender == 'Belirtmek istemiyorum',
+              onTap: () => setState(() => _gender = 'Belirtmek istemiyorum'),
             ),
           ],
         ),
@@ -640,6 +640,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 8),
           Text(
             label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w600,
@@ -699,7 +702,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _nextStep() async {
     if (!_validateCurrentStep()) {
-      _showSnack('Lutfen bu adimi tamamla.');
+      _showSnack('Lütfen bu adımı tamamla.');
       return;
     }
 
@@ -736,7 +739,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     setState(() => _isSaving = true);
 
     final birthTimeValue = _birthTimeUnknown
-        ? null
+        ? '12:00'
         : _birthTime != null
         ? _formatTime(_birthTime!)
         : null;
@@ -749,8 +752,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     final canCalculateFromApi =
         _birthDate != null &&
-        _birthTime != null &&
-        !_birthTimeUnknown &&
+        birthTimeValue != null &&
         _selectedBirthLocation != null;
 
     if (!canCalculateFromApi) {
@@ -796,7 +798,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
     } catch (_) {
       if (mounted) {
-        _showSnack('Kayit tamamlanamadi. Tekrar dene.');
+        _showSnack('Kayıt tamamlanamadı. Tekrar dene.');
       }
     } finally {
       if (mounted) {

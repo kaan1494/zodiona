@@ -657,185 +657,277 @@ class PremiumUpsellSheet extends StatelessWidget {
     );
   }
 
+  void _openPremiumScreen(BuildContext context) {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const PremiumMembershipScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF1A0848), Color(0xFF080520)],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.white24,
-              borderRadius: BorderRadius.circular(2),
+    return FractionallySizedBox(
+      heightFactor: 0.94,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: Stack(
+          children: [
+            // Arka plan görseli
+            Positioned.fill(
+              child: Image.asset(
+                'assets/onboarding/home_page.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
+            // Karanlık degrade
+            Positioned.fill(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const RadialGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFF7C3AED)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF7C3AED).withValues(alpha: 0.5),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Text(
-                    '✦',
-                    style: TextStyle(fontSize: 22, color: Colors.white),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      const Color(0xCC050012),
+                      const Color(0xEE050012),
+                      const Color(0xFF050012),
+                    ],
+                    stops: const [0.0, 0.35, 0.65],
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Zodiona Premium',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFFF2D28E),
-                        fontWeight: FontWeight.w800,
+            ),
+            // İçerik
+            SafeArea(
+              child: Column(
+                children: [
+                  // Kapat butonu
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.12),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
-                    Text(
-                      'Evrenin tüm mesajlarını al',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.white54),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ...[
-            ('🪐', 'Doğum haritasına tam erişim'),
-            ('📅', 'Her gün kişisel astroloji içeriği'),
-            ('💞', 'Sınırsız uyumluluk analizi'),
-            ('🌟', 'Tarot kartlarını sınırsız kullan'),
-          ].map(
-            (b) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                children: [
-                  Text(b.$1, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 10),
-                  Text(
-                    b.$2,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
                   ),
+
+                  // Başlık
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Zodiona Premium',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFFF2D28E),
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Evrenin tüm mesajlarını al',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white60, fontSize: 15),
+                  ),
+
+                  // Özellik listesi
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Rehberlik için ihtiyacın olan\nher şey',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ...[
+                            (
+                              '🪐',
+                              'Doğum Haritası',
+                              'Hayat amacını, yeteneklerini ve potansiyelini keşfet.',
+                            ),
+                            (
+                              '💞',
+                              'Uyum',
+                              'İlişkilerindeki dengeyi ve gerçek bağları keşfet.',
+                            ),
+                            (
+                              '❤️',
+                              'Haftalık İlişki Yorumu',
+                              'İlişkini etkileyebilecek enerjileri önceden öğren.',
+                            ),
+                            (
+                              '🌍',
+                              'Transit Hareketleri',
+                              'Gezegen geçişlerinin duygularını nasıl etkilediğini anlık olarak keşfet.',
+                            ),
+                            (
+                              '🌙',
+                              'Ay Takvimi',
+                              'Önemli anlarını ay döngüsüne göre planla.',
+                            ),
+                            (
+                              '⭐',
+                              'Günlük Burç Yorumu',
+                              'Doğum haritana özel hazırlanmış günlük yorumlar al.',
+                            ),
+                          ].map(
+                            (b) => Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    b.$1,
+                                    style: const TextStyle(fontSize: 22),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          b.$2,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          b.$3,
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 13,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Fiyat bilgisi
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                        border: Border.all(
+                          color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Aylık yalnızca ',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white54),
+                          ),
+                          Text(
+                            '₺75',
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(
+                                  color: const Color(0xFFF2D28E),
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                          Text(
+                            '  ·  Yıllıkta ₺550',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white38),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // CTA Butonu
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
+                    child: GestureDetector(
+                      onTap: () => _openPremiumScreen(context),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFD97706)],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(
+                                0xFFFFD700,
+                              ).withValues(alpha: 0.35),
+                              blurRadius: 20,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          '✦  Premium\'u Keşfet',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF1C0A00),
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      'Daha sonra',
+                      style: TextStyle(color: Colors.white30, fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-              border: Border.all(
-                color: const Color(0xFF7C3AED).withValues(alpha: 0.4),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Aylık yalnızca ',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white54),
-                ),
-                Text(
-                  '₺75',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: const Color(0xFFF2D28E),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  '  ·  Yıllıkta ₺550',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const PremiumMembershipScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFD700), Color(0xFFD97706)],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: const Text(
-                  '✦  Premium\'u Keşfet',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF1C0A00),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Daha sonra',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.white30),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

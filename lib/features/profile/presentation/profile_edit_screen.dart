@@ -18,16 +18,16 @@ class ProfileEditScreen extends StatefulWidget {
 
 class _ProfileEditScreenState extends State<ProfileEditScreen> {
   static const _jobOptions = <String>[
-    'Teknik ve Muhendislik',
-    'Saglik Hizmetleri',
-    'Egitim',
-    'Sanat, Tasarim ve Medya',
-    'Sivil Toplum ve Kamu Sektoru',
+    'Teknik ve Mühendislik',
+    'Sağlık Hizmetleri',
+    'Eğitim',
+    'Sanat, Tasarım ve Medya',
+    'Sivil Toplum ve Kamu Sektörü',
     'Spor ve Fitness',
-    'Serbest ve Bagimsiz Calisma',
-    'Ogrenci',
+    'Serbest ve Bağımsız Çalışma',
+    'Öğrenci',
     'Emekli',
-    'Diger',
+    'Diğer',
   ];
 
   static const _relationshipOptions = <String>[
@@ -41,7 +41,11 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     'Açık ilişki',
   ];
 
-  static const _genderOptions = <String>['Erkek', 'Kadın', 'Non Binary'];
+  static const _genderOptions = <String>[
+    'Erkek',
+    'Kadın',
+    'Belirtmek istemiyorum',
+  ];
 
   final _nameController = TextEditingController();
   final _placeController = TextEditingController();
@@ -130,11 +134,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       _birthDate = birthDate;
       _birthTime = _parseTimeOfDay(birthTimeText);
       _birthTimeUnknown = birthTimeUnknown;
-      _job = (job?.isNotEmpty ?? false) ? job : null;
-      _relationshipStatus = (relationship?.isNotEmpty ?? false)
-          ? relationship
-          : null;
-      _gender = (gender?.isNotEmpty ?? false) ? gender : null;
+      _job = _normalizeJob(job);
+      _relationshipStatus = _normalizeRelationship(relationship);
+      _gender = _normalizeGender(gender);
 
       _initialPlaceText = placeText;
       _existingPlaceLat = _asDouble(data['birthPlaceLat']);
@@ -152,7 +154,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
           : null;
       _initialBirthTimeUnknown = birthTimeUnknown;
     } catch (_) {
-      _showSnack('Profil bilgileri yuklenemedi.');
+      _showSnack('Profil bilgileri yüklenemedi.');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -219,9 +221,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                           children: [
                             _buildTextInputTile(
-                              label: 'Isim',
+                              label: 'İsim',
                               controller: _nameController,
-                              hint: 'Adini yaz',
+                              hint: 'Adını yaz',
                             ),
                             const SizedBox(height: 14),
                             _buildDateTile(),
@@ -397,7 +399,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
   Widget _buildTimeTile() {
     final text = _birthTimeUnknown
-        ? 'Bilinmiyor'
+        ? '12:00'
         : (_birthTime != null ? _formatTime(_birthTime!) : '-');
 
     return _buildPickerTile(
@@ -655,7 +657,7 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     }
 
     final birthTimeValue = _birthTimeUnknown
-        ? null
+        ? '12:00'
         : (_birthTime != null ? _formatTime(_birthTime!) : null);
 
     final hasBirthDateChanged = !_sameDate(_initialBirthDate, _birthDate);
@@ -676,7 +678,6 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
 
     final canCalculateFromApi =
         _birthDate != null &&
-        !_birthTimeUnknown &&
         birthTimeValue != null &&
         birthPlaceLat != null &&
         birthPlaceLon != null;
@@ -872,6 +873,60 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
       return double.tryParse(value);
     }
     return null;
+  }
+
+  String? _normalizeJob(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    const map = <String, String>{
+      'Teknik ve Muhendislik': 'Teknik ve Mühendislik',
+      'Saglik Hizmetleri': 'Sağlık Hizmetleri',
+      'Egitim': 'Eğitim',
+      'Sanat, Tasarim ve Medya': 'Sanat, Tasarım ve Medya',
+      'Sivil Toplum ve Kamu Sektoru': 'Sivil Toplum ve Kamu Sektörü',
+      'Serbest ve Bagimsiz Calisma': 'Serbest ve Bağımsız Çalışma',
+      'Ogrenci': 'Öğrenci',
+      'Diger': 'Diğer',
+    };
+
+    final normalized = map[raw] ?? raw;
+    return _jobOptions.contains(normalized) ? normalized : raw;
+  }
+
+  String? _normalizeRelationship(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    const map = <String, String>{
+      'Iliskim var': 'İlişkim var',
+      'Nisanli': 'Nişanlı',
+      'Bosanmis': 'Boşanmış',
+      'Karmasik': 'Karmaşık',
+      'Acik iliski': 'Açık ilişki',
+    };
+
+    final normalized = map[raw] ?? raw;
+    return _relationshipOptions.contains(normalized) ? normalized : raw;
+  }
+
+  String? _normalizeGender(String? value) {
+    final raw = value?.trim();
+    if (raw == null || raw.isEmpty) {
+      return null;
+    }
+
+    const map = <String, String>{
+      'Kadin': 'Kadın',
+      'Non Binary': 'Belirtmek istemiyorum',
+    };
+
+    final normalized = map[raw] ?? raw;
+    return _genderOptions.contains(normalized) ? normalized : raw;
   }
 
   void _showSnack(String message) {

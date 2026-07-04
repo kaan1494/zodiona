@@ -176,6 +176,15 @@ class PromoCodeService {
     final normalizedCode = _normalizeCode(rawCode);
 
     if (normalizedCode.isEmpty) {
+      await _writeDiscountAttempt(
+        uid: uid,
+        code: normalizedCode,
+        storePlatform: storePlatform,
+        status: PromoRedeemStatus.emptyCode,
+        membershipType: 'bilinmiyor',
+        isPremiumUser: false,
+        isAuthenticated: true,
+      );
       return const PromoRedeemResult(
         status: PromoRedeemStatus.emptyCode,
         message: 'Lutfen bir promosyon kodu gir.',
@@ -184,6 +193,15 @@ class PromoCodeService {
 
     final offer = _promoCatalog[normalizedCode];
     if (offer == null) {
+      await _writeDiscountAttempt(
+        uid: uid,
+        code: normalizedCode,
+        storePlatform: storePlatform,
+        status: PromoRedeemStatus.invalidCode,
+        membershipType: 'bilinmiyor',
+        isPremiumUser: false,
+        isAuthenticated: true,
+      );
       return const PromoRedeemResult(
         status: PromoRedeemStatus.invalidCode,
         message: 'Kod gecersiz veya suresi dolmus.',
@@ -198,8 +216,19 @@ class PromoCodeService {
       final userData = userSnap.data() ?? {};
       final redeemedCodes =
           (userData['redeemedCodes'] as Map<String, dynamic>?) ?? {};
+      final isPremiumUser = (userData['isPremium'] as bool?) ?? false;
+      final membershipType = isPremiumUser ? 'premium' : 'uye_degil';
 
       if (redeemedCodes.containsKey(normalizedCode)) {
+        await _writeDiscountAttempt(
+          uid: uid,
+          code: normalizedCode,
+          storePlatform: storePlatform,
+          status: PromoRedeemStatus.alreadyUsed,
+          membershipType: membershipType,
+          isPremiumUser: isPremiumUser,
+          isAuthenticated: true,
+        );
         return PromoRedeemResult(
           status: PromoRedeemStatus.alreadyUsed,
           message: '$normalizedCode kodu daha önce kullanılmış.',
@@ -226,6 +255,16 @@ class PromoCodeService {
           },
           'updatedAt': now,
         }, SetOptions(merge: true));
+
+        await _writeDiscountAttempt(
+          uid: uid,
+          code: normalizedCode,
+          storePlatform: storePlatform,
+          status: PromoRedeemStatus.success,
+          membershipType: membershipType,
+          isPremiumUser: isPremiumUser,
+          isAuthenticated: true,
+        );
 
         return PromoRedeemResult(
           status: PromoRedeemStatus.success,
@@ -255,6 +294,16 @@ class PromoCodeService {
         'updatedAt': now,
       }, SetOptions(merge: true));
 
+      await _writeDiscountAttempt(
+        uid: uid,
+        code: normalizedCode,
+        storePlatform: storePlatform,
+        status: PromoRedeemStatus.success,
+        membershipType: membershipType,
+        isPremiumUser: isPremiumUser,
+        isAuthenticated: true,
+      );
+
       return PromoRedeemResult(
         status: PromoRedeemStatus.success,
         message:
@@ -262,10 +311,62 @@ class PromoCodeService {
         offer: offer,
       );
     } catch (_) {
+      await _writeDiscountAttempt(
+        uid: uid,
+        code: normalizedCode,
+        storePlatform: storePlatform,
+        status: PromoRedeemStatus.failed,
+        membershipType: 'bilinmiyor',
+        isPremiumUser: false,
+        isAuthenticated: true,
+      );
       return const PromoRedeemResult(
         status: PromoRedeemStatus.failed,
         message: 'Promosyon kodu şu an uygulanamadı. Lütfen tekrar dene.',
       );
+    }
+  }
+
+  Future<void> logGuestDiscountAttempt({
+    required String guestUid,
+    required String rawCode,
+    required PromoStorePlatform storePlatform,
+  }) async {
+    final normalizedCode = _normalizeCode(rawCode);
+    await _writeDiscountAttempt(
+      uid: guestUid,
+      code: normalizedCode,
+      storePlatform: storePlatform,
+      status: PromoRedeemStatus.failed,
+      membershipType: 'misafir',
+      isPremiumUser: false,
+      isAuthenticated: false,
+    );
+  }
+
+  Future<void> _writeDiscountAttempt({
+    required String uid,
+    required String code,
+    required PromoStorePlatform storePlatform,
+    required PromoRedeemStatus status,
+    required String membershipType,
+    required bool isPremiumUser,
+    required bool isAuthenticated,
+  }) async {
+    try {
+      await _firestore.collection('discount_attempts').add({
+        'uid': uid,
+        'code': code,
+        'store': storePlatform.value,
+        'status': status.name,
+        'membershipType': membershipType,
+        'isPremiumUser': isPremiumUser,
+        'isAuthenticated': isAuthenticated,
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdAtClient': Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (_) {
+      // Log yazımı ana akışı bloklamasın.
     }
   }
 

@@ -46,6 +46,11 @@ C:/Projects/Zodiona/.venv/Scripts/python.exe -m uvicorn backend.app.main:app --h
      ```
 5. Deploy et.
 
+6. Render Environment Variables bölümüne şunları ekle:
+   - `FIREBASE_SERVICE_ACCOUNT`
+   - `NOTIFY_API_KEY`
+   - `OPENAI_API_KEY`
+
 Deploy sonrası URL örneği:
 
 `https://zodiona-astro-api.onrender.com`
@@ -63,6 +68,8 @@ Release için:
 ```bash
 flutter build appbundle --dart-define=ASTRO_API_BASE_URL=https://zodiona-astro-api.onrender.com
 ```
+
+OpenAI anahtarı Flutter'a verilmez; sadece backend ortam değişkeninde tutulur.
 
 ## 4) Neden Ay/Yükselen Bilinmiyor çıkıyordu?
 

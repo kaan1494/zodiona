@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -71,18 +72,38 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
     if (normalized == null || normalized.isEmpty) {
       return false;
     }
-    return normalized != 'Bilinmiyor' && normalized != 'Yukleniyor...';
+
+    final lower = normalized.toLowerCase();
+    final folded = lower
+        .replaceAll('ı', 'i')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('ö', 'o')
+        .replaceAll('ç', 'c');
+
+    final isUnknown = folded.startsWith('bilinmiyor');
+    final isLoading = folded.startsWith('yukleniyor');
+    return !isUnknown && !isLoading;
   }
 
   DateTime? _buildLocalBirthDateTime({
     required DateTime? birthDate,
     required String? birthTime,
+    required bool birthTimeUnknown,
   }) {
-    if (birthDate == null || birthTime == null || birthTime.trim().isEmpty) {
+    if (birthDate == null) {
       return null;
     }
 
-    final parts = birthTime.trim().split(':');
+    final resolvedBirthTime = birthTimeUnknown
+        ? '12:00'
+        : (birthTime ?? '').trim();
+    if (resolvedBirthTime.isEmpty) {
+      return null;
+    }
+
+    final parts = resolvedBirthTime.split(':');
     if (parts.length != 2) {
       return null;
     }
@@ -206,9 +227,11 @@ class _CompatibilityPageState extends State<CompatibilityPage> {
           ? birthDateRaw.toDate()
           : null;
       final birthTime = (friend['birthTime'] as String?)?.trim();
+      final birthTimeUnknown = friend['birthTimeUnknown'] as bool? ?? false;
       final localBirthDateTime = _buildLocalBirthDateTime(
         birthDate: birthDate,
         birthTime: birthTime,
+        birthTimeUnknown: birthTimeUnknown,
       );
       final latitude = _asDouble(friend['birthPlaceLat']);
       final longitude = _asDouble(friend['birthPlaceLon']);
@@ -686,78 +709,95 @@ class _CompatibilityBondPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final area = Offset.zero & size;
-    final bondPath = Path()
-      ..moveTo(1, size.height * 0.5)
-      ..quadraticBezierTo(
-        size.width * 0.20,
-        size.height * 0.26,
-        size.width * 0.38,
-        size.height * 0.50,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.56,
-        size.height * 0.74,
-        size.width * 0.74,
-        size.height * 0.50,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.88,
-        size.height * 0.32,
-        size.width - 1,
-        size.height * 0.50,
-      );
+    final stars = <Offset>[
+      Offset(size.width * 0.05, size.height * 0.56),
+      Offset(size.width * 0.23, size.height * 0.36),
+      Offset(size.width * 0.40, size.height * 0.54),
+      Offset(size.width * 0.59, size.height * 0.43),
+      Offset(size.width * 0.78, size.height * 0.63),
+      Offset(size.width * 0.95, size.height * 0.50),
+    ];
+
+    final bondPath = Path()..moveTo(stars.first.dx, stars.first.dy);
+    for (var i = 1; i < stars.length; i++) {
+      bondPath.lineTo(stars[i].dx, stars[i].dy);
+    }
+
+    final branchPath = Path()
+      ..moveTo(stars[1].dx, stars[1].dy)
+      ..lineTo(size.width * 0.30, size.height * 0.20)
+      ..lineTo(size.width * 0.44, size.height * 0.30);
+
     final echoPath = Path()
-      ..moveTo(4, size.height * 0.58)
+      ..moveTo(stars.first.dx, stars.first.dy + 2)
       ..quadraticBezierTo(
-        size.width * 0.24,
-        size.height * 0.42,
-        size.width * 0.46,
-        size.height * 0.58,
-      )
-      ..quadraticBezierTo(
-        size.width * 0.70,
-        size.height * 0.74,
-        size.width - 4,
-        size.height * 0.58,
+        size.width * 0.30,
+        size.height * 0.70,
+        stars.last.dx,
+        stars.last.dy + 2,
       );
 
     final glowPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0x45F5DEB6), Color(0xD9FFE6B6), Color(0x45F5DEB6)],
+        colors: [Color(0x45E5DAFD), Color(0xCCFFF2CC), Color(0x45E5DAFD)],
       ).createShader(area)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 9
+      ..strokeWidth = 8
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
 
     final linePaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0xB2F6D9A1), Color(0xFFFFF1D2), Color(0xB2F6D9A1)],
+        colors: [Color(0xBFD9D5FF), Color(0xFFFFF1D2), Color(0xBFD9D5FF)],
       ).createShader(area)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 2.8;
+      ..strokeWidth = 2.1;
+
+    final branchPaint = Paint()
+      ..color = const Color(0xD9EEE5FF)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.45
+      ..strokeCap = StrokeCap.round;
 
     final echoPaint = Paint()
       ..shader = const LinearGradient(
-        colors: [Color(0x00F8E7C0), Color(0x99F8E7C0), Color(0x00F8E7C0)],
+        colors: [Color(0x00F8E7C0), Color(0x66EFE6FF), Color(0x00F8E7C0)],
       ).createShader(area)
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 1.6;
+      ..strokeWidth = 1.2;
 
     final pulseCorePaint = Paint()..color = const Color(0xFFFFF3D8);
     final pulseHaloPaint = Paint()
-      ..color = const Color(0x90FFE7BE)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      ..color = const Color(0x90F8EFCF)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.5);
 
     canvas.drawPath(bondPath, glowPaint);
     canvas.drawPath(bondPath, linePaint);
+    canvas.drawPath(branchPath, branchPaint);
     canvas.drawPath(echoPath, echoPaint);
 
-    final center = Offset(size.width * 0.5, size.height * 0.5);
-    canvas.drawCircle(center, 8, pulseHaloPaint);
-    canvas.drawCircle(center, 3.2, pulseCorePaint);
+    for (final p in stars) {
+      canvas.drawCircle(p, 3.2, pulseHaloPaint);
+      canvas.drawCircle(p, 1.75, pulseCorePaint);
+    }
+
+    final sparklePaint = Paint()..color = const Color(0xBFFFFFF4);
+    canvas.drawCircle(
+      Offset(size.width * 0.33, size.height * 0.26),
+      1.3,
+      sparklePaint,
+    );
+    canvas.drawCircle(
+      Offset(size.width * 0.69, size.height * 0.31),
+      1.1,
+      sparklePaint,
+    );
+
+    final center = Offset(size.width * 0.53, size.height * 0.50);
+    canvas.drawCircle(center, 10, pulseHaloPaint);
+    canvas.drawCircle(center, 4, pulseCorePaint);
   }
 
   @override
@@ -865,253 +905,367 @@ class _CompatibilityFriendList extends StatelessWidget {
         );
         final friendAvatarId = _defaultAvatarIdForSign(friendSignKey);
 
-        return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Spacer(),
-                  IconButton(
-                    onPressed: (uid == null || friendId == null)
-                        ? null
-                        : () => onDeleteFriend(friendId, name),
-                    visualDensity: VisualDensity.compact,
-                    splashRadius: 18,
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.white70,
-                      size: 20,
-                    ),
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 3.2, sigmaY: 3.2),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0x527E89A9), Color(0x36364061)],
+                ),
+                border: Border.all(color: const Color(0x63E3D0A7), width: 0.9),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 8,
+                    offset: const Offset(0, 5),
                   ),
-                  const Icon(Icons.chevron_right, color: Colors.white70),
+                  BoxShadow(
+                    color: const Color(0x40CCE3FF),
+                    blurRadius: 8,
+                    spreadRadius: -7,
+                    offset: const Offset(0, -2),
+                  ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 104,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 64,
-                                child: Text(
-                                  currentUserName,
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              _ProfileAvatarBadge(
-                                avatarId: _defaultAvatarIdForSign(currentSun),
-                                size: 52,
-                                borderColor: const Color(0xD2F2D9A3),
-                              ),
-                            ],
-                          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Spacer(),
+                      IconButton(
+                        onPressed: (uid == null || friendId == null)
+                            ? null
+                            : () => onDeleteFriend(friendId, name),
+                        visualDensity: VisualDensity.compact,
+                        splashRadius: 18,
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Color(0xD7E4D5B0),
+                          size: 19,
                         ),
-                        const SizedBox(width: 4),
-                        const Column(
+                      ),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xD7E4D5B0),
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SizedBox(height: 22),
                             SizedBox(
-                              width: 32,
-                              height: 56,
-                              child: CustomPaint(
-                                painter: _CompatibilityBondPainter(),
+                              width: 104,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 64,
+                                    child: Text(
+                                      currentUserName,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: const Color(0xFFE7DFCC),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _ProfileAvatarBadge(
+                                    avatarId: _defaultAvatarIdForSign(
+                                      currentSun,
+                                    ),
+                                    size: 52,
+                                    borderColor: const Color(0xD2F2D9A3),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 2),
+                            const Column(
+                              children: [
+                                SizedBox(height: 18),
+                                SizedBox(
+                                  width: 56,
+                                  height: 76,
+                                  child: CustomPaint(
+                                    painter: _CompatibilityBondPainter(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 2),
+                            SizedBox(
+                              width: 104,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 72,
+                                    child: Text(
+                                      name,
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: const Color(0xFFE7DFCC),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  _ProfileAvatarBadge(
+                                    avatarId: friendAvatarId,
+                                    size: 52,
+                                    borderColor: const Color(0xD2F2D9A3),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 4),
-                        SizedBox(
-                          width: 104,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 72,
-                                child: Text(
-                                  name,
-                                  textAlign: TextAlign.center,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 128,
+                              child: Text(
+                                '☉$currentSun☾$currentMoon↑$currentRising',
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xCCDDD3BE),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10.6,
+                                    ),
                               ),
-                              const SizedBox(height: 4),
-                              _ProfileAvatarBadge(
-                                avatarId: friendAvatarId,
-                                size: 52,
-                                borderColor: const Color(0xD2F2D9A3),
+                            ),
+                            const SizedBox(width: 18),
+                            SizedBox(
+                              width: 128,
+                              child: Text(
+                                '☉$friendSun☾$friendMoon↑$friendRising',
+                                maxLines: 1,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: const Color(0xCCDDD3BE),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10.6,
+                                    ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 128,
-                          child: Text(
-                            '☉$currentSun☾$currentMoon↑$currentRising',
-                            maxLines: 1,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
+                  ),
+                  const SizedBox(height: 10),
+                  _OrnateActionBar(
+                    title: 'İkiniz Arasında',
+                    icon: Icons.favorite_border_rounded,
+                    filled: false,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CompatibilityFriendDetailPage(
+                            currentUserName: currentUserName,
+                            currentUserAvatarId: currentAvatarId,
+                            friendAvatarId: friendAvatarId,
+                            currentUserSigns: {
+                              'sun': currentSun,
+                              'moon': currentMoon,
+                              'rising': currentRising,
+                              'venus': currentVenus,
+                            },
+                            friendData: map,
                           ),
                         ),
-                        const SizedBox(width: 18),
-                        SizedBox(
-                          width: 128,
-                          child: Text(
-                            '☉$friendSun☾$friendMoon↑$friendRising',
-                            maxLines: 1,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _OrnateActionBar(
+                    title: 'Kozmik Rehber\'de Yorumla',
+                    icon: Icons.auto_awesome,
+                    filled: true,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => KozmikRehberUyumChatPage(
+                            friendId: friendId,
+                            friendData: map,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      );
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => CompatibilityFriendDetailPage(
-                        currentUserName: currentUserName,
-                        currentUserAvatarId: currentAvatarId,
-                        friendAvatarId: friendAvatarId,
-                        currentUserSigns: {
-                          'sun': currentSun,
-                          'moon': currentMoon,
-                          'rising': currentRising,
-                          'venus': currentVenus,
-                        },
-                        friendData: map,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    color: Colors.white.withValues(alpha: 0.08),
-                    border: Border.all(color: Colors.white30),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.favorite_border_rounded,
-                        color: Colors.white70,
-                        size: 15,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'İkiniz Arasında',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => KozmikRehberUyumChatPage(
-                        friendId: friendId,
-                        friendData: map,
-                      ),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF7B52C1), Color(0xFF3D1E7A)],
-                    ),
-                    border: Border.all(
-                      color: const Color(0xFFF2D293).withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.auto_awesome,
-                        color: Color(0xFFF2D293),
-                        size: 15,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Kozmik Rehber\'de Yorumla',
-                        style: TextStyle(
-                          color: Color(0xFFF2D293),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _OrnateActionBar extends StatelessWidget {
+  const _OrnateActionBar({
+    required this.title,
+    required this.icon,
+    required this.filled,
+    required this.onTap,
+  });
+
+  final String title;
+  final IconData icon;
+  final bool filled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = const Color(0xA8D9C89D);
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 39,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              gradient: filled
+                  ? const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF6D49B6), Color(0xFF4B2591)],
+                    )
+                  : const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0x665D617E), Color(0x66494E6A)],
+                    ),
+              border: Border.all(color: borderColor, width: 1.1),
+              boxShadow: filled
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF9C8BFF).withValues(alpha: 0.34),
+                        blurRadius: 10,
+                        spreadRadius: 0.2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: filled
+                      ? const Color(0xFFF2D293)
+                      : const Color(0xFFF0E2C1),
+                  size: 14,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: filled
+                        ? const Color(0xFFF2D293)
+                        : const Color(0xFFE7DBC1),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Positioned(left: 8, child: _OrnateActionEdge()),
+          Positioned(
+            right: 8,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4(
+                -1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                0,
+                1,
+              ),
+              child: _OrnateActionEdge(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrnateActionEdge extends StatelessWidget {
+  const _OrnateActionEdge();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 18,
+      height: 12,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          Container(width: 13, height: 1.1, color: const Color(0xA8D9C89D)),
+          Positioned(
+            right: 0,
+            child: Transform.rotate(
+              angle: 0.785398,
+              child: Container(
+                width: 5,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xD7E3D4B3),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1154,18 +1308,38 @@ class _CompatibilityUserHeaderState extends State<_CompatibilityUserHeader> {
     if (normalized == null || normalized.isEmpty) {
       return false;
     }
-    return normalized != 'Bilinmiyor' && normalized != 'Yukleniyor...';
+
+    final lower = normalized.toLowerCase();
+    final folded = lower
+        .replaceAll('ı', 'i')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('ö', 'o')
+        .replaceAll('ç', 'c');
+
+    final isUnknown = folded.startsWith('bilinmiyor');
+    final isLoading = folded.startsWith('yukleniyor');
+    return !isUnknown && !isLoading;
   }
 
   DateTime? _buildLocalBirthDateTime({
     required DateTime? birthDate,
     required String? birthTime,
+    required bool birthTimeUnknown,
   }) {
-    if (birthDate == null || birthTime == null || birthTime.trim().isEmpty) {
+    if (birthDate == null) {
       return null;
     }
 
-    final parts = birthTime.trim().split(':');
+    final resolvedBirthTime = birthTimeUnknown
+        ? '12:00'
+        : (birthTime ?? '').trim();
+    if (resolvedBirthTime.isEmpty) {
+      return null;
+    }
+
+    final parts = resolvedBirthTime.split(':');
     if (parts.length != 2) {
       return null;
     }
@@ -1281,11 +1455,13 @@ class _CompatibilityUserHeaderState extends State<_CompatibilityUserHeader> {
         final risingSign = hasRisingSign ? risingSignRaw! : 'Bilinmiyor';
 
         final birthTime = (data['birthTime'] as String?)?.trim();
+        final birthTimeUnknown = data['birthTimeUnknown'] as bool? ?? false;
         final lat = _asDouble(data['birthPlaceLat']);
         final lon = _asDouble(data['birthPlaceLon']);
         final localBirthDateTime = _buildLocalBirthDateTime(
           birthDate: birthDate,
           birthTime: birthTime,
+          birthTimeUnknown: birthTimeUnknown,
         );
 
         final canRefreshAstro =

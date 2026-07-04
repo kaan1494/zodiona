@@ -1,6 +1,7 @@
 # Zodiona Astro Backend (NASA/JPL)
 
 Bu servis, `Skyfield + NASA JPL ephemeris` ile `Güneş`, `Ay` ve `Yükselen` burcunu hesaplar.
+Ayrıca `OpenAI` chat istekleri için bir backend proxy endpoint sağlar.
 
 ## 1) Kurulum
 
@@ -12,6 +13,12 @@ Bu servis, `Skyfield + NASA JPL ephemeris` ile `Güneş`, `Ay` ve `Yükselen` bu
 ```bash
 pip install -r requirements.txt
 ```
+
+5. Ortam değişkenlerini ayarlayın:
+
+- `FIREBASE_SERVICE_ACCOUNT`
+- `NOTIFY_API_KEY`
+- `OPENAI_API_KEY`
 
 ## 2) Çalıştırma
 
@@ -48,3 +55,11 @@ Hesap:
 Android emulator içinden backend'e erişim için Flutter tarafında base URL:
 
 - `http://10.0.2.2:8000`
+
+## OpenAI Proxy
+
+Flutter uygulaması OpenAI'ye doğrudan bağlanmaz. Sohbet istekleri aşağıdaki endpoint üzerinden geçer:
+
+- `POST /openai/chat`
+
+Bu endpoint Firebase ID token ister ve OpenAI anahtarını yalnızca backend ortam değişkeninden kullanır.

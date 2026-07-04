@@ -634,7 +634,7 @@ class _AddCompatibilityFriendPageState
     final minLoadingFuture = Future<void>.delayed(_savingMinDuration);
 
     final birthTimeValue = _birthTimeUnknown
-        ? null
+        ? '12:00'
         : _birthTime != null
         ? _formatTime(_birthTime!)
         : null;
@@ -648,18 +648,18 @@ class _AddCompatibilityFriendPageState
 
     final canCalculateFromApi =
         _birthDate != null &&
-        _birthTime != null &&
-        !_birthTimeUnknown &&
+        birthTimeValue != null &&
         _selectedBirthLocation != null;
 
     if (canCalculateFromApi) {
       try {
+        final resolvedBirthTime = birthTimeValue.split(':');
         final localDateTime = DateTime(
           _birthDate!.year,
           _birthDate!.month,
           _birthDate!.day,
-          _birthTime!.hour,
-          _birthTime!.minute,
+          int.parse(resolvedBirthTime[0]),
+          int.parse(resolvedBirthTime[1]),
         );
 
         final astro = await _astroApiService.calculate(
@@ -1072,9 +1072,10 @@ class _CompatibilityFriendDetailPageState
     }
 
     final birthTime = (data['birthTime'] as String?)?.trim();
+    final birthTimeUnknown = data['birthTimeUnknown'] as bool? ?? false;
     final birthTimeStr = (birthTime != null && birthTime.isNotEmpty)
         ? birthTime
-        : 'Bilinmiyor';
+        : (birthTimeUnknown ? '12:00' : 'Bilinmiyor');
 
     final birthPlace =
         (data['birthPlaceName'] as String?)?.trim().isNotEmpty == true
@@ -1201,32 +1202,60 @@ class _CompatibilityFriendDetailPageState
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
       children: [
-        _CardSurface(
+        Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xBF2E2A67), Color(0xBF1B1A49)],
+            ),
+            border: Border.all(color: const Color(0x88D8B87B), width: 1.05),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.26),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
           child: Column(
             children: [
               Text(
                 '$currentUserName - $friendName',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final double buttonLeft = constraints.maxWidth * 2 / 3 + 30;
+                  final double buttonLeft = constraints.maxWidth * 0.68;
                   return Stack(
                     children: [
+                      Positioned.fill(
+                        top: 8,
+                        left: 36,
+                        right: 36,
+                        child: IgnorePointer(child: _ConstellationConnector()),
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _CircleAvatarSign(
                             label: currentUserName,
                             avatarId: currentUserAvatarId,
+                            sign: widget.currentUserSigns['sun'] ?? '',
                           ),
                           _CircleAvatarSign(
                             label: friendName,
                             avatarId: friendAvatarId,
+                            sign: _displaySign(
+                              (widget.friendData['zodiacSign'] as String?) ??
+                                  'Bilinmiyor',
+                            ),
                           ),
                         ],
                       ),
@@ -1237,48 +1266,71 @@ class _CompatibilityFriendDetailPageState
                           onTap: () =>
                               _showFriendInfoSheet(context, friendName),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
+                            padding: const EdgeInsets.all(1.2),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(24),
                               gradient: const LinearGradient(
-                                colors: [Color(0xFF4B1FA8), Color(0xFF2E1568)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Color(0xFF2D3D73), Color(0xFF5F8FC6)],
                               ),
                               border: Border.all(
-                                color: const Color(0xFFF2D293),
-                                width: 1.2,
+                                color: const Color(0xFFE8D4A1),
+                                width: 1.1,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(
-                                    0xFFF2D293,
-                                  ).withValues(alpha: 0.25),
+                                    0xFF9EE6FF,
+                                  ).withValues(alpha: 0.42),
+                                  blurRadius: 16,
+                                  spreadRadius: 0.7,
+                                ),
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFF5DAA0,
+                                  ).withValues(alpha: 0.22),
                                   blurRadius: 8,
-                                  spreadRadius: 1,
+                                  spreadRadius: 0.2,
                                 ),
                               ],
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.auto_awesome,
-                                  color: Color(0xFFF2D293),
-                                  size: 13,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 11,
+                                vertical: 4.8,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(22),
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color(0xFF5A6D90),
+                                    Color(0xFF3D4D6B),
+                                  ],
                                 ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Profil',
-                                  style: TextStyle(
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
                                     color: Color(0xFFF2D293),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
+                                    size: 12,
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Profil',
+                                    style: TextStyle(
+                                      color: Color(0xFFF8E2AD),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -1287,7 +1339,7 @@ class _CompatibilityFriendDetailPageState
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               const _MetricRow(label: 'Duygusal Bağ', value: 88),
               const _MetricRow(label: 'Fiziksel Çekim', value: 100),
               const _MetricRow(label: 'İletişim', value: 84),
@@ -1295,60 +1347,10 @@ class _CompatibilityFriendDetailPageState
           ),
         ),
         const SizedBox(height: 14),
-        _CardSurface(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'İlişkinizi Etkileyen Transitler',
-                style: const TextStyle(
-                  color: Color(0xFFF2C98A),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                weeklyComment.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                weeklyComment.body,
-                style: const TextStyle(
-                  color: Colors.white,
-                  height: 1.55,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0x22F2C98A),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0x55F2C98A)),
-                ),
-                child: Text(
-                  weeklyComment.tip,
-                  style: const TextStyle(
-                    color: Color(0xFFF7D57A),
-                    height: 1.45,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        _TransitFrameCard(
+          title: weeklyComment.title,
+          body: weeklyComment.body,
+          tip: weeklyComment.tip,
         ),
       ],
     );
@@ -1404,9 +1406,9 @@ class _CompatibilityFriendDetailPageState
             Text(
               weekly.title,
               style: const TextStyle(
-                color: Colors.white,
+                color: Color(0xFFF7D57A),
                 fontWeight: FontWeight.w700,
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
             const SizedBox(height: 8),
@@ -1420,31 +1422,15 @@ class _CompatibilityFriendDetailPageState
     } else {
       contentCard = const _CardSurface(
         child: Text(
-          'Bu bölüm yakında eklenecek.',
-          style: TextStyle(color: Colors.white70, height: 1.5),
+          'Doğum haritası yorumu için karta dokun.',
+          style: TextStyle(color: Colors.white),
         ),
       );
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
       children: [
-        Text(
-          friendName,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          '☉ $friendSun   ☾ $friendMoon   ↑ $friendRising   ♀ $friendVenus',
-          style: const TextStyle(
-            color: Colors.white70,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 14),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1456,7 +1442,7 @@ class _CompatibilityFriendDetailPageState
                   onTap: () {
                     if (f == 'Doğum Haritası') {
                       Navigator.of(context).push(
-                        MaterialPageRoute(
+                        MaterialPageRoute<void>(
                           builder: (_) => BirthChartDetailPage(
                             externalData: widget.friendData,
                             ownerName: friendName,
@@ -1630,24 +1616,361 @@ class _MetricRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = (value.clamp(0, 100)) / 100;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '$label  %$value',
             style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+              color: Color(0xFFE6D3A0),
+              fontWeight: FontWeight.w400,
+              fontSize: 13.6,
             ),
           ),
-          const SizedBox(height: 6),
-          LinearProgressIndicator(
-            minHeight: 4,
-            value: value / 100,
-            backgroundColor: Colors.white12,
-            valueColor: const AlwaysStoppedAnimation(Color(0xFFF2C98A)),
+          const SizedBox(height: 4.5),
+          _CrystalMeterBar(progress: progress),
+        ],
+      ),
+    );
+  }
+}
+
+class _CrystalMeterBar extends StatelessWidget {
+  const _CrystalMeterBar({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final safe = progress.clamp(0.0, 1.0);
+    final knobOffset = (safe * 100).clamp(2, 98) / 100;
+
+    return SizedBox(
+      height: 12,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            left: 12,
+            right: 12,
+            top: 2,
+            child: Container(
+              height: 7,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                gradient: const LinearGradient(
+                  colors: [Color(0x8A69708F), Color(0x66545A73)],
+                ),
+                border: Border.all(color: const Color(0x88D0BB8A), width: 0.6),
+              ),
+            ),
+          ),
+          Positioned(left: 0, top: 1, child: _barCap(false)),
+          Positioned(right: 0, top: 1, child: _barCap(true)),
+          Positioned(
+            left: 12,
+            right: 12,
+            top: 3,
+            child: FractionallySizedBox(
+              widthFactor: safe,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: List.generate(5, (i) {
+                  final isBlue = i == 0;
+                  return Expanded(
+                    child: Container(
+                      margin: EdgeInsets.only(right: i == 4 ? 0 : 1),
+                      height: 7,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        gradient: isBlue
+                            ? const LinearGradient(
+                                colors: [Color(0xFFCFE8FF), Color(0xFF87B3D6)],
+                              )
+                            : const LinearGradient(
+                                colors: [Color(0xFFFCEFC6), Color(0xFFE2BE6D)],
+                              ),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                (isBlue
+                                        ? const Color(0xFFBEE7FF)
+                                        : const Color(0xFFFFE39F))
+                                    .withValues(alpha: 0.28),
+                            blurRadius: 5,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            right: 12,
+            top: 2,
+            child: FractionallySizedBox(
+              widthFactor: knobOffset,
+              alignment: Alignment.centerLeft,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Container(
+                  width: 5.5,
+                  height: 5.5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF2CB),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFF2CB).withValues(alpha: 0.95),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _barCap(bool right) {
+    return Transform.rotate(
+      angle: right ? 3.14159 : 0,
+      child: SizedBox(
+        width: 10,
+        height: 11,
+        child: CustomPaint(painter: _BarCapPainter()),
+      ),
+    );
+  }
+}
+
+class _BarCapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, size.height / 2)
+      ..lineTo(size.width - 1, 0)
+      ..lineTo(size.width - 1, size.height)
+      ..close();
+
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFE8D5A6), Color(0xFFBE9850)],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ConstellationConnector extends StatelessWidget {
+  const _ConstellationConnector();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(painter: _ConstellationPainter());
+  }
+}
+
+class _ConstellationPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = const Color(0xCCDAE6FF)
+      ..strokeWidth = 1.25
+      ..style = PaintingStyle.stroke;
+
+    final glowPaint = Paint()
+      ..color = const Color(0x66DAE6FF)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2);
+
+    final points = <Offset>[
+      Offset(size.width * 0.04, size.height * 0.50),
+      Offset(size.width * 0.11, size.height * 0.33),
+      Offset(size.width * 0.19, size.height * 0.42),
+      Offset(size.width * 0.35, size.height * 0.51),
+      Offset(size.width * 0.46, size.height * 0.53),
+      Offset(size.width * 0.54, size.height * 0.53),
+      Offset(size.width * 0.68, size.height * 0.45),
+      Offset(size.width * 0.77, size.height * 0.29),
+      Offset(size.width * 0.88, size.height * 0.14),
+      Offset(size.width * 0.93, size.height * 0.29),
+    ];
+
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+    canvas.drawPath(path, linePaint);
+
+    for (final p in points) {
+      canvas.drawCircle(p, 2.7, glowPaint);
+      canvas.drawCircle(p, 1.85, Paint()..color = const Color(0xFFF5F7FF));
+    }
+
+    final center = Offset(size.width * 0.52, size.height * 0.54);
+    final starPath = Path()
+      ..moveTo(center.dx, center.dy - 5)
+      ..lineTo(center.dx + 1.6, center.dy - 1.2)
+      ..lineTo(center.dx + 5, center.dy)
+      ..lineTo(center.dx + 1.6, center.dy + 1.2)
+      ..lineTo(center.dx, center.dy + 5)
+      ..lineTo(center.dx - 1.6, center.dy + 1.2)
+      ..lineTo(center.dx - 5, center.dy)
+      ..lineTo(center.dx - 1.6, center.dy - 1.2)
+      ..close();
+    canvas.drawPath(starPath, Paint()..color = const Color(0xFFF4DEAA));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _TransitFrameCard extends StatelessWidget {
+  const _TransitFrameCard({
+    required this.title,
+    required this.body,
+    required this.tip,
+  });
+
+  final String title;
+  final String body;
+  final String tip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xC056556D), Color(0xC03A415B)],
+        ),
+        border: Border.all(color: const Color(0x88D2BE90), width: 1.05),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Center(
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 210,
+                      height: 210,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const Positioned(left: -4, top: -9, child: _MoonBadge()),
+          const Positioned(right: -7, top: -10, child: _SaturnBadge()),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'İlişkinizi Etkileyen Transitler',
+                style: TextStyle(
+                  color: Color(0xFFF2C98A),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.8,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                body,
+                style: const TextStyle(
+                  color: Colors.white,
+                  height: 1.52,
+                  fontSize: 12.8,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0x2AF2C98A), Color(0x1B7F6A45)],
+                      ),
+                      borderRadius: BorderRadius.circular(9),
+                      border: Border.all(color: const Color(0xA6D5BD88)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 1),
+                          child: Icon(
+                            Icons.auto_awesome,
+                            color: Color(0xFFF7D57A),
+                            size: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            tip,
+                            style: const TextStyle(
+                              color: Color(0xFFF7D57A),
+                              height: 1.42,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Positioned(left: -10, top: -1, child: _TipPillar()),
+                  const Positioned(right: -10, top: -1, child: _TipPillar()),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -1655,44 +1978,208 @@ class _MetricRow extends StatelessWidget {
   }
 }
 
+class _MoonBadge extends StatelessWidget {
+  const _MoonBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [Color(0xFFF4E0BE), Color(0xFFBA9760)],
+            ),
+          ),
+        ),
+        const SizedBox(width: 2),
+        Container(
+          width: 25,
+          height: 5,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            gradient: const LinearGradient(
+              colors: [Color(0xFFE6D09F), Color(0xFF9D7D40)],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SaturnBadge extends StatelessWidget {
+  const _SaturnBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Transform.rotate(
+            angle: -0.45,
+            child: Container(
+              width: 24,
+              height: 7,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFD7BF90), width: 1),
+              ),
+            ),
+          ),
+          Container(
+            width: 14,
+            height: 14,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [Color(0xFFF1DFC0), Color(0xFFB08E56)],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TipPillar extends StatelessWidget {
+  const _TipPillar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 8,
+      height: 23,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFE5D6B8), Color(0xFF9C8250)],
+        ),
+      ),
+      child: Center(
+        child: Container(
+          width: 3,
+          height: 3,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Color(0xFF73CDEB),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CircleAvatarSign extends StatelessWidget {
-  const _CircleAvatarSign({required this.label, required this.avatarId});
+  const _CircleAvatarSign({
+    required this.label,
+    required this.avatarId,
+    this.sign = '',
+  });
 
   final String label;
   final String avatarId;
+  final String sign;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          width: 76,
-          height: 76,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.12),
-            border: Border.all(color: const Color(0xFFF2C98A), width: 1.6),
-          ),
-          child: ClipOval(
-            child: Image.asset(
-              _avatarAssetPathForId(avatarId),
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: const Color(0xFF0E2152),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.white70,
-                    size: 36,
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  colors: [Color(0x2268A7FF), Color(0x111B2149)],
+                ),
+                border: Border.all(color: const Color(0xFFF2C98A), width: 1.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFB1DFFF).withValues(alpha: 0.22),
+                    blurRadius: 10,
+                    spreadRadius: 0.3,
                   ),
-                );
-              },
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  _avatarAssetPathForId(avatarId),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: const Color(0xFF0E2152),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.person,
+                        color: Colors.white70,
+                        size: 36,
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
+            if (sign.isNotEmpty)
+              Positioned(
+                bottom: 2,
+                right: 2,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6D49B6), Color(0xFF4B2591)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFFF2D293),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFF2CC).withValues(alpha: 0.4),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    sign.isNotEmpty ? sign.substring(0, 1) : '',
+                    style: const TextStyle(
+                      color: Color(0xFFF2D293),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: 8),
-        Text(label, style: const TextStyle(color: Colors.white)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFFD8D2C5),
+            fontSize: 30 / 2,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
       ],
     );
   }

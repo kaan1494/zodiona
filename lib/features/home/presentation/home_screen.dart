@@ -22,6 +22,7 @@ import 'widgets/celestia_card_preview.dart';
 import 'widgets/zodiona_daily_comment_card.dart';
 import '../../../services/astro_api_service.dart';
 import '../../../services/force_update_service.dart';
+import '../../../services/location_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../services/user_activity_service.dart';
 import '../../../utils/zodiac.dart';
@@ -618,10 +619,15 @@ class _HomeUserHeader extends StatefulWidget {
 class _HomeUserHeaderState extends State<_HomeUserHeader>
     with WidgetsBindingObserver {
   final _astroApiService = const AstroApiService();
+  final _locationService = LocationService();
   static const _astroRetryInterval = Duration(seconds: 15);
+  static const _locationRetryInterval = Duration(seconds: 20);
   bool _isRefreshingAstro = false;
+  bool _isResolvingLocation = false;
   String? _lastAstroRequestKey;
+  String? _lastLocationQuery;
   DateTime? _lastAstroAttemptAt;
+  DateTime? _lastLocationAttemptAt;
   String? _lastAstroError;
   Timer? _astroRetryTicker;
 
@@ -660,18 +666,37 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
     if (normalized == null || normalized.isEmpty) {
       return false;
     }
-    return normalized != 'Bilinmiyor' && normalized != 'Yukleniyor...';
+
+    final lower = normalized.toLowerCase();
+    final folded = lower
+        .replaceAll('ı', 'i')
+        .replaceAll('ğ', 'g')
+        .replaceAll('ü', 'u')
+        .replaceAll('ş', 's')
+        .replaceAll('ö', 'o')
+        .replaceAll('ç', 'c');
+
+    final isUnknown = folded.startsWith('bilinmiyor');
+    final isLoading = folded.startsWith('yukleniyor');
+    return !isUnknown && !isLoading;
   }
 
   DateTime? _buildLocalBirthDateTime({
     required DateTime? birthDate,
     required String? birthTime,
+    required bool birthTimeUnknown,
   }) {
-    if (birthDate == null || birthTime == null || birthTime.trim().isEmpty) {
+    if (birthDate == null) {
       return null;
     }
 
-    final parts = birthTime.trim().split(':');
+    final resolvedBirthTime =
+        birthTimeUnknown ? '12:00' : (birthTime ?? '').trim();
+    if (resolvedBirthTime.isEmpty) {
+      return null;
+    }
+
+    final parts = resolvedBirthTime.split(':');
     if (parts.length != 2) {
       return null;
     }
@@ -734,7 +759,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
         error.contains('clientexception')) {
       return 'Astro servisine ulasilamadi. Baglanti/izin kontrol edilerek tekrar deneniyor...';
     }
-    return 'Astro bilgileri alinamadi. 15 sn sonra tekrar denenecek...';
+    return 'Astro bilgileri alınamadı. 15 sn sonra tekrar denenecek...';
   }
 
   Future<void> _refreshAstro({
@@ -784,6 +809,49 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
     }
   }
 
+  Future<void> _resolveBirthLocation({
+    required String uid,
+    required String placeQuery,
+  }) async {
+    final query = placeQuery.trim();
+    if (_isResolvingLocation || query.length < 2) {
+      return;
+    }
+
+    setState(() {
+      _isResolvingLocation = true;
+      _lastLocationQuery = query;
+      _lastLocationAttemptAt = DateTime.now();
+    });
+
+    try {
+      final suggestions = await _locationService.searchLocations(
+        query,
+        limit: 1,
+        language: 'tr',
+      );
+
+      if (suggestions.isEmpty) {
+        return;
+      }
+
+      final first = suggestions.first;
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'birthPlaceLat': first.lat,
+        'birthPlaceLon': first.lon,
+        'birthPlaceCountry': first.country,
+        'birthPlaceName': first.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Sessiz gec: retry ticker sonraki turda tekrar deneyecek.
+    } finally {
+      if (mounted) {
+        setState(() => _isResolvingLocation = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -826,12 +894,45 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
         final hasVenusSign = _isKnownAstroValue(venusSignRaw);
 
         final birthTime = (data['birthTime'] as String?)?.trim();
+        final birthTimeUnknown = data['birthTimeUnknown'] as bool? ?? false;
+        final birthPlaceName = (data['birthPlaceName'] as String?)?.trim();
+        final birthPlaceRaw = (data['birthPlace'] as String?)?.trim();
+        final birthPlaceQuery = (birthPlaceName?.isNotEmpty ?? false)
+            ? birthPlaceName!
+            : (birthPlaceRaw ?? '');
         final lat = _asDouble(data['birthPlaceLat']);
         final lon = _asDouble(data['birthPlaceLon']);
         final localBirthDateTime = _buildLocalBirthDateTime(
           birthDate: birthDate,
           birthTime: birthTime,
+          birthTimeUnknown: birthTimeUnknown,
         );
+
+        final canResolveLocation =
+            uid != null &&
+            localBirthDateTime != null &&
+            (lat == null || lon == null) &&
+            birthPlaceQuery.trim().length >= 2;
+        final canRetryLocationNow =
+            _lastLocationAttemptAt == null ||
+            DateTime.now().difference(_lastLocationAttemptAt!) >=
+                _locationRetryInterval;
+
+        if (canResolveLocation &&
+            !_isResolvingLocation &&
+            canRetryLocationNow &&
+            (_lastLocationQuery != birthPlaceQuery)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _resolveBirthLocation(uid: uid, placeQuery: birthPlaceQuery);
+          });
+        } else if (canResolveLocation &&
+            !_isResolvingLocation &&
+            canRetryLocationNow &&
+            _lastLocationQuery == birthPlaceQuery) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _resolveBirthLocation(uid: uid, placeQuery: birthPlaceQuery);
+          });
+        }
 
         final canRefreshAstro =
             uid != null &&
@@ -895,7 +996,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
                           hasMoonSign
                               ? moonSign
                               : (needsAstroRefresh || _isRefreshingAstro
-                                    ? 'Yukleniyor...'
+                                    ? 'Yükleniyor...'
                                     : moonSign),
                         ),
                       ),
@@ -905,7 +1006,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
                           hasRisingSign
                               ? risingSign
                               : (needsAstroRefresh || _isRefreshingAstro
-                                    ? 'Yukleniyor...'
+                                    ? 'Yükleniyor...'
                                     : risingSign),
                         ),
                       ),
@@ -915,7 +1016,7 @@ class _HomeUserHeaderState extends State<_HomeUserHeader>
                     const SizedBox(height: 4),
                     Text(
                       _isRefreshingAstro
-                          ? 'Astro bilgileri yukleniyor...'
+                          ? 'Astro bilgileri yükleniyor...'
                           : _astroRetryStatusMessage(),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.white60,

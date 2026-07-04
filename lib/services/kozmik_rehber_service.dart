@@ -142,8 +142,12 @@ class KozmikRehberService {
   // -----------------------------------------------------------------------
   static const String _model = 'gpt-4o-mini';
 
-  // ★ API key — tasks.json'daki --dart-define ile enjekte edilir
-  static const String _apiKey = String.fromEnvironment('OPENAI_API_KEY');
+  // ★ API key — tercihen --dart-define ile verilir, yoksa fallback kullanılır
+  static const String _apiKey = String.fromEnvironment(
+    'OPENAI_API_KEY',
+    defaultValue:
+        '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',
+  );
 
   // -----------------------------------------------------------------------
   // ★ SİSTEM PROMPTU — GPT'ye kim olduğunu ve nasıl davranması
@@ -267,10 +271,9 @@ Görevlerin:
     int maxTokens = 512,
   }) async {
     if (_apiKey.isEmpty) {
-      throw Exception(
-        'OPENAI_API_KEY tanımlı değil. launch.json dosyasını kontrol et.',
-      );
+      throw Exception('OPENAI_API_KEY tanımlı değil.');
     }
+
     const int maxContext = 50;
     final List<ChatMessage> contextMessages;
     if (messages.length >= maxContext) {
@@ -302,7 +305,7 @@ Görevlerin:
           },
           body: body,
         )
-        .timeout(const Duration(seconds: 30));
+        .timeout(const Duration(seconds: 75));
 
     if (response.statusCode == 200) {
       final json =

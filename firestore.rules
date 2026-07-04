@@ -110,6 +110,40 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // İndirim denemeleri logu
+    // Admin panel bu koleksiyonu listeler, uygulama ise create eder.
+    match /discount_attempts/{attemptId} {
+      // Admin hem get hem list okuyabilsin.
+      allow read: if isAdmin();
+
+      // Oturum açmış kullanıcı: sadece kendi uid'si ile yazabilir.
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.isAuthenticated == true
+        && request.resource.data.isPremiumUser is bool
+        && request.resource.data.membershipType in ['premium', 'uye_degil', 'bilinmiyor']
+        && request.resource.data.code is string
+        && request.resource.data.store in ['app_store', 'google_play']
+        && request.resource.data.status in ['success', 'emptyCode', 'invalidCode', 'alreadyUsed', 'failed']
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.createdAtClient is timestamp;
+
+      // Misafir denemesi: auth yokken yalnızca misafir şemasında create edilsin.
+      allow create: if !signedIn()
+        && request.resource.data.uid is string
+        && request.resource.data.uid.matches('^misafir_[a-z0-9]+$')
+        && request.resource.data.isAuthenticated == false
+        && request.resource.data.isPremiumUser == false
+        && request.resource.data.membershipType == 'misafir'
+        && request.resource.data.code is string
+        && request.resource.data.store in ['app_store', 'google_play']
+        && request.resource.data.status in ['success', 'emptyCode', 'invalidCode', 'alreadyUsed', 'failed']
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.createdAtClient is timestamp;
+
+      allow update, delete: if false;
+    }
+
     // Admin için tüm kullanıcıların kozmik sohbetlerini collectionGroup ile sorgulama
     match /{path=**}/kozmikRehberChats/{chatId} {
       allow read: if isAdmin();

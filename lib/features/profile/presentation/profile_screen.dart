@@ -144,9 +144,53 @@ class ProfileScreen extends StatelessWidget {
       return;
     }
 
+    if (title == 'Yorum Yap') {
+      _openStoreReview(context);
+      return;
+    }
+
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('$title yakında eklenecek.')));
+  }
+
+  Future<void> _openStoreReview(BuildContext context) async {
+    // Android package id for this app.
+    const packageId = 'com.zodiona.app';
+    // iOS app id unknown for now; set when App Store listing is ready.
+    const iosAppId = '';
+
+    final platform = Theme.of(context).platform;
+    final candidates = <Uri>[];
+
+    if (platform == TargetPlatform.android) {
+      candidates.addAll([
+        Uri.parse('market://details?id=$packageId&showAllReviews=true'),
+        Uri.parse(
+          'https://play.google.com/store/apps/details?id=$packageId&showAllReviews=true',
+        ),
+      ]);
+    } else if (platform == TargetPlatform.iOS && iosAppId.isNotEmpty) {
+      candidates.addAll([
+        Uri.parse(
+          'itms-apps://itunes.apple.com/app/id$iosAppId?action=write-review',
+        ),
+        Uri.parse('https://apps.apple.com/app/id$iosAppId?action=write-review'),
+      ]);
+    }
+
+    for (final uri in candidates) {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        return;
+      }
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Yorum sayfası açılamadı.')));
+    }
   }
 
   Future<void> _onContactTap(BuildContext context) async {
@@ -277,11 +321,32 @@ class _ProfileModel {
   final String avatarId;
 
   factory _ProfileModel.fromMap(Map<String, dynamic> data) {
+    final timezoneRaw = (data['birthTimezone'] as String?)?.trim();
+    final isAstroPending = (timezoneRaw?.toLowerCase() ?? '') == 'pending';
+
     String normalizeSign(String? sign) {
       final value = (sign ?? '').trim();
-      if (value.isEmpty || value == 'Bilinmiyor') {
+      if (value.isEmpty) {
+        return isAstroPending ? 'Yükleniyor...' : 'Bilinmiyor';
+      }
+
+      final lower = value.toLowerCase();
+      final folded = lower
+          .replaceAll('ı', 'i')
+          .replaceAll('ğ', 'g')
+          .replaceAll('ü', 'u')
+          .replaceAll('ş', 's')
+          .replaceAll('ö', 'o')
+          .replaceAll('ç', 'c');
+
+      if (folded.startsWith('yukleniyor')) {
         return 'Yükleniyor...';
       }
+
+      if (folded.startsWith('bilinmiyor')) {
+        return isAstroPending ? 'Yükleniyor...' : 'Bilinmiyor';
+      }
+
       switch (value) {
         case 'Koc':
           return 'Koç';
@@ -311,6 +376,7 @@ class _ProfileModel {
     final ts = data['birthDate'];
     final birthDate = ts is Timestamp ? ts.toDate() : null;
     final birthTime = (data['birthTime'] as String?)?.trim();
+    final birthTimeUnknown = data['birthTimeUnknown'] as bool? ?? false;
     final birthPlace =
         ((data['birthPlaceName'] as String?)?.trim().isNotEmpty ?? false)
         ? (data['birthPlaceName'] as String).trim()
@@ -319,7 +385,9 @@ class _ProfileModel {
     final dateText = birthDate == null
         ? 'Tarih Bilinmiyor'
         : '${birthDate.day.toString().padLeft(2, '0')} ${_monthName(birthDate.month)} ${birthDate.year}';
-    final timeText = (birthTime?.isNotEmpty ?? false) ? birthTime! : '--:--';
+    final timeText = (birthTime?.isNotEmpty ?? false)
+        ? birthTime!
+        : (birthTimeUnknown ? '12:00' : '--:--');
     final birthInfo = '$dateText - $timeText - $birthPlace';
 
     final sun = normalizeSign((data['zodiacSign'] as String?)?.trim());
@@ -1078,22 +1146,22 @@ class _ContactCard extends StatelessWidget {
             children: [
               _SocialIcon(
                 icon: FontAwesomeIcons.instagram,
-                url: 'https://www.instagram.com/zodionaofficial/',
+                url: 'https://www.instagram.com/zodionaapp',
               ),
               const SizedBox(width: 10),
               _SocialIcon(
                 icon: FontAwesomeIcons.tiktok,
-                url: 'https://www.tiktok.com/@zodionaofficial',
+                url: 'https://www.tiktok.com/@zodionaapp',
               ),
               const SizedBox(width: 10),
               _SocialIcon(
                 icon: FontAwesomeIcons.youtube,
-                url: 'https://www.youtube.com/@Zodionaofficial',
+                url: 'https://www.youtube.com/@ZodionaApp',
               ),
               const SizedBox(width: 10),
               _SocialIcon(
                 icon: FontAwesomeIcons.facebook,
-                url: 'https://www.facebook.com/people/Zodiona/61572010933557/',
+                url: 'https://www.facebook.com/ZodionaApp',
               ),
             ],
           ),

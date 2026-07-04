@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../services/promo_code_service.dart';
 
@@ -18,6 +21,7 @@ class _PromoCodeRedeemScreenState extends State<PromoCodeRedeemScreen> {
   bool _isSubmitting = false;
   String? _message;
   bool _isError = false;
+  String? _cachedGuestUid;
 
   @override
   void dispose() {
@@ -263,9 +267,20 @@ class _PromoCodeRedeemScreenState extends State<PromoCodeRedeemScreen> {
   Future<void> _applyCode() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || uid.isEmpty) {
+      final guestUid = await _getOrCreateGuestUid();
+      await _promoService.logGuestDiscountAttempt(
+        guestUid: guestUid,
+        rawCode: _codeController.text,
+        storePlatform: _storePlatform,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _isError = true;
-        _message = 'Kullanıcı oturumu bulunamadı.';
+        _message = 'Kullanıcı oturumu bulunamadı. Misafir denemesi kaydedildi.';
       });
       return;
     }
@@ -295,5 +310,31 @@ class _PromoCodeRedeemScreenState extends State<PromoCodeRedeemScreen> {
     if (result.isSuccess) {
       FocusScope.of(context).unfocus();
     }
+  }
+
+  Future<String> _getOrCreateGuestUid() async {
+    if (_cachedGuestUid != null && _cachedGuestUid!.isNotEmpty) {
+      return _cachedGuestUid!;
+    }
+
+    const key = 'discount_guest_uid';
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(key);
+    if (existing != null && existing.isNotEmpty) {
+      _cachedGuestUid = existing;
+      return existing;
+    }
+
+    final random = Random.secure();
+    final randPart = List<String>.generate(
+      6,
+      (_) => random.nextInt(36).toRadixString(36),
+    ).join();
+    final tsPart = DateTime.now().millisecondsSinceEpoch.toRadixString(36);
+    final guestUid = 'misafir_$tsPart$randPart';
+
+    await prefs.setString(key, guestUid);
+    _cachedGuestUid = guestUid;
+    return guestUid;
   }
 }

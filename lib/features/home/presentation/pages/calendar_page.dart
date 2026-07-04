@@ -497,112 +497,132 @@ class _DailyMoonDetailPageState extends State<_DailyMoonDetailPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0B2A),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF1A1040), Color(0xFF130D35), Color(0xFF0D0B2A)],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.99,
+              child: Image.asset(
+                'assets/onboarding/home_page.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xE61A1040),
+                    Color(0xEE130D35),
+                    Color(0xF20D0B2A),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              phaseTitle,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        color: const Color(0xFFE8D3B0),
+                        style: IconButton.styleFrom(
+                          side: const BorderSide(color: Colors.white24),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                  child: _TopMoonDaySelector(
+                    selectedDate: _selectedDate,
+                    onDateChanged: (date) {
+                      setState(() {
+                        _selectedDate = date;
+                        _beautyPageIndex = 0;
+                      });
+                      _beautyPageController.jumpToPage(0);
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                    children: [
+                      for (final category in _orderedCategories) ...[
+                        if (category == _DetailCategory.career) ...[
+                          const SizedBox(height: 8),
                           Text(
-                            phaseTitle,
-                            style: Theme.of(context).textTheme.headlineSmall
+                            'Doğum Haritana Özel Etkiler',
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            subtitle,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(color: Colors.white70),
-                          ),
+                          const SizedBox(height: 10),
                         ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                      color: const Color(0xFFE8D3B0),
-                      style: IconButton.styleFrom(
-                        side: const BorderSide(color: Colors.white24),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                child: _TopMoonDaySelector(
-                  selectedDate: _selectedDate,
-                  onDateChanged: (date) {
-                    setState(() {
-                      _selectedDate = date;
-                      _beautyPageIndex = 0;
-                    });
-                    _beautyPageController.jumpToPage(0);
-                  },
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
-                  children: [
-                    for (final category in _orderedCategories) ...[
-                      if (category == _DetailCategory.career) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          'Doğum Haritana Özel Etkiler',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
+                        _InsightExpandableCard(
+                          category: category,
+                          pages: dayData[category] ?? const [],
+                          expanded: _expanded.contains(category),
+                          isPremium: _isPremium,
+                          beautyPageController: _beautyPageController,
+                          beautyPageIndex: _beautyPageIndex,
+                          onBeautyPageChanged: (index) {
+                            setState(() => _beautyPageIndex = index);
+                          },
+                          onTap: () {
+                            setState(() {
+                              if (_expanded.contains(category)) {
+                                _expanded.remove(category);
+                              } else {
+                                _expanded.add(category);
+                              }
+                            });
+                          },
                         ),
                         const SizedBox(height: 10),
                       ],
-                      _InsightExpandableCard(
-                        category: category,
-                        pages: dayData[category] ?? const [],
-                        expanded: _expanded.contains(category),
-                        isPremium: _isPremium,
-                        beautyPageController: _beautyPageController,
-                        beautyPageIndex: _beautyPageIndex,
-                        onBeautyPageChanged: (index) {
-                          setState(() => _beautyPageIndex = index);
-                        },
-                        onTap: () {
-                          setState(() {
-                            if (_expanded.contains(category)) {
-                              _expanded.remove(category);
-                            } else {
-                              _expanded.add(category);
-                            }
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -998,119 +1018,172 @@ class _InsightExpandableCard extends StatelessWidget {
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOut,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: scheme,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: const Color(0xD2E1C08A),
+          width: expanded ? 1.5 : 1.2,
         ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              scheme.first.withValues(alpha: 0.24),
+              const Color(0xFF14183A),
+            ),
+            Color.alphaBlend(
+              scheme.last.withValues(alpha: 0.22),
+              const Color(0xFF11132F),
+            ),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x66311C54),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: const Color(0x35F0D6A6),
+            blurRadius: 14,
+            offset: const Offset(0, 1),
+          ),
+        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(26),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Column(
-              children: [
-                // ── Başlık satırı ──────────────────────────────────────
-                Row(
-                  children: [
-                    Text(icon, style: const TextStyle(fontSize: 30)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: const Color(0xFFECCB8E),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                    if (locked)
-                      const Padding(
-                        padding: EdgeInsets.only(right: 6),
-                        child: Icon(
-                          Icons.lock_outline,
-                          color: Color(0xFFECCB8E),
-                          size: 20,
-                        ),
-                      ),
-                    Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: const Color(0xFFECCB8E),
-                      size: 34,
-                    ),
-                  ],
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.13),
+                      Colors.transparent,
+                      Colors.white.withValues(alpha: 0.04),
+                    ],
+                    stops: const [0.0, 0.34, 1.0],
+                  ),
                 ),
-                // ── Genişletilmiş içerik ───────────────────────────────
-                if (expanded) ...[
-                  const SizedBox(height: 10),
-                  Container(height: 1.2, color: const Color(0xFFD5C099)),
-                  const SizedBox(height: 14),
-                  if (locked)
-                    _LockedContent(text: pages.isEmpty ? '' : pages.first)
-                  else if (isBeauty && pages.length > 1)
-                    SizedBox(
-                      height: 256,
-                      child: PageView.builder(
-                        controller: beautyPageController,
-                        itemCount: pages.length,
-                        onPageChanged: onBeautyPageChanged,
-                        itemBuilder: (context, index) => SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
+              ),
+            ),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(22),
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                child: Column(
+                  children: [
+                    // ── Başlık satırı ──────────────────────────────────────
+                    Row(
+                      children: [
+                        Text(icon, style: const TextStyle(fontSize: 24)),
+                        const SizedBox(width: 10),
+                        Expanded(
                           child: Text(
-                            pages[index],
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge
+                            title,
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
-                                  color: Colors.white,
-                                  height: 1.45,
-                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFFECCB8E),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 17,
                                 ),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    Text(
-                      pages.isEmpty ? '' : pages.first,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white,
-                        height: 1.45,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  if (isBeauty && pages.length > 1 && !locked) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (var i = 0; i < pages.length; i++)
-                          Container(
-                            width: 10,
-                            height: 10,
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              color: i == beautyPageIndex
-                                  ? const Color(0xFFEFD39A)
-                                  : Colors.white54,
-                              shape: BoxShape.circle,
+                        if (locked)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 6),
+                            child: Icon(
+                              Icons.lock_outline,
+                              color: Color(0xFFECCB8E),
+                              size: 20,
                             ),
                           ),
+                        Icon(
+                          expanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: const Color(0xFFECCB8E),
+                          size: 30,
+                        ),
                       ],
                     ),
+                    // ── Genişletilmiş içerik ───────────────────────────────
+                    if (expanded) ...[
+                      const SizedBox(height: 10),
+                      Container(height: 1.2, color: const Color(0xFFD5C099)),
+                      const SizedBox(height: 14),
+                      if (locked)
+                        _LockedContent(text: pages.isEmpty ? '' : pages.first)
+                      else if (isBeauty && pages.length > 1)
+                        SizedBox(
+                          height: 256,
+                          child: PageView.builder(
+                            controller: beautyPageController,
+                            itemCount: pages.length,
+                            onPageChanged: onBeautyPageChanged,
+                            itemBuilder: (context, index) =>
+                                SingleChildScrollView(
+                                  physics: const BouncingScrollPhysics(),
+                                  child: Text(
+                                    pages[index],
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          height: 1.45,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
+                                ),
+                          ),
+                        )
+                      else
+                        Text(
+                          pages.isEmpty ? '' : pages.first,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Colors.white,
+                                height: 1.45,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      if (isBeauty && pages.length > 1 && !locked) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (var i = 0; i < pages.length; i++)
+                              Container(
+                                width: 10,
+                                height: 10,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: i == beautyPageIndex
+                                      ? const Color(0xFFEFD39A)
+                                      : Colors.white54,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ],
-                ],
-              ],
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
